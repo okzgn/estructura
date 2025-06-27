@@ -1,6 +1,6 @@
 {
-  "name": "@okzgn/estructura",
-  "version": "1.3.0",
+  "name": "estructura-js",
+  "version": "1.4.0",
   "description": "A lightweight, type-based dispatching JavaScript Framework.",
   "main": "./dist/estructura.umd.js",
   "module": "./dist/estructura.esm.js",
@@ -10,7 +10,12 @@
       "require": "./dist/estructura.umd.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "test": "node test.js",
     "start": "node test.js"

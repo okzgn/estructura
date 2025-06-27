@@ -18,7 +18,7 @@ En lugar de la programación orientada a objetos tradicional (`objeto.metodo()`)
 
 ## ¿Por qué usar Estructura?
 
-Al necesitar manejar lógica compleja que depende de la naturaleza de tus datos. Es ideal para:
+Estructura es ideal cuando necesitas manejar lógica compleja que depende de la naturaleza de tus datos. Es ideal para:
 
 *   **APIs Polimórficas:** Crear funciones como `draw(shape)`, `draw(shape, context)`, `draw(arrayOfShapes)` que se resuelven automáticamente.
 *   **Sistemas de Plugins:** Permitir que extensiones de terceros registren manejadores para nuevos tipos de datos sin modificar el núcleo de tu aplicación.
@@ -30,21 +30,58 @@ Al necesitar manejar lógica compleja que depende de la naturaleza de tus datos.
 Puedes instalar Estructura a través de npm:
 
 ```bash
-npm install @okzgn/estructura
+npm install estructura-js
 ```
 
 O usarlo directamente en el navegador a través de un CDN:
 
 ```html
-<script src="https://unpkg.com/@okzgn/estructura/dist/estructura.umd.js"></script>
+<script src="https://unpkg.com/estructura-js"></script>
 ```
+
+## Compatibilidad
+
+Estructura está diseñado para ser universalmente compatible, funcionando sin problemas en una amplia gama de entornos de JavaScript, desde navegadores modernos y antiguos hasta Node.js.
+
+### Formatos de Módulo
+
+El paquete se distribuye en múltiples formatos para asegurar una integración sencilla con cualquier sistema de módulos:
+
+*   **Módulos ES (ESM):** El formato principal y moderno. Ideal para usar con `import` en navegadores modernos (`<script type="module">`) y herramientas de compilación como Vite, Rollup o Webpack.
+    ```javascript
+    import _e from 'estructura-js';
+    ```
+
+*   **UMD (Universal Module Definition):** Proporciona máxima compatibilidad.
+    *   **Navegadores (Global):** Si se incluye con un tag `<script>` normal, crea una variable global `_e`.
+        ```html
+        <script src="https://unpkg.com/estructura-js"></script>
+        <script>
+          _e('hola');
+        </script>
+        ```
+    *   **CommonJS (Node.js):** Funciona de forma nativa en Node.js con `require()`.
+        ```javascript
+        const _e = require('estructura-js');
+        ```
+    *   **AMD (Asynchronous Module Definition):** Compatible con cargadores de módulos como RequireJS.
+
+### Compatibilidad con Navegadores
+
+El código de la distribución **UMD** está escrito en **sintaxis compatible con ES3/ES5**, lo que garantiza su funcionamiento en todos los navegadores modernos y en la mayoría de los antiguos, incluyendo **Internet Explorer 9+**, sin necesidad de transpilación.
+
+También incluye subtipos predefinidos para elementos del DOM y el navegador, para importarlos en instancias use `_e.subtype('browser-dom')`.
+
+### Compatibilidad con Node.js
+
+Estructura funciona perfectamente en cualquier versión de Node.js que soporte la sintaxis ES5 en modo CommonJS.
 
 ## Guía de Inicio Rápido
 
 El concepto central es simple: defines funciones para combinaciones de tipos y luego llamas al despachador principal `_e()` con tus datos.
 
 ```javascript
-import _e from '@okzgn/estructura';
+import _e from 'estructura-js';
 
 // 1. Definir funciones para tipos específicos
 
@@ -66,9 +103,9 @@ _e.fn({
 
 // 2. Llamar al despachador
 
-_e([/hola/]).log();             //> "Un array: /hola/
+_e(['hola']).log();             //> "Un array: hola"
 _e(12345).log();                //> "Un número: 12345"
-_e('texto', 67890).combine();   //> "Combinado: texto y 567890"
+_e('texto', 67890).combine();   //> "Combinado: texto y 67890"
 ```
 
 ## Documentación de la API
@@ -90,11 +127,12 @@ Registra las funciones que se ejecutarán para combinaciones de tipos.
 ```javascript
 _e.fn({
   Object: {
-    extend: (args, target_object) => Object.assign(target_object, args[0])
+    keys: (args) => Object.keys(args[0])
   }
 });
 
-_e({ a: 1, b: 2 }).extend({ c: 4, d: 5 }); //> "{ c: 4, d: 5, a: 1, b: 2 }"
+const keys = _e({ a: 1, b: 2 }).keys();
+console.log(keys); //> ["a", "b"]
 ```
 
 Los métodos que registras siempre reciben los argumentos originales del despachador como un **array en la primera posición**.
@@ -106,7 +144,8 @@ _e.fn({
   }
 });
 
-_e("hola ").repeat(3); //> "hola hola hola "
+const repeated = _e("hola ").repeat(3);
+console.log(repeated); //> "hola hola hola "
 ```
 
 ### `.subtype(definitions)`
@@ -159,10 +198,11 @@ otraApi('test').log(); //> "Log de otraApi"
 
 ### `.type(input)`
 
-Una herramienta de utilidad que te permite saber el tipo de cualquier variable. Devuelve un array/mapa de todos los tipos detectados.
+Una herramienta de utilidad que te permite saber los tipos de cualquier variable. Devuelve un array/mapa de todos los tipos detectados.
 
 ```javascript
-_e.type([]); //> [ 'Object', 'Array', Object: true, Array: true ]
+const types = _e.type({ id: 1 }); 
+console.log(types); //> [ 'Object', Object: true ]
 ```
 
 ## Licencia

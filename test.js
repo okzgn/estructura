@@ -18,17 +18,18 @@ _e.fn({
   }
 });
 
-_e([/hola/]).log();         //> "Un array: /hola/"
+_e(['hola']).log();         //> "Un array: hola"
 _e(12345).log();            //> "Un número: 12345"
-_e('texto', 67890).combine(); //> "Combinado: texto y 567890"
+_e('texto', 67890).combine(); //> "Combinado: texto y 67890"
 
 _e.fn({
   Object: {
-    extend: (args, target_object) => Object.assign(target_object, args[0])
+    keys: (args) => Object.keys(args[0])
   }
 });
 
-console.log(_e({ a: 1, b: 2 }).extend({ c: 4, d: 5 })); //> "{ c: 4, d: 5, a: 1, b: 2 }"
+const keys = _e({ a: 1, b: 2 }).keys();
+console.log(keys); //> ["a", "b"]
 
 _e.fn({
   String: {
@@ -36,7 +37,8 @@ _e.fn({
   }
 });
 
-console.log(_e("hola ").repeat(3)); //> "hola hola hola "
+const repeated = _e("hola ").repeat(3);
+console.log(repeated); //> "hola hola hola "
 
 _e.subtype({
   Object: (input) => {
@@ -64,5 +66,79 @@ otraApi.fn({ String: { log: () => console.log('Log de otraApi') } });
 miApi('test').log();  //> "Log de miApi"
 otraApi('test').log(); //> "Log de otraApi"
 
-console.log(_e.type([])); //> [ 'Object', 'Array', Object: true, Array: true ]
+const types = _e.type({ id: 1 }); 
+console.log(types); //> [ 'Object', Object: true ]
 
+// Definimos una función que se ejecutará para cualquier 'String'
+// Nota: La función recibe los argumentos del despachador directamente.
+
+const logString = (str) => {
+  console.log(`[LOG]: La string "${str}" fue procesada.`);
+};
+
+// Registramos la función directamente bajo el tipo 'String'
+
+_e.fn({
+  String: logString
+});
+
+// Al llamar a _e con una string, la función se ejecuta automáticamente.
+
+_e("Mi primer evento");   //> "[LOG]: La string "Mi primer evento" fue procesada."
+_e("Otro evento más");    //> "[LOG]: La string "Otro evento más" fue procesada."
+
+// Subtipo para identificar emails
+
+_e.subtype({
+  String: (input) => (input.includes('@') ? 'Email' : false)
+});
+
+// Subtipo para identificar emails
+
+_e.subtype({
+  String: (input) => (input.includes('@') ? 'Email' : false)
+});
+
+// Nodo híbrido para el tipo 'Email'.
+// Recibe el email como primer argumento, no envuelto en un array.
+
+const validateEmail = (email) => {
+  console.log(`Validando: ${email}`);
+
+  if (email.endsWith('@gmail.com')) {
+    // Si es un email de Gmail, devuelve métodos específicos.
+
+    return {
+      send: () => console.log('Enviando con la API de Gmail...'),
+      addToContacts: () => console.log('Añadiendo a contactos de Google.')
+    };
+  } else {
+    // Para otros emails, devuelve un método genérico.
+
+    return {
+      send: () => console.log('Enviando con SMTP genérico...')
+    };
+  }
+};
+
+// Registramos el nodo híbrido
+
+_e.fn({
+  Email: validateEmail
+});
+
+// --- Caso 1: Email de Gmail ---
+
+const gmailUser = _e('test@gmail.com');
+//> "Validando: test@gmail.com"
+
+gmailUser.send();            //> "Enviando con la API de Gmail..."
+gmailUser.addToContacts();   //> "Añadiendo a contactos de Google."
+
+// --- Caso 2: Otro email ---
+
+const otherUser = _e('user@outlook.com');
+//> "Validando: user@outlook.com"
+
+otherUser.send();            //> "Enviando con SMTP genérico..."
+// otherUser.addToContacts(); // Esto daría un error, porque el método no fue devuelto.
