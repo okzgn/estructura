@@ -1,0 +1,36 @@
+{
+  "name": "@okzgn/estructura",
+  "version": "1.3.0",
+  "description": "A lightweight, type-based dispatching JavaScript Framework.",
+  "main": "./dist/estructura.umd.js",
+  "module": "./dist/estructura.esm.js",
+  "exports": {
+    ".": {
+      "import": "./dist/estructura.esm.js",
+      "require": "./dist/estructura.umd.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "test": "node test.js",
+    "start": "node test.js"
+  },
+  "author": "Elías A. Soshina",
+  "license": "MIT",
+  "homepage": "https://github.com/okzgn/estructura#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/okzgn/estructura.git"
+  },
+  "bugs": {
+    "url": "https://github.com/okzgn/estructura/issues"
+  },
+  "keywords": [
+    "functions-dispatch",
+    "multiple-dispatch",
+    "polymorphism",
+    "data-types",
+    "lightweight",
+    "zero-dependencies"
+  ]
+}
