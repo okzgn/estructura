@@ -205,6 +205,100 @@ const types = _e.type({ id: 1 });
 console.log(types); //> [ 'Object', Object: true ]
 ```
 
+## Conceptos Avanzados: Nodos de Función Híbridos
+
+Además de registrar objetos con métodos, Estructura permite registrar una **función directamente como un nodo** en el árbol de despacho. Estas funciones se comportan de manera especial y ofrecen una gran flexibilidad.
+
+Un nodo de función es "híbrido" porque puede hacer dos cosas a la vez:
+1.  **Auto-ejecutarse:** Si la secuencia de tipos coincide con la ruta hacia la función, esa función se ejecutará automáticamente. Los argumentos del despachador se pasan directamente a esta función.
+2.  **Contener más definiciones:** Al ser una función (que en JavaScript es un objeto), puede tener propiedades adjuntas que actúen como sub-nodos para un despacho más profundo.
+
+### 1. Auto-ejecución de Nodos
+
+Puedes registrar una función que se dispare en cuanto los tipos de los argumentos coincidan con su posición en el árbol `fns`.
+
+```javascript
+// Definimos una función que se ejecutará para cualquier 'String'
+// Nota: La función recibe los argumentos del despachador directamente.
+
+const logString = (str) => {
+  console.log(`[LOG]: La string "${str}" fue procesada.`);
+};
+
+// Registramos la función directamente bajo el tipo 'String'
+
+_e.fn({
+  String: logString
+});
+
+// Al llamar a _e con una string, la función se ejecuta automáticamente.
+
+_e("Mi primer evento");   //> "[LOG]: La string "Mi primer evento" fue procesada."
+_e("Otro evento más");    //> "[LOG]: La string "Otro evento más" fue procesada."
+```
+
+### 2. Extender o Sobrescribir Métodos dinámicamente
+
+Un nodo de función híbrido puede, además, **devolver un objeto**. Si lo hace, los métodos de ese objeto se añadirán (o sobrescribirán) al conjunto de métodos que el despachador está construyendo.
+
+Esto permite crear APIs dinámicas donde el resultado de una función puede cambiar los métodos disponibles.
+
+**Ejemplo: Un validador que devuelve métodos diferentes según el resultado.**
+
+```javascript
+// Subtipo para identificar emails
+
+_e.subtype({
+  String: (input) => (input.includes('@') ? 'Email' : false)
+});
+
+// Nodo híbrido para el tipo 'Email'.
+// Recibe el email como primer argumento, no envuelto en un array.
+
+const validateEmail = (email) => {
+  console.log(`Validando: ${email}`);
+
+  if (email.endsWith('@gmail.com')) {
+    // Si es un email de Gmail, devuelve métodos específicos.
+
+    return {
+      send: () => console.log('Enviando con la API de Gmail...'),
+      addToContacts: () => console.log('Añadiendo a contactos de Google.')
+    };
+  } else {
+    // Para otros emails, devuelve un método genérico.
+
+    return {
+      send: () => console.log('Enviando con SMTP genérico...')
+    };
+  }
+};
+
+// Registramos el nodo híbrido
+
+_e.fn({
+  Email: validateEmail
+});
+
+// --- Caso 1: Email de Gmail ---
+
+const gmailUser = _e('test@gmail.com');
+//> "Validando: test@gmail.com"
+
+gmailUser.send();            //> "Enviando con la API de Gmail..."
+gmailUser.addToContacts();   //> "Añadiendo a contactos de Google."
+
+// --- Caso 2: Otro email ---
+
+const otherUser = _e('user@outlook.com');
+//> "Validando: user@outlook.com"
+
+otherUser.send();            //> "Enviando con SMTP genérico..."
+// otherUser.addToContacts(); // Esto daría un error, porque el método no fue devuelto.
+```
+
+Esta característica avanzada te permite construir mecanismos y flujos de trabajo de una manera increíblemente declarativa y potente.
+
 ## Licencia
 
 MIT © 2025 OKZGN
