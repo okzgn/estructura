@@ -1,5 +1,5 @@
 /**
- * Estructura v1.7.0
+ * Estructura v1.8.0
  * A lightweight, type-based dispatching JavaScript Framework.
  * 2025 (c) OKZGN
  * @license MIT
@@ -157,7 +157,7 @@
 	 * @param {string} resolved_node_type The type string that led to this node.
 	 * @param {IArguments} main_fn_args The original arguments from the main dispatcher call.
 	 * @param {boolean} [return_mode] If true, ensures the function returns the result object.
-	 * @returns {object|void}
+	 * @returns {object|null}
 	 */
 	function attach_resolved_methods(result_object, resolved_node, resolved_node_type, main_fn_args, return_mode){
 		var actual_fns = resolved_node;
@@ -171,12 +171,14 @@
 			}
 			catch(error){ message.call(this, 'error', 'Type function "' + resolved_node_type + '" error: ' + String(error)); }
 		}
+		// If it is a string, the function stops to protect against string iteration. Another data types don't cause issues, including falsy values.
+		if(typeof actual_fns === typeof_str_value){ return (return_mode ? result_object : null); }
 		for(var fn_name in actual_fns){
 			if(!verify_own_property_fn.call(actual_fns, fn_name) || typeof actual_fns[fn_name] !== typeof_fn_value){ continue; }
-			if(result_object[fn_name]){ message.call(this, 'warn', 'Method conflict for "' + fn_name + '". A definition from type "' + resolved_node_type + '" is overwriting a previously attached method. This occurs when an input matches multiple types; the last-processed definition takes precedence.'); }
+			if(result_object[fn_name]){ message.call(this, 'warn', 'Method conflict for "' + fn_name + '". A definition from type "' + resolved_node_type + '" is overwriting another same name method or node function. This occurs when an input matches multiple types.'); }
 			result_object[fn_name] = adjust_method(this, fn_name, actual_fns, main_fn_args);
 		}
-		if(return_mode){ return result_object; }
+		return (return_mode ? result_object : null);
 	};
 
 	/**
@@ -319,7 +321,6 @@
 				default: message.call(this, 'warn', 'Invalid definition for "fn.' + type_name + '". Only Function or Object are allowed.');
 			}
 		}
-		return this;
 	};
 
 	/**
@@ -363,7 +364,6 @@
 				default: message.call(this, 'warn', 'Invalid definition for "subtype.' + definition_name + '". Only Object, Function, Array, or String are allowed.');
 			}
 		}
-		return this;
 	};
 
 	/**
@@ -419,7 +419,7 @@
 		public_interface.type = function(input){ return type.call(instance, input); };
 		public_interface.fn = function(new_fns){ return fn.call(instance, new_fns); };
 		public_interface.subtype = function(new_subtypes){ return subtype.call(instance, new_subtypes); };
-		public_interface.instance = get_instance;
+		public_interface.instance = function(name){ return get_instance(name); };
 		subtype.call(instance, 'object-constructors');
 		return public_interface;
 	}
@@ -461,6 +461,6 @@
 	 * @param {string} name The name of the instance. Use an empty string ('') for the default instance.
 	 * @returns {EstructuraPublicInterface} The requested instance.
 	 */
-	_e.instance = get_instance;
+	_e.instance = function(name){ return get_instance(name); };
 	return _e;
 }));

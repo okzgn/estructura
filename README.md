@@ -20,7 +20,7 @@ En lugar de la programación orientada a objetos tradicional, donde los métodos
 
 Estructura es ideal cuando necesitas manejar lógica compleja que depende de la naturaleza de tus datos. Es ideal para:
 
-*   **APIs Polimórficas:** Crear funciones como `draw(shape)`, `draw(shape, context)`, `draw(arrayOfShapes)` que se resuelven automáticamente.
+*   **APIs Polimórficas:** Crear funciones como `render(shape)`, `render(shape, context)`, `render(arrayOfShapes)` que se resuelven automáticamente.
 *   **Sistemas de Plugins:** Permitir que extensiones de terceros registren manejadores para nuevos tipos de datos sin modificar el núcleo de tu aplicación.
 *   **Procesamiento de Datos:** Escribir tuberías de datos limpias que reaccionan a diferentes formatos de entrada (JSON, XML, CSV, etc.).
 *   **Refactorizar Código Complejo:** Reemplazar largas cadenas de `if/else` o `switch` que comprueban `typeof` e `instanceof`.
@@ -64,9 +64,11 @@ El paquete se distribuye en múltiples formatos para asegurar una integración s
         ```html
         <script src="https://unpkg.com/estructura-js"></script>
         <script>
-          // Este ejemplo demuestra que la variable global "_e" se ha cargado correctamente
-          // y muestra su tipo en la consola.
-          const tipos = _e.type('hola');
+          // La variable global "_e" se ha cargado correctamente
+          const estructura = _e;
+
+          // Ejemplo para mostrar los tipos de datos en la consola.
+          let tipos = _e.type('hola');
           console.log(tipos); //> [ 'String', String: true ]
         </script>
         ```
@@ -175,11 +177,63 @@ console.log(_e("abc").timestamp());     //> "Procesado a las: 1700000000001"
 > Cuando un valor corresponde a múltiples tipos (por ejemplo, un `Array` con los alias `['Coleccion', 'ListaOrdenada']`), todos sus métodos se fusionan. Si existe un método con el mismo nombre en diferentes definiciones, prevalecerá el del tipo con mayor precedencia.
 >
 > El orden de precedencia, de mayor a menor, es:
-> 1. Métodos globales: Definidos en la raíz del objeto con `fn`.
-> 2. Tipo base: El tipo nativo del valor (ej. `Object`, `Array`).
-> 3. Subtipos o alias: En el orden en que fueron declarados con `subtype`.
+> 1. Métodos globales: Definidos en la raíz del objeto con `.fn()`. Ejemplo: `_e.fn({ miMetodo: ... })`.
+> 2. Tipo base: El tipo nativo del valor (`Object`, `Array`). Ejemplo: `_e.fn({ Array: { miMetodo: ... }})`.
+> 3. Subtipos o alias: En el orden en que fueron declarados con `.subtype()`. Ejemplo: `_e.fn({ MiTipoColeccion: { miMetodo: ... }})`.
 >
 > Esto significa que un método para `Array` sobrescribirá a uno con el mismo nombre en `Coleccion`.
+
+#### Fusión de Definiciones (Registro Aditivo)
+
+Si llamas a `.fn()` varias veces con definiciones para el mismo tipo, estas se fusionan en lugar de sobreescribirse. Este comportamiento aditivo es ideal para sistemas de plugins o para organizar el código en módulos, ya que permite añadir nueva funcionalidad de forma segura.
+
+```javascript
+// 1. Registro inicial en el núcleo de la aplicación
+_e.fn({
+  String: {
+    log: (args) => console.log(`[LOG]: ${args[0]}`)
+  }
+});
+
+// 2. Más tarde, un "plugin" añade nueva funcionalidad al tipo String
+_e.fn({
+  String: {
+    wordCount: (args) => args[0].split(' ').length
+  }
+});
+
+// 3. Ambos métodos están ahora disponibles gracias a la fusión
+const miFrase = _e("Estructura es muy flexible");
+
+miFrase.log();                      //> [LOG]: Estructura es muy flexible
+console.log(miFrase.wordCount());   //> 4
+```
+
+> **Nota sobre la Fusión con Nodos Híbridos:**
+>
+> La fusión también se aplica a los nodos híbridos, pero con una regla importante: **una vez que un tipo se define como un nodo híbrido, siempre se comportará como tal**.
+>
+> Si posteriormente registras un objeto de métodos para ese mismo tipo, los nuevos métodos se añadirán a la función del nodo híbrido, pero esta no perderá su capacidad de auto-ejecutarse.
+>
+**Ejemplo (Fusión con un Nodo Híbrido):**
+```javascript
+// 1. Definimos un nodo híbrido para 'Number'
+_e.fn({
+  Number: (num) => console.log(`Nodo híbrido ejecutado para: ${num}`)
+});
+
+// 2. Fusionamos un objeto con un nuevo método
+_e.fn({
+  Number: {
+    isEven: (args) => args[0] % 2 === 0
+  }
+});
+
+// 3. El nodo se auto-ejecuta Y tiene el nuevo método disponible
+const miNumero = _e(10); //> Nodo híbrido ejecutado para: 10
+
+console.log(miNumero.isEven()); //> true
+```
 
 ### `.subtype(definitions)`
 
@@ -265,18 +319,40 @@ const types = _e.type({ id: 1 });
 console.log(types); //> [ 'Object', Object: true ]
 ```
 
+## Una Distinción Crucial: Cómo se Pasan los Argumentos
+
+Antes de explorar los conceptos avanzados, es vital entender una diferencia clave en cómo tus funciones reciben los argumentos, dependiendo de cómo las registres.
+
+1.  **Métodos Estándar (dentro de un objeto):**
+Reciben todos los argumentos originales de la llamada a `_e()` agrupados en un **único array como primer parámetro**.
+
+```javascript
+_e.fn({
+  String: {
+    // 'args' es ['Hola']
+    miMetodo: (args) => console.log(`El primer argumento es: ${args[0]}`)
+  }
+});
+_e('Hola').miMetodo(); //> "El primer argumento es: Hola"
+```
+
+1.  **Nodos de Función Híbridos (funciones directas):**
+Reciben los argumentos originales de `_e()` de forma **desplegada y directa**.
+
+```javascript
+_e.fn({
+  // 'arg1' es 'Hola'
+  String: (arg1) => { console.log(`Recibí directamente: ${arg1}`); }
+});
+_e('Hola'); //> "Recibí directamente: Hola"
+```
+
 ## Conceptos Avanzados: Nodos de Función Híbridos
 
 Además de registrar objetos con métodos, Estructura permite registrar una **función directamente como un nodo** en el árbol de despacho. Estas funciones se comportan de manera especial y ofrecen una gran flexibilidad.
 
 Un nodo de función es "híbrido" porque puede hacer dos cosas a la vez:
 1.  **Auto-ejecutarse:** Si la secuencia de tipos coincide con la ruta hacia la función, esa función se ejecutará automáticamente. Los argumentos del despachador se pasan directamente a esta función.
-
-> **Nota Importante sobre los Argumentos:**
->
-> Cuando registras una función directamente como un nodo (Nodo Híbrido), esta recibe los argumentos del despachador de forma directa y desplegada (ej: `(arg1, arg2) => ...`).
->
-> Sin embargo, cuando registras un objeto con métodos, cada método recibe los argumentos originales como un **array en su primera posición** (ej: `(args, param1) => ...`).
 
 2.  **Contener más definiciones:** Al ser una función (que en JavaScript es un objeto), puede tener propiedades adjuntas que actúen como sub-nodos para un despacho más profundo.
 
@@ -304,7 +380,41 @@ _e("Mi primer evento");   //> "[LOG]: La string "Mi primer evento" fue procesada
 _e("Otro evento más");    //> "[LOG]: La string "Otro evento más" fue procesada."
 ```
 
-### 2. Extender o Sobrescribir Métodos dinámicamente
+### 2. Cascada de Ejecución y Herencia de Tipos
+
+Cuando un valor pertenece a múltiples tipos (como un `Array`, que también es un `Object`), se ejecutarán en cascada todos los nodos híbridos que coincidan, desde el más específico hasta el más general.
+
+Esto permite crear "middleware" o capas de lógica que se construyen unas sobre otras.
+
+> **Nota sobre el Nodo Híbrido Raíz:**
+> Puedes registrar un nodo híbrido que se ejecute para **cualquier** llamada a `_e()` pasándole una función directamente: `_e.fn(function() { ... })`.
+
+**Ejemplo de cascada:**
+
+```javascript
+// Nodo para Arrays (muy específico)
+_e.fn({
+  Array: (arr) => console.log(`[LOG]: Nodo para Array ejecutado para: ${arr}`)
+});
+
+// Nodo para Objects (menos específico, ya que Array es un Object)
+_e.fn({
+  Object: () => console.log('[LOG]: Nodo para Object ejecutado.')
+});
+
+// Nodo híbrido raíz (el más general)
+_e.fn(function(){
+  console.log('[LOG]: Nodo raíz ejecutado.');
+});
+
+// Al llamar con un array, se disparan los tres nodos en orden de especificidad.
+_e(['a', 'b']);
+//> "[LOG]: Nodo para Array ejecutado para: a,b"
+//> "[LOG]: Nodo para Object ejecutado."
+//> "[LOG]: Nodo raíz ejecutado."
+```
+
+### 3. Extender o Sobrescribir Métodos dinámicamente
 
 Un nodo de función híbrido puede, además, **devolver un objeto**. Si lo hace, los métodos de ese objeto se añadirán (o sobrescribirán) al conjunto de métodos que el despachador está construyendo.
 

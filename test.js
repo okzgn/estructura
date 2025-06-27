@@ -48,6 +48,43 @@ _e.fn({
 console.log(_e(123).timestamp());       //> "Procesado a las: 1700000000000"
 console.log(_e("abc").timestamp());     //> "Procesado a las: 1700000000001"
 
+// 1. Registro inicial en el núcleo de la aplicación
+_e.fn({
+  String: {
+    log: (args) => console.log(`[Log]: ${args[0]}`)
+  }
+});
+
+// 2. Más tarde, un "plugin" añade nueva funcionalidad al tipo String
+_e.fn({
+  String: {
+    wordCount: (args) => args[0].split(' ').length
+  }
+});
+
+// 3. Ambos métodos están ahora disponibles gracias a la fusión
+const miFrase = _e("Estructura es muy flexible");
+
+miFrase.log();                      //> [LOG]: Estructura es muy flexible
+console.log(miFrase.wordCount());   //> 4
+
+// 1. Definimos un nodo híbrido para 'Number'
+_e.fn({
+  Number: (num) => console.log(`Nodo híbrido ejecutado para: ${num}`)
+});
+
+// 2. Fusionamos un objeto con un nuevo método
+_e.fn({
+  Number: {
+    isEven: (args) => args[0] % 2 === 0
+  }
+});
+
+// 3. El nodo se auto-ejecuta Y tiene el nuevo método disponible
+const miNumero = _e(10); //> Nodo híbrido ejecutado para: 10
+
+console.log(miNumero.isEven()); //> true
+
 // Crear subtipos
 _e.subtype({
   // 1. Con una función
@@ -101,6 +138,20 @@ otraApi('test').log(); //> "Log de otraApi"
 const types = _e.type({ id: 1 }); 
 console.log(types); //> [ 'Object', Object: true ]
 
+_e.fn({
+  String: {
+    // 'args' es ['Hola']
+    miMetodo: (args) => console.log(`El primer argumento es: ${args[0]}`)
+  }
+});
+_e('Hola').miMetodo(); //> "El primer argumento es: Hola"
+
+_e.fn({
+  // 'arg1' es 'Hola'
+  String: (arg1) => console.log(`Recibí directamente: ${arg1}`)
+});
+_e('Hola'); //> "Recibí directamente: Hola"
+
 // Definimos una función que se ejecutará para cualquier 'String'
 // Nota: La función recibe los argumentos del despachador directamente.
 
@@ -119,11 +170,26 @@ _e.fn({
 _e("Mi primer evento");   //> "[LOG]: La string "Mi primer evento" fue procesada."
 _e("Otro evento más");    //> "[LOG]: La string "Otro evento más" fue procesada."
 
-// Subtipo para identificar emails
-
-_e.subtype({
-  String: (input) => (input.includes('@') ? 'Email' : false)
+// Nodo para Arrays (muy específico)
+_e.fn({
+  Array: (args) => console.log(`[LOG]: Nodo para Array ejecutado para: ${args}`)
 });
+
+// Nodo para Objects (menos específico, ya que Array es un Object)
+_e.fn({
+  Object: () => console.log('[LOG]: Nodo para Object ejecutado.')
+});
+
+// Nodo híbrido raíz (el más general)
+_e.fn(function(){
+  console.log('[LOG]: Nodo raíz ejecutado.');
+});
+
+// Al llamar con un array, se disparan los tres nodos en orden de especificidad.
+_e(['a', 'b']);
+//> "[LOG]: Nodo para Array ejecutado para: a,b"
+//> "[LOG]: Nodo para Object ejecutado."
+//> "[LOG]: Nodo raíz ejecutado."
 
 // Subtipo para identificar emails
 
