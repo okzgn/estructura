@@ -4,7 +4,7 @@
 
 **Estructura.js** es un framework de JavaScript, ligero y sin dependencias, que implementa el **despacho múltiple (multiple dispatch)** basado en un sistema de tipado dinámico y extensible.
 
-En lugar de la programación orientada a objetos tradicional (`objeto.metodo()`), Estructura te permite definir funciones que se ejecutan basándose en los tipos de los argumentos proporcionados en tiempo de ejecución. Esto permite crear APIs altamente polimórficas, flexibles y declarativas.
+En lugar de la programación orientada a objetos tradicional, donde los métodos pertenecen a clases estáticas (`miInstancia.metodo()`), Estructura te permite definir funciones que se "adjuntan" a un objeto dinámico basado en los tipos de los argumentos. Esto resulta en una sintaxis de uso fluida (`_e(datos).metodo()`), pero con una lógica de despacho mucho más flexible y polimórfica.
 
 ---
 
@@ -14,7 +14,7 @@ En lugar de la programación orientada a objetos tradicional (`objeto.metodo()`)
 *   **Sistema de Tipos Extensible:** Define tus propios tipos y jerarquías (`subtype`) para cualquier estructura de datos, yendo mucho más allá de los tipos primitivos de JavaScript.
 *   **Instancias Aisladas (Sandboxing):** Crea múltiples instancias de Estructura (`_e.instance('miApi')`) que no interfieren entre sí, cada una con su propio registro de tipos y funciones.
 *   **Ligero y sin Dependencias:** Menos de 8 KB (minificado), ideal para el navegador y Node.js sin añadir peso innecesario.
-*   **Robusto y Predecible:** Diseño sin estado que garantiza que el resultado de una llamada dependa únicamente de las entradas actuales, evitando efectos secundarios inesperados (como mutación de objetos).
+*   **Robusto y Predecible:** Las llamadas al despachador son deterministas. Para una misma configuración de tipos y funciones registradas, una llamada a `_e(arg1, arg2)` siempre devolverá el mismo conjunto de métodos, evitando efectos secundarios inesperados.
 
 ## ¿Por qué usar Estructura?
 
@@ -41,15 +41,22 @@ O usarlo directamente en el navegador a través de un CDN:
 
 ## Compatibilidad
 
-Estructura está diseñado para ser universalmente compatible, funcionando sin problemas en una amplia gama de entornos de JavaScript, desde navegadores modernos y antiguos hasta Node.js.
+Estructura está diseñado para ser casi universalmente compatible, funcionando sin problemas en una amplia gama de entornos de JavaScript, desde navegadores modernos y antiguos hasta entornos de ejecución como Node.js, etc.
 
 ### Formatos de Módulo
 
 El paquete se distribuye en múltiples formatos para asegurar una integración sencilla con cualquier sistema de módulos:
 
-*   **Módulos ES (ESM):** El formato principal y moderno. Ideal para usar con `import` en navegadores modernos (`<script type="module">`) y herramientas de compilación como Vite, Rollup o Webpack.
+*   **Módulos ES (ESM):** El formato principal y moderno. Ideal para usar con `import` en Node.js con herramientas de compilación como Vite, Rollup, Webpack, o en navegadores modernos.
+    Node.js:
     ```javascript
     import _e from 'estructura-js';
+    ```
+    Navegadores modernos:
+    ```html
+    <script type="module">
+      import _e from 'https://unpkg.com/estructura-js';
+    </script>
     ```
 
 *   **UMD (Universal Module Definition):** Proporciona máxima compatibilidad.
@@ -57,7 +64,10 @@ El paquete se distribuye en múltiples formatos para asegurar una integración s
         ```html
         <script src="https://unpkg.com/estructura-js"></script>
         <script>
-          _e('hola');
+          // Este ejemplo demuestra que la variable global "_e" se ha cargado correctamente
+          // y muestra su tipo en la consola.
+          const tipos = _e.type('hola');
+          console.log(tipos); //> [ 'String', String: true ]
         </script>
         ```
     *   **CommonJS (Node.js):** Funciona de forma nativa en Node.js con `require()`.
@@ -74,7 +84,7 @@ También incluye subtipos predefinidos para elementos del DOM y el navegador, pa
 
 ### Compatibilidad con Node.js
 
-Estructura funciona perfectamente en cualquier versión de Node.js que soporte la sintaxis ES5 en modo CommonJS.
+Estructura funciona perfectamente en cualquier versión de Node.js que soporte la sintaxis ES5.
 
 ## Guía de Inicio Rápido
 
@@ -152,7 +162,7 @@ console.log(repeated); //> "hola hola hola "
 
 Extiende el sistema de tipos de Estructura. Es la característica más potente.
 
-*   **`definitions`**: Un objeto donde las claves son tipos existentes y los valores son funciones que definen un nuevo subtipo.
+*   **`definitions`**: Un objeto donde las claves son tipos existentes y los valores son funciones que definen un nuevo subtipo. También puede recibir un nombre de subtipos predefinidos, como `'browser-dom'`, para cargarlos automáticamente a la instancia.
 
 La función de subtipo recibe el `input` y debe devolver:
 *   Un `string` con el nombre del nuevo subtipo.
@@ -211,6 +221,12 @@ Además de registrar objetos con métodos, Estructura permite registrar una **fu
 
 Un nodo de función es "híbrido" porque puede hacer dos cosas a la vez:
 1.  **Auto-ejecutarse:** Si la secuencia de tipos coincide con la ruta hacia la función, esa función se ejecutará automáticamente. Los argumentos del despachador se pasan directamente a esta función.
+
+    *   **Nota Importante sobre los Argumentos::**
+    Cuando registras una función directamente como un nodo (Nodo Híbrido), esta recibe los argumentos del despachador de forma directa y desplegada (ej: `(arg1, arg2) => ...`).
+
+    Sin embargo, cuando registras un objeto con métodos, cada método recibe los argumentos originales como un array en su primera posición (ej: `(args, param1) => ...`).
+
 2.  **Contener más definiciones:** Al ser una función (que en JavaScript es un objeto), puede tener propiedades adjuntas que actúen como sub-nodos para un despacho más profundo.
 
 ### 1. Auto-ejecución de Nodos
