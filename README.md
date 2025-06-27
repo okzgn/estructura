@@ -44,7 +44,7 @@ O usarlo directamente en el navegador a través de un CDN:
 El concepto central es simple: defines funciones para combinaciones de tipos y luego llamas al despachador principal `_e()` con tus datos.
 
 ```javascript
-import _e from 'estructura-js';
+import _e from '@okzgn/estructura';
 
 // 1. Definir funciones para tipos específicos
 
