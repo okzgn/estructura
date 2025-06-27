@@ -40,22 +40,54 @@ _e.fn({
 const repeated = _e("hola ").repeat(3);
 console.log(repeated); //> "hola hola hola "
 
-_e.subtype({
-  Object: (input) => {
-    if (input && typeof input.userId === 'string') {
-      return 'User';
-    }
-  }
+_e.fn({
+  // Este método estará disponible en todas las llamadas a _e()
+  timestamp: () => `Procesado a las: ${Date.now()}`
 });
 
+console.log(_e(123).timestamp());       //> "Procesado a las: 1700000000000"
+console.log(_e("abc").timestamp());     //> "Procesado a las: 1700000000001"
+
+// Crear subtipos
+_e.subtype({
+  // 1. Con una función
+  Object: (input) => (input.userId ? 'User' : false),
+
+  // 2. Con un string (un alias simple)
+  RegExp: 'RegexPattern',
+
+  // 3. Con un array (múltiples alias)
+  // Un Array ahora también es de tipo 'Coleccion' y 'ListaOrdenada'
+  Array: ['Coleccion', 'ListaOrdenada'] 
+});
+
+// Registrar funciones para los nuevos tipos
 _e.fn({
   User: {
     hello: (args) => console.log(`Hello, ${args[0].name}!`)
+  },
+  RegexPattern: {
+    test: (args, str) => args[0].test(str)
+  },
+  // Se pueden registrar métodos para CUALQUIER alias
+  Coleccion: {
+    esColeccion: () => true
+  },
+  ListaOrdenada: {
+    count: (args) => args[0].length
   }
 });
 
 const user = { userId: 'u-123', name: 'Alex' };
 _e(user).hello(); //> "Hello, Alex!"
+
+const hasNumber = _e(/\d+/).test('abc-123'); 
+console.log(hasNumber); //> true
+
+// Ahora los métodos de ambos alias están disponibles
+const miLista = _e([1, 2, 3]);
+console.log(miLista.count());       //> 3
+console.log(miLista.esColeccion()); //> true
 
 const miApi = _e.instance('miApi');
 const otraApi = _e.instance('otraApi');

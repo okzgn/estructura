@@ -1,5 +1,5 @@
 /**
- * Estructura v1.6.0
+ * Estructura v1.7.0
  * A lightweight, type-based dispatching JavaScript Framework.
  * 2025 (c) OKZGN
  * @license MIT

@@ -13,7 +13,7 @@ En lugar de la programación orientada a objetos tradicional, donde los métodos
 *   **Despacho Múltiple Basado en Tipos:** Selecciona la lógica a ejecutar basándose en la combinación de tipos de todos los argumentos, no solo del primero.
 *   **Sistema de Tipos Extensible:** Define tus propios tipos y jerarquías (`subtype`) para cualquier estructura de datos, yendo mucho más allá de los tipos primitivos de JavaScript.
 *   **Instancias Aisladas (Sandboxing):** Crea múltiples instancias de Estructura (`_e.instance('miApi')`) que no interfieren entre sí, cada una con su propio registro de tipos y funciones.
-*   **Ligero y sin Dependencias:** Menos de 8 KB (minificado), ideal para el navegador y Node.js sin añadir peso innecesario.
+*   **Ligero y sin Dependencias:** Menos de 25 KB (8 KB minificado), ideal para el navegador o Node.js sin añadir peso innecesario.
 *   **Robusto y Predecible:** Las llamadas al despachador son deterministas. Para una misma configuración de tipos y funciones registradas, una llamada a `_e(arg1, arg2)` siempre devolverá el mismo conjunto de métodos, evitando efectos secundarios inesperados.
 
 ## ¿Por qué usar Estructura?
@@ -41,18 +41,18 @@ O usarlo directamente en el navegador a través de un CDN:
 
 ## Compatibilidad
 
-Estructura está diseñado para ser casi universalmente compatible, funcionando sin problemas en una amplia gama de entornos de JavaScript, desde navegadores modernos y antiguos hasta entornos de ejecución como Node.js, etc.
+Estructura está diseñado para ser casi universalmente compatible, funcionando sin problemas en una amplia gama de entornos de JavaScript, desde navegadores modernos y antiguos hasta Node.js, etc.
 
 ### Formatos de Módulo
 
 El paquete se distribuye en múltiples formatos para asegurar una integración sencilla con cualquier sistema de módulos:
 
-*   **Módulos ES (ESM):** El formato principal y moderno. Ideal para usar con `import` en Node.js con herramientas de compilación como Vite, Rollup, Webpack, o en navegadores modernos.
-    Node.js:
+*   **Módulos ES (ESM):** El formato principal y moderno. Ideal para usar con `import` en Node.js con herramientas de compilación como Vite, Rollup, Webpack, o en navegadores actualizados.
+    *   **Node.js:**
     ```javascript
     import _e from 'estructura-js';
     ```
-    Navegadores modernos:
+    *   **Navegadores actuales:**
     ```html
     <script type="module">
       import _e from 'https://unpkg.com/estructura-js';
@@ -80,7 +80,7 @@ El paquete se distribuye en múltiples formatos para asegurar una integración s
 
 El código de la distribución **UMD** está escrito en **sintaxis compatible con ES3/ES5**, lo que garantiza su funcionamiento en todos los navegadores modernos y en la mayoría de los antiguos, incluyendo **Internet Explorer 9+**, sin necesidad de transpilación.
 
-También incluye subtipos predefinidos para elementos del DOM y el navegador, para importarlos en instancias use `_e.subtype('browser-dom')`.
+También incluye subtipos predefinidos para elementos del DOM y el navegador, para importarlos en instancias use por ejemplo: `_e.subtype('browser-dom')`.
 
 ### Compatibilidad con Node.js
 
@@ -158,36 +158,86 @@ const repeated = _e("hola ").repeat(3);
 console.log(repeated); //> "hola hola hola "
 ```
 
+También puedes definir métodos "globales" para una instancia que estarán disponibles sin importar el tipo de los argumentos. Para ello, regístralos en el primer nivel del objeto de definiciones:
+
+```javascript
+_e.fn({
+  // Este método estará disponible en todas las llamadas a _e()
+  timestamp: () => `Procesado a las: ${Date.now()}`
+});
+
+console.log(_e(123).timestamp());       //> "Procesado a las: 1700000000000"
+console.log(_e("abc").timestamp());     //> "Procesado a las: 1700000000001"
+```
+
+> **Nota sobre Precedencia y Colisiones:**
+>
+> Cuando un valor corresponde a múltiples tipos (por ejemplo, un `Array` con los alias `['Coleccion', 'ListaOrdenada']`), todos sus métodos se fusionan. Si existe un método con el mismo nombre en diferentes definiciones, prevalecerá el del tipo con mayor precedencia.
+>
+> El orden de precedencia, de mayor a menor, es:
+> 1. Métodos globales: Definidos en la raíz del objeto con `fn`.
+> 2. Tipo base: El tipo nativo del valor (ej. `Object`, `Array`).
+> 3. Subtipos o alias: En el orden en que fueron declarados con `subtype`.
+>
+> Esto significa que un método para `Array` sobrescribirá a uno con el mismo nombre en `Coleccion`.
+
 ### `.subtype(definitions)`
 
 Extiende el sistema de tipos de Estructura. Es la característica más potente.
 
-*   **`definitions`**: Un objeto donde las claves son tipos existentes y los valores son funciones que definen un nuevo subtipo. También puede recibir un nombre de subtipos predefinidos, como `'browser-dom'`, para cargarlos automáticamente a la instancia.
+*   **`definitions`**: Un objeto donde las *claves* son nombres de tipos primitivos existentes y los *valores* pueden ser:
+    - Una función que devuelve un nuevo nombre de tipo.
+    - Una cadena de texto para crear un alias simple.
+    - Un `array` de cadenas de texto para asignar múltiples alias nuevos a la vez.
 
-La función de subtipo recibe el `input` y debe devolver:
+Si es función de subtipo, esta recibe el `input` y debe devolver:
 *   Un `string` con el nombre del nuevo subtipo.
 *   `true` si el nombre de la definición debe usarse como el nombre del subtipo.
 *   `false` o `undefined` si no hay coincidencia.
 
-```javascript
-// Crear un subtipo para objetos 'User'
+Además, `definitions` puede ser una cadena de texto como `'browser-dom'`, que sirve para cargar subtipos predefinidos para el DOM de navegadores a la instancia, por ejemplo: `_e.subtype('browser-dom')`.
 
+```javascript
+// Crear subtipos
 _e.subtype({
-  Object: (input) => {
-    if (input && typeof input.userId === 'string') {
-      return 'User';
-    }
-  }
+  // 1. Con una función
+  Object: (input) => (input.userId ? 'User' : false),
+
+  // 2. Con un string (un alias simple)
+  RegExp: 'RegexPattern',
+
+  // 3. Con un array (múltiples alias)
+  // Un Array ahora también es de tipo 'Coleccion' y 'ListaOrdenada'
+  Array: ['Coleccion', 'ListaOrdenada'] 
 });
 
+// Registrar funciones para los nuevos tipos
 _e.fn({
   User: {
     hello: (args) => console.log(`Hello, ${args[0].name}!`)
+  },
+  RegexPattern: {
+    test: (args, str) => args[0].test(str)
+  },
+  // Se pueden registrar métodos para CUALQUIER alias
+  Coleccion: {
+    esColeccion: () => true
+  },
+  ListaOrdenada: {
+    count: (args) => args[0].length
   }
 });
 
 const user = { userId: 'u-123', name: 'Alex' };
 _e(user).hello(); //> "Hello, Alex!"
+
+const hasNumber = _e(/\d+/).test('abc-123'); 
+console.log(hasNumber); //> true
+
+// Ahora los métodos de ambos alias están disponibles
+const miLista = _e([1, 2, 3]);
+console.log(miLista.count());       //> 3
+console.log(miLista.esColeccion()); //> true
 ```
 
 ### `.instance(name)`
@@ -222,10 +272,11 @@ Además de registrar objetos con métodos, Estructura permite registrar una **fu
 Un nodo de función es "híbrido" porque puede hacer dos cosas a la vez:
 1.  **Auto-ejecutarse:** Si la secuencia de tipos coincide con la ruta hacia la función, esa función se ejecutará automáticamente. Los argumentos del despachador se pasan directamente a esta función.
 
-    *   **Nota Importante sobre los Argumentos::**
-    Cuando registras una función directamente como un nodo (Nodo Híbrido), esta recibe los argumentos del despachador de forma directa y desplegada (ej: `(arg1, arg2) => ...`).
-
-    Sin embargo, cuando registras un objeto con métodos, cada método recibe los argumentos originales como un array en su primera posición (ej: `(args, param1) => ...`).
+> **Nota Importante sobre los Argumentos:**
+>
+> Cuando registras una función directamente como un nodo (Nodo Híbrido), esta recibe los argumentos del despachador de forma directa y desplegada (ej: `(arg1, arg2) => ...`).
+>
+> Sin embargo, cuando registras un objeto con métodos, cada método recibe los argumentos originales como un **array en su primera posición** (ej: `(args, param1) => ...`).
 
 2.  **Contener más definiciones:** Al ser una función (que en JavaScript es un objeto), puede tener propiedades adjuntas que actúen como sub-nodos para un despacho más profundo.
 
