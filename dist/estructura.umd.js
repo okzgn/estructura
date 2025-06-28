@@ -1,5 +1,5 @@
 /**
- * Estructura v1.8.0
+ * Estructura v1.9.0
  * A lightweight, type-based dispatching JavaScript Framework.
  * 2025 (c) OKZGN
  * @license MIT
@@ -156,10 +156,10 @@
 	 * @param {object|Function} resolved_node The final function-node from the 'fns' tree.
 	 * @param {string} resolved_node_type The type string that led to this node.
 	 * @param {IArguments} main_fn_args The original arguments from the main dispatcher call.
-	 * @param {boolean} [return_mode] If true, ensures the function returns the result object.
+	 * @param {boolean} [should_return_result] If true, ensures the function returns the result object.
 	 * @returns {object|null}
 	 */
-	function attach_resolved_methods(result_object, resolved_node, resolved_node_type, main_fn_args, return_mode){
+	function attach_resolved_methods(result_object, resolved_node, resolved_node_type, main_fn_args, should_return_result){
 		var actual_fns = resolved_node;
 		if(typeof actual_fns === typeof_fn_value){
 			try {
@@ -172,13 +172,13 @@
 			catch(error){ message.call(this, 'error', 'Type function "' + resolved_node_type + '" error: ' + String(error)); }
 		}
 		// If it is a string, the function stops to protect against string iteration. Another data types don't cause issues, including falsy values.
-		if(typeof actual_fns === typeof_str_value){ return (return_mode ? result_object : null); }
+		if(typeof actual_fns === typeof_str_value){ return (should_return_result ? result_object : null); }
 		for(var fn_name in actual_fns){
 			if(!verify_own_property_fn.call(actual_fns, fn_name) || typeof actual_fns[fn_name] !== typeof_fn_value){ continue; }
 			if(result_object[fn_name]){ message.call(this, 'warn', 'Method conflict for "' + fn_name + '". A definition from type "' + resolved_node_type + '" is overwriting another same name method or node function. This occurs when an input matches multiple types.'); }
 			result_object[fn_name] = adjust_method(this, fn_name, actual_fns, main_fn_args);
 		}
-		return (return_mode ? result_object : null);
+		return (should_return_result ? result_object : null);
 	};
 
 	/**
@@ -295,7 +295,7 @@
 	 * @this EstructuraInstance
 	 * @param {object|function} new_type_fns An object representing the function tree to merge, or a single function to act as a node.
 	 * @param {object} [existent_type_fns] Internal use for recursion.
-	 * @returns {EstructuraInstance} The instance itself, to allow for chaining.
+	 * @returns {void}
 	 */
 	function fn(new_type_fns, existent_type_fns){
 		if(typeof new_type_fns === typeof_fn_value){
@@ -329,7 +329,7 @@
 	 * @this EstructuraInstance
 	 * @param {object|string} subtype_definitions An object with definitions or a predefined set name.
 	 * @param {Array} [parent_subtype] Internal use for recursion.
-	 * @returns {EstructuraInstance} The instance itself, to allow for chaining.
+	 * @returns {void}
 	 */
 	function subtype(subtype_definitions, parent_subtype){
 		if(typeof subtype_definitions === typeof_str_value && typeof predefined_subtypes[subtype_definitions] === typeof_fn_value){
@@ -344,7 +344,9 @@
 			var existent_subtypes_reference = (!parent_subtype ? current_subtypes[definition_name] : current_subtypes);
 			switch(subtype_definition_type[0]){
 				case 'Object':
+					// Put subtype definitions in the first level of definitions to create container for another subtypes.
 					subtype.call(this, subtype_definitions[definition_name]);
+					// This puts subtype definitions into the subtype definition that is infered from.
 					subtype.call(this, subtype_definitions[definition_name], current_subtypes[definition_name]);
 				break;
 				case 'Function':
@@ -400,7 +402,7 @@
 			}
 			types_start = found_object;
 		}
-		// Always attach methods from the root 'Any' type as a final step.
+		// Finally, attach methods from the root 'this.fns' (the 'Any' type).
 		return attach_resolved_methods.call(this, result_object, this.fns, 'Any', arguments, true);
 	};
 

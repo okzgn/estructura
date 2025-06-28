@@ -96,7 +96,6 @@ El concepto central es simple: defines funciones para combinaciones de tipos y l
 import _e from 'estructura-js';
 
 // 1. Definir funciones para tipos específicos
-
 _e.fn({
   Array: {
     log: (args) => console.log(`Un array: ${args[0]}`)
@@ -114,7 +113,6 @@ _e.fn({
 });
 
 // 2. Llamar al despachador
-
 _e(['hola']).log();             //> "Un array: hola"
 _e(12345).log();                //> "Un número: 12345"
 _e('texto', 67890).combine();   //> "Combinado: texto y 67890"
@@ -126,15 +124,15 @@ _e('texto', 67890).combine();   //> "Combinado: texto y 67890"
 
 La función despachadora principal.
 
-*   Analiza los tipos de los argumentos proporcionados.
-*   Busca en el registro `fns` una función que coincida con la secuencia de tipos.
-*   Devuelve un nuevo objeto con los métodos correspondientes adjuntos.
+1. Analiza los tipos de los argumentos proporcionados.
+2. Busca una función que coincida con toda la secuencia de tipos.
+3. Devuelve un nuevo objeto con los métodos correspondientes adjuntos.
 
 ### `.fn(definitions)`
 
-Registra las funciones que se ejecutarán para combinaciones de tipos.
+Registra las funciones que se ejecutarán para los tipos y sus combinaciones.
 
-*   **`definitions`**: Un objeto anidado donde las claves son nombres de tipos. El valor final debe ser una función o un objeto con más definiciones.
+**`definitions`**: Un objeto anidado donde las *claves* son nombres de tipos y cada *valor* debe ser una función o un objeto con más definiciones.
 
 ```javascript
 _e.fn({
@@ -160,7 +158,7 @@ const repeated = _e("hola ").repeat(3);
 console.log(repeated); //> "hola hola hola "
 ```
 
-También puedes definir métodos "globales" para una instancia que estarán disponibles sin importar el tipo de los argumentos. Para ello, regístralos en el primer nivel del objeto de definiciones:
+También puedes definir métodos "globales" para una instancia que estarán disponibles sin importar el tipo de los argumentos (`Any`). Para ello, regístralos en el primer nivel del objeto de definiciones:
 
 ```javascript
 _e.fn({
@@ -174,14 +172,25 @@ console.log(_e("abc").timestamp());     //> "Procesado a las: 1700000000001"
 
 > **Nota sobre Precedencia y Colisiones:**
 >
-> Cuando un valor corresponde a múltiples tipos (por ejemplo, un `Array` con los alias `['Coleccion', 'ListaOrdenada']`), todos sus métodos se fusionan. Si existe un método con el mismo nombre en diferentes definiciones, prevalecerá el del tipo con mayor precedencia.
+> Cuando un valor (`input`) corresponde a múltiples tipos (por ejemplo, un `Array` con los alias `['Coleccion', 'MiTipoColeccion']`), todos sus métodos se fusionan en el objeto resultante. Si dos o más tipos definen un método con el mismo nombre, se producirá una colisión. En este caso, **el método del tipo más general (menos específico) prevalecerá, sobrescribiendo al del tipo más específico**.
 >
-> El orden de precedencia, de mayor a menor, es:
-> 1. Métodos globales: Definidos en la raíz del objeto con `.fn()`. Ejemplo: `_e.fn({ miMetodo: ... })`.
-> 2. Tipo base: El tipo nativo del valor (`Object`, `Array`). Ejemplo: `_e.fn({ Array: { miMetodo: ... }})`.
-> 3. Subtipos o alias: En el orden en que fueron declarados con `.subtype()`. Ejemplo: `_e.fn({ MiTipoColeccion: { miMetodo: ... }})`.
+> El orden de sobrescritura es el siguiente (el de abajo sobrescribe al de arriba):
+> 1. Métodos de **subtipos o alias**: Definidos con `.subtype()`. Ejemplo:
+> ```javascript
+> _e.fn({ MiTipoColeccion: { miMetodo: ... }})
+> ```
 >
-> Esto significa que un método para `Array` sobrescribirá a uno con el mismo nombre en `Coleccion`.
+> 2. Métodos de **tipos base**: Tipos primitivos del valor (`Object`, `Array`, etc.). Ejemplo:
+> ```javascript
+> _e.fn({ Array: { miMetodo: ... }})
+> ```
+>
+> 3. Métodos **globales**: Definidos en la raíz del objeto con `.fn()`. Ejemplo:
+> ```javascript
+> _e.fn({ miMetodo: ... })
+> ```
+>
+> Esto significa, por ejemplo, que un método para `Array` sobrescribirá a uno con el mismo nombre en `MiTipoColeccion`. Se puede saber el orden de especificidad con `.type()`.
 
 #### Fusión de Definiciones (Registro Aditivo)
 
@@ -239,7 +248,7 @@ console.log(miNumero.isEven()); //> true
 
 Extiende el sistema de tipos de Estructura. Es la característica más potente.
 
-*   **`definitions`**: Un objeto donde las *claves* son nombres de tipos primitivos existentes y los *valores* pueden ser:
+**`definitions`**: Un objeto donde las *claves* son nombres de tipos primitivos existentes y los *valores* pueden ser:
     - Una función que devuelve un nuevo nombre de tipo.
     - Una cadena de texto para crear un alias simple.
     - Un `array` de cadenas de texto para asignar múltiples alias nuevos a la vez.
@@ -352,13 +361,13 @@ _e('Hola'); //> "Recibí directamente: Hola"
 Además de registrar objetos con métodos, Estructura permite registrar una **función directamente como un nodo** en el árbol de despacho. Estas funciones se comportan de manera especial y ofrecen una gran flexibilidad.
 
 Un nodo de función es "híbrido" porque puede hacer dos cosas a la vez:
-1.  **Auto-ejecutarse:** Si la secuencia de tipos coincide con la ruta hacia la función, esa función se ejecutará automáticamente. Los argumentos del despachador se pasan directamente a esta función.
+1.  **Auto-ejecutarse:** Si la secuencia completa de tipos coincide con la función, esa función se ejecutará automáticamente. Los argumentos del despachador se pasan directamente a esta función.
 
 2.  **Contener más definiciones:** Al ser una función (que en JavaScript es un objeto), puede tener propiedades adjuntas que actúen como sub-nodos para un despacho más profundo.
 
 ### 1. Auto-ejecución de Nodos
 
-Puedes registrar una función que se dispare en cuanto los tipos de los argumentos coincidan con su posición en el árbol `fns`.
+Puedes registrar una función que se dispare en cuanto los tipos de los argumentos coincidan.
 
 ```javascript
 // Definimos una función que se ejecutará para cualquier 'String'
@@ -382,12 +391,15 @@ _e("Otro evento más");    //> "[LOG]: La string "Otro evento más" fue procesad
 
 ### 2. Cascada de Ejecución y Herencia de Tipos
 
-Cuando un valor pertenece a múltiples tipos (como un `Array`, que también es un `Object`), se ejecutarán en cascada todos los nodos híbridos que coincidan, desde el más específico hasta el más general.
+Cuando un valor (`input`) pertenece a múltiples tipos (como un `Array`, que también es un `Object`), se ejecutarán en cascada todos los nodos híbridos que coincidan, desde el más específico hasta el más general.
 
 Esto permite crear "middleware" o capas de lógica que se construyen unas sobre otras.
 
 > **Nota sobre el Nodo Híbrido Raíz:**
-> Puedes registrar un nodo híbrido que se ejecute para **cualquier** llamada a `_e()` pasándole una función directamente: `_e.fn(function() { ... })`.
+> Puedes registrar un nodo híbrido que se ejecute para **cualquier** llamada a `_e()` pasándole una función directamente:
+> ```javascript
+> _e.fn(function() { ... })
+> ```
 
 **Ejemplo de cascada:**
 
@@ -416,7 +428,7 @@ _e(['a', 'b']);
 
 ### 3. Extender o Sobrescribir Métodos dinámicamente
 
-Un nodo de función híbrido puede, además, **devolver un objeto**. Si lo hace, los métodos de ese objeto se añadirán (o sobrescribirán) al conjunto de métodos que el despachador está construyendo.
+Un nodo de función híbrido puede, además, **devolver un objeto**. Si lo hace, los métodos de ese objeto se  sobrescribirán al conjunto de métodos que el despachador está construyendo.
 
 Esto permite crear APIs dinámicas donde el resultado de una función puede cambiar los métodos disponibles.
 
