@@ -10,9 +10,9 @@ En lugar de la programación orientada a objetos tradicional, donde los métodos
 
 ## Características Principales
 
-*   **Despacho Múltiple Basado en Tipos:** Selecciona la lógica a ejecutar basándose en la combinación de tipos de todos los argumentos, no solo del primero.
+*   **Despacho Múltiple Basado en Tipos:** Selecciona la lógica a ejecutar basándose en la combinación de todos los tipos de los argumentos, no solo del primero.
 *   **Sistema de Tipos Extensible:** Define tus propios tipos y jerarquías (`subtype`) para cualquier estructura de datos, yendo mucho más allá de los tipos primitivos de JavaScript.
-*   **Instancias Aisladas (Sandboxing):** Crea múltiples instancias de Estructura (`_e.instance('miApi')`) que no interfieren entre sí, cada una con su propio registro de tipos y funciones.
+*   **Instancias Aisladas (Sandboxing):** Crea múltiples instancias de Estructura (`instance`) que no interfieren entre sí, cada una con su propio registro de tipos y funciones.
 *   **Ligero y sin Dependencias:** Menos de 25 KB (8 KB minificado), ideal para el navegador o Node.js sin añadir peso innecesario.
 *   **Robusto y Predecible:** Las llamadas al despachador son deterministas. Para una misma configuración de tipos y funciones registradas, una llamada a `_e(arg1, arg2)` siempre devolverá el mismo conjunto de métodos, evitando efectos secundarios inesperados.
 
@@ -64,7 +64,7 @@ El paquete se distribuye en múltiples formatos para asegurar una integración s
         ```html
         <script src="https://unpkg.com/estructura-js"></script>
         <script>
-          // La variable global "_e" se ha cargado correctamente
+          // La variable global "_e" se ha cargado correctamente.
           const estructura = _e;
 
           // Ejemplo para mostrar los tipos de datos en la consola.
@@ -82,7 +82,7 @@ El paquete se distribuye en múltiples formatos para asegurar una integración s
 
 El código de la distribución **UMD** está escrito en **sintaxis compatible con ES3/ES5**, lo que garantiza su funcionamiento en todos los navegadores modernos y en la mayoría de los antiguos, incluyendo **Internet Explorer 9+**, sin necesidad de transpilación.
 
-También incluye subtipos predefinidos para elementos del DOM y el navegador, para importarlos en instancias use por ejemplo: `_e.subtype('browser-dom')`.
+También incluye subtipos predefinidos para elementos del navegador y el DOM, para importarlos en instancias use por ejemplo: `_e.subtype('browser-dom')`.
 
 ### Compatibilidad con Node.js
 
@@ -90,12 +90,12 @@ Estructura funciona perfectamente en cualquier versión de Node.js que soporte l
 
 ## Guía de Inicio Rápido
 
-El concepto central es simple: defines funciones para combinaciones de tipos y luego llamas al despachador principal `_e()` con tus datos.
+El concepto central es simple: defines funciones para tipos o combinaciones de tipos y luego llamas al despachador principal `_e()` con tus datos.
 
 ```javascript
 import _e from 'estructura-js';
 
-// 1. Definir funciones para tipos específicos
+// 1. Definir funciones para tipos específicos.
 _e.fn({
   Array: {
     log: (args) => console.log(`Un array: ${args[0]}`)
@@ -112,7 +112,7 @@ _e.fn({
   }
 });
 
-// 2. Llamar al despachador
+// 2. Llamar al despachador.
 _e(['hola']).log();             //> "Un array: hola"
 _e(12345).log();                //> "Un número: 12345"
 _e('texto', 67890).combine();   //> "Combinado: texto y 67890"
@@ -130,7 +130,7 @@ La función despachadora principal.
 
 ### `.fn(definitions)`
 
-Registra las funciones que se ejecutarán para los tipos y sus combinaciones.
+Registra las funciones o métodos para los tipos y sus combinaciones.
 
 **`definitions`**: Un objeto anidado donde las *claves* son nombres de tipos y cada *valor* debe ser una función o un objeto con más definiciones.
 
@@ -158,7 +158,7 @@ const repeated = _e("hola ").repeat(3);
 console.log(repeated); //> "hola hola hola "
 ```
 
-También puedes definir métodos "globales" para una instancia que estarán disponibles sin importar el tipo de los argumentos (`Any`). Para ello, regístralos en el primer nivel del objeto de definiciones:
+También puedes definir métodos "globales" para una instancia y estarán disponibles sin importar el tipo de los argumentos (`Any`). Para ello, regístralos en el primer nivel del objeto de definiciones:
 
 ```javascript
 _e.fn({
@@ -172,7 +172,7 @@ console.log(_e("abc").timestamp());     //> "Procesado a las: 1700000000001"
 
 > **Nota sobre Precedencia y Colisiones:**
 >
-> Cuando un valor (`input`) corresponde a múltiples tipos (por ejemplo, un `Array` con los alias `['Coleccion', 'MiTipoColeccion']`), todos sus métodos se fusionan en el objeto resultante. Si dos o más tipos definen un método con el mismo nombre, se producirá una colisión. En este caso, **el método del tipo más general (menos específico) prevalecerá, sobrescribiendo al del tipo más específico**.
+> Cuando un valor (`input`) corresponde a múltiples tipos todos sus métodos se fusionan en el objeto resultante. Si dos o más tipos definen un método con el mismo nombre, se producirá una colisión. En este caso, **el método del tipo más general (menos específico) prevalecerá, sobrescribiendo al del tipo más específico**.
 >
 > El orden de sobrescritura es el siguiente (el de abajo sobrescribe al de arriba):
 > 1. Métodos de **subtipos o alias**: Definidos con `.subtype()`. Ejemplo:
@@ -190,28 +190,29 @@ console.log(_e("abc").timestamp());     //> "Procesado a las: 1700000000001"
 > _e.fn({ miMetodo: ... })
 > ```
 >
-> Esto significa, por ejemplo, que un método para `Array` sobrescribirá a uno con el mismo nombre en `MiTipoColeccion`. Se puede saber el orden de especificidad con `.type()`.
+> Esto significa, por ejemplo, que un método para `Array` sobrescribirá a uno con el mismo nombre en `MiTipoColeccion`.
+> Se puede saber el orden de especificidad con `.type()`.
 
 #### Fusión de Definiciones (Registro Aditivo)
 
 Si llamas a `.fn()` varias veces con definiciones para el mismo tipo, estas se fusionan en lugar de sobreescribirse. Este comportamiento aditivo es ideal para sistemas de plugins o para organizar el código en módulos, ya que permite añadir nueva funcionalidad de forma segura.
 
 ```javascript
-// 1. Registro inicial en el núcleo de la aplicación
+// 1. Registro inicial en el núcleo de la aplicación.
 _e.fn({
   String: {
     log: (args) => console.log(`[LOG]: ${args[0]}`)
   }
 });
 
-// 2. Más tarde, un "plugin" añade nueva funcionalidad al tipo String
+// 2. Más tarde, un "plugin" añade nueva funcionalidad al tipo String.
 _e.fn({
   String: {
     wordCount: (args) => args[0].split(' ').length
   }
 });
 
-// 3. Ambos métodos están ahora disponibles gracias a la fusión
+// 3. Ambos métodos están ahora disponibles gracias a la fusión.
 const miFrase = _e("Estructura es muy flexible");
 
 miFrase.log();                      //> [LOG]: Estructura es muy flexible
@@ -226,19 +227,19 @@ console.log(miFrase.wordCount());   //> 4
 >
 **Ejemplo (Fusión con un Nodo Híbrido):**
 ```javascript
-// 1. Definimos un nodo híbrido para 'Number'
+// 1. Definimos un nodo híbrido para 'Number'.
 _e.fn({
   Number: (num) => console.log(`Nodo híbrido ejecutado para: ${num}`)
 });
 
-// 2. Fusionamos un objeto con un nuevo método
+// 2. Fusionamos un objeto con un nuevo método.
 _e.fn({
   Number: {
     isEven: (args) => args[0] % 2 === 0
   }
 });
 
-// 3. El nodo se auto-ejecuta Y tiene el nuevo método disponible
+// 3. El nodo se auto-ejecuta y tiene el nuevo método disponible.
 const miNumero = _e(10); //> Nodo híbrido ejecutado para: 10
 
 console.log(miNumero.isEven()); //> true
@@ -248,33 +249,34 @@ console.log(miNumero.isEven()); //> true
 
 Extiende el sistema de tipos de Estructura. Es la característica más potente.
 
-**`definitions`**: Un objeto donde las *claves* son nombres de tipos primitivos existentes y los *valores* pueden ser:
-    - Una función que devuelve un nuevo nombre de tipo.
-    - Una cadena de texto para crear un alias simple.
-    - Un `array` de cadenas de texto para asignar múltiples alias nuevos a la vez.
+**`definitions`**: Un objeto donde las *claves* son nombres de tipos existentes o predefinidos y los *valores* pueden ser:
+
+*   Una función que devuelve un nuevo nombre de tipo.
+*   Una cadena de texto para crear un alias simple.
+*   Un `array` de cadenas de texto para asignar múltiples alias nuevos a la vez.
 
 Si es función de subtipo, esta recibe el `input` y debe devolver:
 *   Un `string` con el nombre del nuevo subtipo.
 *   `true` si el nombre de la definición debe usarse como el nombre del subtipo.
 *   `false` o `undefined` si no hay coincidencia.
 
-Además, `definitions` puede ser una cadena de texto como `'browser-dom'`, que sirve para cargar subtipos predefinidos para el DOM de navegadores a la instancia, por ejemplo: `_e.subtype('browser-dom')`.
+Además, `definitions` puede ser una cadena de texto como `'browser-dom'`, que sirve para cargar a la instancia subtipos predefinidos para el DOM de navegadores, por ejemplo: `_e.subtype('browser-dom')`.
 
 ```javascript
-// Crear subtipos
+// Crear subtipos.
 _e.subtype({
-  // 1. Con una función
+  // 1. Con una función.
   Object: (input) => (input.userId ? 'User' : false),
 
-  // 2. Con un string (un alias simple)
+  // 2. Con un string (un alias simple).
   RegExp: 'RegexPattern',
 
-  // 3. Con un array (múltiples alias)
-  // Un Array ahora también es de tipo 'Coleccion' y 'ListaOrdenada'
+  // 3. Con un array (múltiples alias).
+  // Un Array ahora también es de tipo 'Coleccion' y 'ListaOrdenada'.
   Array: ['Coleccion', 'ListaOrdenada'] 
 });
 
-// Registrar funciones para los nuevos tipos
+// Registrar funciones para los nuevos tipos.
 _e.fn({
   User: {
     hello: (args) => console.log(`Hello, ${args[0].name}!`)
@@ -282,7 +284,7 @@ _e.fn({
   RegexPattern: {
     test: (args, str) => args[0].test(str)
   },
-  // Se pueden registrar métodos para CUALQUIER alias
+  // Se pueden registrar métodos para CUALQUIER alias.
   Coleccion: {
     esColeccion: () => true
   },
@@ -297,7 +299,7 @@ _e(user).hello(); //> "Hello, Alex!"
 const hasNumber = _e(/\d+/).test('abc-123'); 
 console.log(hasNumber); //> true
 
-// Ahora los métodos de ambos alias están disponibles
+// Ahora los métodos de ambos alias están disponibles.
 const miLista = _e([1, 2, 3]);
 console.log(miLista.count());       //> 3
 console.log(miLista.esColeccion()); //> true
@@ -311,7 +313,7 @@ Crea o recupera una instancia aislada de Estructura. Esto es ideal para evitar c
 const miApi = _e.instance('miApi');
 const otraApi = _e.instance('otraApi');
 
-// Las definiciones en miApi no afectan a otraApi
+// Las definiciones en miApi no afectan a otraApi.
 miApi.fn({ String: { log: () => console.log('Log de miApi') } });
 otraApi.fn({ String: { log: () => console.log('Log de otraApi') } });
 
@@ -358,7 +360,7 @@ _e('Hola'); //> "Recibí directamente: Hola"
 
 ## Conceptos Avanzados: Nodos de Función Híbridos
 
-Además de registrar objetos con métodos, Estructura permite registrar una **función directamente como un nodo** en el árbol de despacho. Estas funciones se comportan de manera especial y ofrecen una gran flexibilidad.
+Además de registrar objetos con métodos, Estructura permite registrar una **función directamente como un nodo** en el mapa de despacho. Estas funciones se comportan de manera especial y ofrecen una gran flexibilidad.
 
 Un nodo de función es "híbrido" porque puede hacer dos cosas a la vez:
 1.  **Auto-ejecutarse:** Si la secuencia completa de tipos coincide con la función, esa función se ejecutará automáticamente. Los argumentos del despachador se pasan directamente a esta función.
@@ -370,14 +372,14 @@ Un nodo de función es "híbrido" porque puede hacer dos cosas a la vez:
 Puedes registrar una función que se dispare en cuanto los tipos de los argumentos coincidan.
 
 ```javascript
-// Definimos una función que se ejecutará para cualquier 'String'
+// Definimos una función que se ejecutará para cualquier 'String'.
 // Nota: La función recibe los argumentos del despachador directamente.
 
 const logString = (str) => {
   console.log(`[LOG]: La string "${str}" fue procesada.`);
 };
 
-// Registramos la función directamente bajo el tipo 'String'
+// Registramos la función directamente bajo el tipo 'String'.
 
 _e.fn({
   String: logString
@@ -404,17 +406,17 @@ Esto permite crear "middleware" o capas de lógica que se construyen unas sobre 
 **Ejemplo de cascada:**
 
 ```javascript
-// Nodo para Arrays (muy específico)
+// Nodo para Arrays (muy específico).
 _e.fn({
   Array: (arr) => console.log(`[LOG]: Nodo para Array ejecutado para: ${arr}`)
 });
 
-// Nodo para Objects (menos específico, ya que Array es un Object)
+// Nodo para Objects (menos específico, ya que Array es un Object).
 _e.fn({
   Object: () => console.log('[LOG]: Nodo para Object ejecutado.')
 });
 
-// Nodo híbrido raíz (el más general)
+// Nodo híbrido raíz (el más general).
 _e.fn(function(){
   console.log('[LOG]: Nodo raíz ejecutado.');
 });
@@ -428,14 +430,14 @@ _e(['a', 'b']);
 
 ### 3. Extender o Sobrescribir Métodos dinámicamente
 
-Un nodo de función híbrido puede, además, **devolver un objeto**. Si lo hace, los métodos de ese objeto se  sobrescribirán al conjunto de métodos que el despachador está construyendo.
+Un nodo de función híbrido puede, además, **devolver un objeto**. Si lo hace, los métodos de ese objeto sobrescribirán el conjunto de métodos que el despachador está construyendo.
 
 Esto permite crear APIs dinámicas donde el resultado de una función puede cambiar los métodos disponibles.
 
 **Ejemplo: Un validador que devuelve métodos diferentes según el resultado.**
 
 ```javascript
-// Subtipo para identificar emails
+// Subtipo para identificar emails.
 
 _e.subtype({
   String: (input) => (input.includes('@') ? 'Email' : false)
@@ -463,13 +465,13 @@ const validateEmail = (email) => {
   }
 };
 
-// Registramos el nodo híbrido
+// Registramos el nodo híbrido.
 
 _e.fn({
   Email: validateEmail
 });
 
-// --- Caso 1: Email de Gmail ---
+// CASO 1: Email de Gmail.
 
 const gmailUser = _e('test@gmail.com');
 //> "Validando: test@gmail.com"
@@ -477,13 +479,13 @@ const gmailUser = _e('test@gmail.com');
 gmailUser.send();            //> "Enviando con la API de Gmail..."
 gmailUser.addToContacts();   //> "Añadiendo a contactos de Google."
 
-// --- Caso 2: Otro email ---
+// CASO 2: Otro email.
 
 const otherUser = _e('user@outlook.com');
 //> "Validando: user@outlook.com"
 
 otherUser.send();            //> "Enviando con SMTP genérico..."
-// otherUser.addToContacts(); // Esto daría un error, porque el método no fue devuelto.
+// otherUser.addToContacts(); // Esto causa error, porque el método no fue devuelto.
 ```
 
 Esta característica avanzada te permite construir mecanismos y flujos de trabajo de una manera increíblemente declarativa y potente.
