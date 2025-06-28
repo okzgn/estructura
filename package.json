@@ -1,6 +1,6 @@
 {
   "name": "estructura-js",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "description": "A lightweight, type-based dispatching JavaScript Framework.",
   "main": "./dist/estructura.umd.js",
   "module": "./dist/estructura.esm.mjs",

@@ -1,8 +1,8 @@
-# Estructura.js
+# Estructura
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**Estructura.js** es un framework de JavaScript, ligero y sin dependencias, que implementa el **despacho múltiple (multiple dispatch)** basado en un sistema de tipado dinámico y extensible.
+**Estructura** es un framework de JavaScript, ligero y sin dependencias, que implementa el **despacho múltiple (multiple dispatch)** basado en un sistema de tipado dinámico y extensible.
 
 En lugar de la programación orientada a objetos tradicional, donde los métodos pertenecen a clases estáticas (`miInstancia.metodo()`), Estructura te permite definir funciones que se "adjuntan" a un objeto dinámico basado en los tipos de los argumentos. Esto resulta en una sintaxis de uso fluida (`_e(datos).metodo()`), pero con una lógica de despacho mucho más flexible y polimórfica.
 
@@ -13,7 +13,7 @@ En lugar de la programación orientada a objetos tradicional, donde los métodos
 *   **Despacho Múltiple Basado en Tipos:** Selecciona la lógica a ejecutar basándose en la combinación de todos los tipos de los argumentos, no solo del primero.
 *   **Sistema de Tipos Extensible:** Define tus propios tipos y jerarquías (`subtype`) para cualquier estructura de datos, yendo mucho más allá de los tipos primitivos de JavaScript.
 *   **Instancias Aisladas (Sandboxing):** Crea múltiples instancias de Estructura (`instance`) que no interfieren entre sí, cada una con su propio registro de tipos y funciones.
-*   **Ligero y sin Dependencias:** Menos de 25 KB (8 KB minificado), ideal para el navegador o Node.js sin añadir peso innecesario.
+*   **Ligero y sin Dependencias:** Menos de 30 KB (menos de 10 KB minificado), ideal para el navegador o Node.js sin añadir peso innecesario.
 *   **Robusto y Predecible:** Las llamadas al despachador son deterministas. Para una misma configuración de tipos y funciones registradas, una llamada a `_e(arg1, arg2)` siempre devolverá el mismo conjunto de métodos, evitando efectos secundarios inesperados.
 
 ## ¿Por qué usar Estructura?
@@ -82,7 +82,9 @@ El paquete se distribuye en múltiples formatos para asegurar una integración s
 
 El código de la distribución **UMD** está escrito en **sintaxis compatible con ES3/ES5**, lo que garantiza su funcionamiento en todos los navegadores modernos y en la mayoría de los antiguos, incluyendo **Internet Explorer 9+**, sin necesidad de transpilación.
 
-También incluye subtipos predefinidos para elementos del navegador y el DOM, para importarlos en instancias use por ejemplo: `_e.subtype('browser-dom')`.
+También incluye subtipos predefinidos para elementos del navegador y el DOM, para importarlos en una instancia, como en el siguiente ejemplo: `_e.subtype('browser-dom')`.
+
+**Nota:** Los ejemplos utilizan sintaxis de ES6 por brevedad, pero pueden ser fácilmente convertidos a funciones `function() { ... }` para su uso en entornos ES5.
 
 ### Compatibilidad con Node.js
 
@@ -162,7 +164,7 @@ También puedes definir métodos "globales" para una instancia y estarán dispon
 
 ```javascript
 _e.fn({
-  // Este método estará disponible en todas las llamadas a _e()
+  // Este método estará disponible en todas las llamadas a '_e()'.
   timestamp: () => `Procesado a las: ${Date.now()}`
 });
 
@@ -357,6 +359,67 @@ _e.fn({
 });
 _e('Hola'); //> "Recibí directamente: Hola"
 ```
+## Subtipos Predefinidos: 'browser-dom'
+
+Este conjunto de subtipos simplifica drásticamente la manipulación del DOM al agrupar cientos de tipos de objetos específicos del navegador en unas pocas categorías potentes y genéricas.
+
+### Cómo Importar o Activar `browser-dom`
+
+```javascript
+// Activar en la instancia por defecto.
+_e.subtype('browser-dom');
+
+// O en una instancia nombrada.
+const domAPI = _e.instance('domAPI');
+domAPI.subtype('browser-dom');
+
+/*
+ * Ejemplos de uso en un navegador.
+ * Nota: El resultado de .type() se muestra aquí ordenado desde el
+ * tipo más específico al más general para mayor claridad.
+ */
+console.log(domAPI.type(document.head));   //> [ "Node.HEAD", "Node", "HTMLHeadElement", "Object" ]
+console.log(domAPI.type(document));        //> [ "Document", "Browser", "HTMLDocument", "Object" ]
+console.log(domAPI.type(window));          //> [ "Browser", "Window", "Object" ]
+```
+
+### Resumen de Tipos Identificados
+
+#### 1. **Node**
+Representa cualquier elemento o nodo individual en el DOM. Esta es la categoría más amplia y abarca:
+
+*   **Todos los Elementos HTML:** Desde `HTMLHtmlElement` hasta `HTMLDivElement`, `HTMLInputElement`, `HTMLTemplateElement`, etc. (para cualquier etiqueta que puedas escribir).
+*   **Elementos SVG y MathML:** Como `SVGSVGElement` y `MathMLMathElement`.
+*   **Nodos que no son elementos:** Incluye nodos de texto (`Text`), comentarios (`Comment`), fragmentos de documento (`DocumentFragment`) y atributos (`Attr`).
+*   **Elementos desconocidos u obsoletos:** Como `HTMLUnknownElement` y `HTMLMarqueeElement`.
+
+> **Subtipo Dinámico: `Node.<TAG_NAME>`**
+>
+> La característica más potente de este conjunto es la creación de subtipos dinámicos. Después de que un elemento es identificado como `Node`, el framework crea un subtipo adicional usando su propiedad `tagName`. Esto permite un despacho increíblemente granular.
+> *   **Ejemplo:** Un elemento `<div>` se clasifica como `[ "Node.DIV", "Node", "HTMLDivElement", "Object" ]`.
+> *   **Ejemplo:** Un elemento `<button>` se clasifica como `[ "Node.BUTTON", "Node", "HTMLButtonElement", "Object" ]`.
+
+#### 2. **Nodes**
+Representa colecciones o listas de nodos, que típicamente son el resultado de consultas al DOM.
+
+*   `NodeList` (devuelto por `document.querySelectorAll()`).
+*   `HTMLCollection` (devuelto por `document.getElementsByTagName()` o `element.children`).
+*   `HTMLAllCollection` (una colección legacy).
+
+#### 3. **Document**
+Identifica específicamente el objeto `document` principal de la página.
+
+*   Se activa cuando el tipo del objeto es `HTMLDocument`.
+
+#### 4. **Browser**
+Identifica objetos globales de alto nivel del entorno del navegador que no son parte del contenido del DOM.
+
+*   `Window` (el objeto global `window`).
+*   `Navigator` (el objeto `navigator` con información del navegador).
+*   `Screen` (el objeto `screen` con información de la pantalla).
+*   `Location` (el objeto `location` con información de la URL).
+*   `History` (el objeto `history` para la navegación).
+*   También se aplica al objeto `Document` como un tipo más general.
 
 ## Conceptos Avanzados: Nodos de Función Híbridos
 
@@ -428,7 +491,7 @@ _e(['a', 'b']);
 //> "[LOG]: Nodo raíz ejecutado."
 ```
 
-### 3. Extender o Sobrescribir Métodos dinámicamente
+### 3. Sobrescribir Métodos Dinámicamente
 
 Un nodo de función híbrido puede, además, **devolver un objeto**. Si lo hace, los métodos de ese objeto sobrescribirán el conjunto de métodos que el despachador está construyendo.
 

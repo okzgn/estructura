@@ -1,6 +1,6 @@
 var _e = require('./dist/estructura.umd.js');
 
-console.log("Test:\n");
+console.log("Test examples from docs:\n");
 
 _e.fn({
   Array: {
