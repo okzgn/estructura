@@ -1,5 +1,5 @@
 {
-  "name": "@okzgn/estructura-js",
+  "name": "estructura-js",
   "version": "1.10.0",
   "description": "A lightweight, type-based dispatching JavaScript Framework.",
   "main": "./dist/estructura.umd.js",
