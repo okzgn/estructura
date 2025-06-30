@@ -331,17 +331,17 @@ const miLista = _e([1, 2, 3]);
 console.log(miLista.count());       //> 3
 console.log(miLista.esColeccion()); //> true
 ```
+Además, **`definitions`** puede ser una cadena de texto como `'browser-dom'`, que sirve para cargar en la instancia subtipos predefinidos para el DOM de navegadores.
+
 ### Tipos Predefinidos
 * Primitivos: `Null`, `Undefined`, `Boolean`, `String`, `Number`, `NaN`, `Bigint`, `Symbol`, `Function`, `Object`.
 * Derivados de **`Object`**: `Array`, `RegExp`, `Date`, `Map`, `Set`, `Promise`, etc.
-
-Además, **`definitions`** puede ser una cadena de texto como `'browser-dom'`, que sirve para cargar en la instancia subtipos predefinidos para el DOM de navegadores.
 
 ### Subtipos Predefinidos: 'browser-dom'
 
 Este conjunto de subtipos simplifica drásticamente la manipulación del DOM al agrupar cientos de tipos de objetos específicos del navegador en unas pocas categorías potentes y genéricas.
 
-#### Cómo Importar o Activar `browser-dom`
+**Cómo Importar o Activar `browser-dom`**
 
 ```javascript
 // Activar en la instancia por defecto.
@@ -361,9 +361,10 @@ console.log(domAPI.type(document));        //> [ "Document", "Browser", "HTMLDoc
 console.log(domAPI.type(window));          //> [ "Browser", "Window", "Object" ]
 ```
 
-#### Resumen de Tipos Identificados
+**Resumen de Subtipos Identificados:**
 
-#### 1. **Node**
+**Subtipo: Node**
+
 Representa cualquier elemento o nodo individual en el DOM. Esta es la categoría más amplia y abarca:
 
 *   **Todos los Elementos HTML:** Desde `HTMLHtmlElement` hasta `HTMLDivElement`, `HTMLInputElement`, `HTMLTemplateElement`, etc. (para cualquier etiqueta que puedas escribir).
@@ -379,19 +380,22 @@ Representa cualquier elemento o nodo individual en el DOM. Esta es la categoría
 > *   Un elemento `<div>` se clasifica como `[ "Node.DIV", "Node", "HTMLDivElement", "Object" ]`.
 > *   Un elemento `<button>` se clasifica como `[ "Node.BUTTON", "Node", "HTMLButtonElement", "Object" ]`.
 
-#### 2. **Nodes**
+**Subtipo: Nodes**
+
 Representa colecciones o listas de nodos, que típicamente son el resultado de consultas al DOM.
 
 *   `NodeList` (devuelto por `document.querySelectorAll()`).
 *   `HTMLCollection` (devuelto por `document.getElementsByTagName()` o `element.children`).
 *   `HTMLAllCollection` (una colección legacy).
 
-#### 3. **Document**
+**Subtipo: Document**
+
 Identifica específicamente el objeto `document` principal de la página.
 
 *   Se activa cuando el tipo del objeto es `HTMLDocument`.
 
-#### 4. **Browser**
+**Subtipo: Browser**
+
 Identifica objetos globales de alto nivel del entorno del navegador que no son parte del contenido del DOM.
 
 *   `Window` (el objeto global `window`).
@@ -558,11 +562,9 @@ otherUser.send();            //> "Enviando con SMTP genérico..."
 
 Esta característica avanzada te permite construir mecanismos y flujos de trabajo de una manera increíblemente declarativa y potente.
 
----
-
 ## Notas Importantes sobre Versiones Anteriores
 
-*   **Hasta la v1.12.0**: Las actualizaciones se centraron principalmente en la documentación. La funcionalidad se ha mantenido estable.
+*   **Hasta la v1.13.0**: Las actualizaciones se centraron principalmente en la documentación. La funcionalidad se ha mantenido estable.
 *   **En la v1.9.0**: Se actualizó la documentación `JSDoc` del código para reflejar cambios de versiones anteriores.
 *   **En la v1.8.0**: Se mejoró el adjuntador de métodos (`attach_resolved_methods`) y el aislamiento de instancias en los registradores de funciones (`fn`) y subtipos (`subtype`).
 *   **Anteriores a la v1.6.0**: El código en formato `ESM` no estaba configurado correctamente, lo que podía causar problemas de importación.

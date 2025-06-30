@@ -1,5 +1,6 @@
 var _e = require('./dist/estructura.umd.js');
 
+console.log('Estructura v1.13.0');
 console.log("Test examples from docs:\n");
 
 _e.fn({
