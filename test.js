@@ -156,7 +156,7 @@ _e('Hola'); //> "Recibí directamente: Hola"
 // Nota: La función recibe los argumentos del despachador directamente.
 
 const logString = (str) => {
-  console.log(`[LOG]: La string "${str}" fue procesada.`);
+  console.log(`[LOG]: La cadena "${str}" fue procesada.`);
 };
 
 // Registramos la función directamente bajo el tipo 'String'
@@ -167,8 +167,8 @@ _e.fn({
 
 // Al llamar a _e con una string, la función se ejecuta automáticamente.
 
-_e("Mi primer evento");   //> "[LOG]: La string "Mi primer evento" fue procesada."
-_e("Otro evento más");    //> "[LOG]: La string "Otro evento más" fue procesada."
+_e("Mi primer evento");   //> "[LOG]: La cadena "Mi primer evento" fue procesada."
+_e("Otro evento más");    //> "[LOG]: La cadena "Otro evento más" fue procesada."
 
 // Nodo para Arrays (muy específico)
 _e.fn({

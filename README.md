@@ -60,6 +60,11 @@ El paquete se distribuye en múltiples formatos para asegurar una integración s
     ```
 
 *   **UMD (Universal Module Definition):** Proporciona máxima compatibilidad.
+    *   **CommonJS (Node.js):** Funciona de forma nativa con `require()`.
+        ```javascript
+        const _e = require('estructura-js');
+        ```
+
     *   **Navegadores (Global):** Si se incluye con un tag `<script>` normal, crea una variable global `_e`.
         ```html
         <script src="https://unpkg.com/estructura-js"></script>
@@ -72,17 +77,12 @@ El paquete se distribuye en múltiples formatos para asegurar una integración s
           console.log(tipos); //> [ 'String', String: true ]
         </script>
         ```
-    *   **CommonJS (Node.js):** Funciona de forma nativa en Node.js con `require()`.
-        ```javascript
-        const _e = require('estructura-js');
-        ```
+
     *   **AMD (Asynchronous Module Definition):** Compatible con cargadores de módulos como RequireJS.
 
 ### Compatibilidad con Navegadores
 
 El código de la distribución **UMD** está escrito en **sintaxis compatible con ES3/ES5**, lo que garantiza su funcionamiento en todos los navegadores modernos y en la mayoría de los antiguos, incluyendo **Internet Explorer 9+**, sin necesidad de transpilación.
-
-También incluye subtipos predefinidos para elementos del navegador y el DOM, para importarlos en una instancia, como en el siguiente ejemplo: `_e.subtype('browser-dom')`.
 
 **Nota:** Los ejemplos utilizan sintaxis de ES6 por brevedad, pero pueden ser fácilmente convertidos a funciones `function() { ... }` para su uso en entornos ES5.
 
@@ -107,6 +107,7 @@ _e.fn({
     log: (args) => console.log(`Un número: ${args[0]}`)
   },
 
+  // Define un método para la combinación de tipos _e(String, Number)
   String: {
     Number: {
       combine: (args) => console.log(`Combinado: ${args[0]} y ${args[1]}`)
@@ -124,10 +125,10 @@ _e('texto', 67890).combine();   //> "Combinado: texto y 67890"
 
 ### `_e(arg1, arg2, ...)`
 
-La función despachadora principal.
+La función despachadora principal. Cada argumento representa un valor (`input`).
 
 1. Analiza los tipos de los argumentos proporcionados.
-2. Busca una función que coincida con toda la secuencia de tipos.
+2. Busca una función que coincida con toda la secuencia (combinación) de tipos.
 3. Devuelve un nuevo objeto con los métodos correspondientes adjuntos.
 
 ### `.fn(definitions)`
@@ -147,7 +148,7 @@ const keys = _e({ a: 1, b: 2 }).keys();
 console.log(keys); //> ["a", "b"]
 ```
 
-Los métodos que registras siempre reciben los argumentos originales del despachador como un **array en la primera posición**.
+Los métodos que registras reciben los argumentos originales del despachador como un **array en la primera posición**. (Véase más abajo "Una Distinción Crucial: Cómo se Pasan los Argumentos").
 
 ```javascript
 _e.fn({
@@ -174,7 +175,7 @@ console.log(_e("abc").timestamp());     //> "Procesado a las: 1700000000001"
 
 > **Nota sobre Precedencia y Colisiones:**
 >
-> Cuando un valor (`input`) corresponde a múltiples tipos todos sus métodos se fusionan en el objeto resultante. Si dos o más tipos definen un método con el mismo nombre, se producirá una colisión. En este caso, **el método del tipo más general (menos específico) prevalecerá, sobrescribiendo al del tipo más específico**.
+> Cuando un valor (`input`) corresponde a múltiples tipos, todos sus métodos se fusionan en el objeto resultante. Si dos o más tipos definen un método con el mismo nombre, se producirá una colisión. En este caso, **el método del tipo más general (menos específico) prevalecerá, sobrescribiendo al del tipo más específico**.
 >
 > El orden de sobrescritura es el siguiente (el de abajo sobrescribe al de arriba):
 > 1. Métodos de **subtipos o alias**: Definidos con `.subtype()`. Ejemplo:
@@ -192,12 +193,12 @@ console.log(_e("abc").timestamp());     //> "Procesado a las: 1700000000001"
 > _e.fn({ miMetodo: ... })
 > ```
 >
-> Esto significa, por ejemplo, que un método para `Array` sobrescribirá a uno con el mismo nombre en `MiTipoColeccion`.
+> En los ejemplos, esto significa que un método para `Array` sobrescribirá a uno con el mismo nombre en `MiTipoColeccion`.
 > Se puede saber el orden de especificidad con `.type()`.
 
-#### Fusión de Definiciones (Registro Aditivo)
+### Fusión de Definiciones (Registro Aditivo)
 
-Si llamas a `.fn()` varias veces con definiciones para el mismo tipo, estas se fusionan en lugar de sobreescribirse. Este comportamiento aditivo es ideal para sistemas de plugins o para organizar el código en módulos, ya que permite añadir nueva funcionalidad de forma segura.
+Si llamas a `.fn()` varias veces con definiciones para el mismo tipo, estas se fusionan en lugar de sobrescribirse. Este comportamiento aditivo es ideal para sistemas de plugins o para organizar el código en módulos, ya que permite añadir nueva funcionalidad de forma segura.
 
 ```javascript
 // 1. Registro inicial en el núcleo de la aplicación.
@@ -247,22 +248,46 @@ const miNumero = _e(10); //> Nodo híbrido ejecutado para: 10
 console.log(miNumero.isEven()); //> true
 ```
 
+### Una Distinción Crucial: Cómo se Pasan los Argumentos
+
+Es vital entender una diferencia clave en cómo tus funciones reciben los argumentos, dependiendo de cómo las registres.
+
+1.  **Métodos Estándar (dentro de un objeto):**
+Reciben todos los argumentos originales de la llamada a `_e()` agrupados en un **único array como primer parámetro**.
+
+```javascript
+_e.fn({
+  String: {
+    // 'args' es ['Hola']
+    miMetodo: (args) => console.log(`El primer argumento es: ${args[0]}`)
+  }
+});
+_e('Hola').miMetodo(); //> "El primer argumento es: Hola"
+```
+
+1.  **Nodos de Función Híbridos (funciones directas):**
+Reciben los argumentos originales de `_e()` de forma **desplegada y directa**.
+
+```javascript
+_e.fn({
+  // 'arg1' es 'Hola'
+  String: (arg1) => { console.log(`Recibí directamente: ${arg1}`); }
+});
+_e('Hola'); //> "Recibí directamente: Hola"
+```
+
 ### `.subtype(definitions)`
 
 Extiende el sistema de tipos de Estructura. Es la característica más potente.
 
-**`definitions`**: Un objeto donde las *claves* son nombres de tipos existentes o predefinidos y los *valores* pueden ser:
+**`definitions`**: Un objeto donde las *claves* son nombres de tipos predefinidos y los *valores* pueden ser:
 
-*   Una función que devuelve un nuevo nombre de tipo.
 *   Una cadena de texto para crear un alias simple.
 *   Un `array` de cadenas de texto para asignar múltiples alias nuevos a la vez.
-
-Si es función de subtipo, esta recibe el `input` y debe devolver:
-*   Un `string` con el nombre del nuevo subtipo.
-*   `true` si el nombre de la definición debe usarse como el nombre del subtipo.
-*   `false` o `undefined` si no hay coincidencia.
-
-Además, `definitions` puede ser una cadena de texto como `'browser-dom'`, que sirve para cargar a la instancia subtipos predefinidos para el DOM de navegadores, por ejemplo: `_e.subtype('browser-dom')`.
+*   Una función que recibe el valor (`input`) y debe devolver:
+    * Un `string` con el nombre del subtipo nuevo.
+    * `true` si el nombre de la definición debe usarse como el nombre del subtipo.
+    * `false`, `undefined`, `null`, etc. si no hay coincidencia.
 
 ```javascript
 // Crear subtipos.
@@ -306,6 +331,75 @@ const miLista = _e([1, 2, 3]);
 console.log(miLista.count());       //> 3
 console.log(miLista.esColeccion()); //> true
 ```
+### Tipos Predefinidos
+* Primitivos: `Null`, `Undefined`, `Boolean`, `String`, `Number`, `NaN`, `Bigint`, `Symbol`, `Function`, `Object`.
+* Derivados de **`Object`**: `Array`, `RegExp`, `Date`, `Map`, `Set`, `Promise`, etc.
+
+Además, **`definitions`** puede ser una cadena de texto como `'browser-dom'`, que sirve para cargar en la instancia subtipos predefinidos para el DOM de navegadores.
+
+### Subtipos Predefinidos: 'browser-dom'
+
+Este conjunto de subtipos simplifica drásticamente la manipulación del DOM al agrupar cientos de tipos de objetos específicos del navegador en unas pocas categorías potentes y genéricas.
+
+#### Cómo Importar o Activar `browser-dom`
+
+```javascript
+// Activar en la instancia por defecto.
+_e.subtype('browser-dom');
+
+// O en una instancia nombrada.
+const domAPI = _e.instance('domAPI');
+domAPI.subtype('browser-dom');
+
+/*
+ * Ejemplos de uso en un navegador.
+ * Nota: El resultado de .type() se muestra aquí ordenado desde el
+ * tipo más específico al más general para mayor claridad.
+ */
+console.log(domAPI.type(document.head));   //> [ "Node.HEAD", "Node", "HTMLHeadElement", "Object" ]
+console.log(domAPI.type(document));        //> [ "Document", "Browser", "HTMLDocument", "Object" ]
+console.log(domAPI.type(window));          //> [ "Browser", "Window", "Object" ]
+```
+
+#### Resumen de Tipos Identificados
+
+#### 1. **Node**
+Representa cualquier elemento o nodo individual en el DOM. Esta es la categoría más amplia y abarca:
+
+*   **Todos los Elementos HTML:** Desde `HTMLHtmlElement` hasta `HTMLDivElement`, `HTMLInputElement`, `HTMLTemplateElement`, etc. (para cualquier etiqueta que puedas escribir).
+*   **Elementos SVG y MathML:** Como `SVGSVGElement` y `MathMLMathElement`.
+*   **Nodos que no son elementos:** Incluye nodos de texto (`Text`), comentarios (`Comment`), fragmentos de documento (`DocumentFragment`) y atributos (`Attr`).
+*   **Elementos desconocidos u obsoletos:** Como `HTMLUnknownElement` y `HTMLMarqueeElement`.
+
+> **Subtipo Dinámico: `Node.<TAG_NAME>`**
+>
+> La característica más potente de este conjunto es la creación de subtipos dinámicos. Después de que un elemento es identificado como `Node`, el framework crea un subtipo adicional usando su propiedad `tagName`. Esto permite un despacho increíblemente granular.
+>
+> **Ejemplos:**
+> *   Un elemento `<div>` se clasifica como `[ "Node.DIV", "Node", "HTMLDivElement", "Object" ]`.
+> *   Un elemento `<button>` se clasifica como `[ "Node.BUTTON", "Node", "HTMLButtonElement", "Object" ]`.
+
+#### 2. **Nodes**
+Representa colecciones o listas de nodos, que típicamente son el resultado de consultas al DOM.
+
+*   `NodeList` (devuelto por `document.querySelectorAll()`).
+*   `HTMLCollection` (devuelto por `document.getElementsByTagName()` o `element.children`).
+*   `HTMLAllCollection` (una colección legacy).
+
+#### 3. **Document**
+Identifica específicamente el objeto `document` principal de la página.
+
+*   Se activa cuando el tipo del objeto es `HTMLDocument`.
+
+#### 4. **Browser**
+Identifica objetos globales de alto nivel del entorno del navegador que no son parte del contenido del DOM.
+
+*   `Window` (el objeto global `window`).
+*   `Navigator` (el objeto `navigator` con información del navegador).
+*   `Screen` (el objeto `screen` con información de la pantalla).
+*   `Location` (el objeto `location` con información de la URL).
+*   `History` (el objeto `history` para la navegación).
+*   También se aplica al objeto `Document` como un tipo más general.
 
 ### `.instance(name)`
 
@@ -332,114 +426,31 @@ const types = _e.type({ id: 1 });
 console.log(types); //> [ 'Object', Object: true ]
 ```
 
-## Una Distinción Crucial: Cómo se Pasan los Argumentos
-
-Antes de explorar los conceptos avanzados, es vital entender una diferencia clave en cómo tus funciones reciben los argumentos, dependiendo de cómo las registres.
-
-1.  **Métodos Estándar (dentro de un objeto):**
-Reciben todos los argumentos originales de la llamada a `_e()` agrupados en un **único array como primer parámetro**.
-
-```javascript
-_e.fn({
-  String: {
-    // 'args' es ['Hola']
-    miMetodo: (args) => console.log(`El primer argumento es: ${args[0]}`)
-  }
-});
-_e('Hola').miMetodo(); //> "El primer argumento es: Hola"
-```
-
-1.  **Nodos de Función Híbridos (funciones directas):**
-Reciben los argumentos originales de `_e()` de forma **desplegada y directa**.
-
-```javascript
-_e.fn({
-  // 'arg1' es 'Hola'
-  String: (arg1) => { console.log(`Recibí directamente: ${arg1}`); }
-});
-_e('Hola'); //> "Recibí directamente: Hola"
-```
-## Subtipos Predefinidos: 'browser-dom'
-
-Este conjunto de subtipos simplifica drásticamente la manipulación del DOM al agrupar cientos de tipos de objetos específicos del navegador en unas pocas categorías potentes y genéricas.
-
-### Cómo Importar o Activar `browser-dom`
-
-```javascript
-// Activar en la instancia por defecto.
-_e.subtype('browser-dom');
-
-// O en una instancia nombrada.
-const domAPI = _e.instance('domAPI');
-domAPI.subtype('browser-dom');
-
-/*
- * Ejemplos de uso en un navegador.
- * Nota: El resultado de .type() se muestra aquí ordenado desde el
- * tipo más específico al más general para mayor claridad.
- */
-console.log(domAPI.type(document.head));   //> [ "Node.HEAD", "Node", "HTMLHeadElement", "Object" ]
-console.log(domAPI.type(document));        //> [ "Document", "Browser", "HTMLDocument", "Object" ]
-console.log(domAPI.type(window));          //> [ "Browser", "Window", "Object" ]
-```
-
-### Resumen de Tipos Identificados
-
-#### 1. **Node**
-Representa cualquier elemento o nodo individual en el DOM. Esta es la categoría más amplia y abarca:
-
-*   **Todos los Elementos HTML:** Desde `HTMLHtmlElement` hasta `HTMLDivElement`, `HTMLInputElement`, `HTMLTemplateElement`, etc. (para cualquier etiqueta que puedas escribir).
-*   **Elementos SVG y MathML:** Como `SVGSVGElement` y `MathMLMathElement`.
-*   **Nodos que no son elementos:** Incluye nodos de texto (`Text`), comentarios (`Comment`), fragmentos de documento (`DocumentFragment`) y atributos (`Attr`).
-*   **Elementos desconocidos u obsoletos:** Como `HTMLUnknownElement` y `HTMLMarqueeElement`.
-
-> **Subtipo Dinámico: `Node.<TAG_NAME>`**
->
-> La característica más potente de este conjunto es la creación de subtipos dinámicos. Después de que un elemento es identificado como `Node`, el framework crea un subtipo adicional usando su propiedad `tagName`. Esto permite un despacho increíblemente granular.
-> *   **Ejemplo:** Un elemento `<div>` se clasifica como `[ "Node.DIV", "Node", "HTMLDivElement", "Object" ]`.
-> *   **Ejemplo:** Un elemento `<button>` se clasifica como `[ "Node.BUTTON", "Node", "HTMLButtonElement", "Object" ]`.
-
-#### 2. **Nodes**
-Representa colecciones o listas de nodos, que típicamente son el resultado de consultas al DOM.
-
-*   `NodeList` (devuelto por `document.querySelectorAll()`).
-*   `HTMLCollection` (devuelto por `document.getElementsByTagName()` o `element.children`).
-*   `HTMLAllCollection` (una colección legacy).
-
-#### 3. **Document**
-Identifica específicamente el objeto `document` principal de la página.
-
-*   Se activa cuando el tipo del objeto es `HTMLDocument`.
-
-#### 4. **Browser**
-Identifica objetos globales de alto nivel del entorno del navegador que no son parte del contenido del DOM.
-
-*   `Window` (el objeto global `window`).
-*   `Navigator` (el objeto `navigator` con información del navegador).
-*   `Screen` (el objeto `screen` con información de la pantalla).
-*   `Location` (el objeto `location` con información de la URL).
-*   `History` (el objeto `history` para la navegación).
-*   También se aplica al objeto `Document` como un tipo más general.
-
 ## Conceptos Avanzados: Nodos de Función Híbridos
 
 Además de registrar objetos con métodos, Estructura permite registrar una **función directamente como un nodo** en el mapa de despacho. Estas funciones se comportan de manera especial y ofrecen una gran flexibilidad.
 
 Un nodo de función es "híbrido" porque puede hacer dos cosas a la vez:
-1.  **Auto-ejecutarse:** Si la secuencia completa de tipos coincide con la función, esa función se ejecutará automáticamente. Los argumentos del despachador se pasan directamente a esta función.
+1.  **Auto-ejecutarse:** Si la secuencia (combinación) completa de tipos coincide con la función, esa función se ejecutará automáticamente. Los argumentos del despachador se pasan directamente a esta función.
 
-2.  **Contener más definiciones:** Al ser una función (que en JavaScript es un objeto), puede tener propiedades adjuntas que actúen como sub-nodos para un despacho más profundo.
+2.  **Contener más definiciones:** Al ser una función, puede tener propiedades adjuntas que actúen como sub-nodos para un despacho más profundo.
+
+> **Nota sobre el Nodo Híbrido Raíz:**
+> Puedes registrar un nodo híbrido que se ejecute para **cualquier** llamada a una instancia pasándole una función directamente, por ejemplo:
+> ```javascript
+> _e.fn(function() { ... })
+> ```
 
 ### 1. Auto-ejecución de Nodos
 
-Puedes registrar una función que se dispare en cuanto los tipos de los argumentos coincidan.
+Puedes registrar una función que se ejecute en cuanto los tipos de los argumentos coincidan.
 
 ```javascript
 // Definimos una función que se ejecutará para cualquier 'String'.
 // Nota: La función recibe los argumentos del despachador directamente.
 
 const logString = (str) => {
-  console.log(`[LOG]: La string "${str}" fue procesada.`);
+  console.log(`[LOG]: La cadena "${str}" fue procesada.`);
 };
 
 // Registramos la función directamente bajo el tipo 'String'.
@@ -450,23 +461,17 @@ _e.fn({
 
 // Al llamar a _e con una string, la función se ejecuta automáticamente.
 
-_e("Mi primer evento");   //> "[LOG]: La string "Mi primer evento" fue procesada."
-_e("Otro evento más");    //> "[LOG]: La string "Otro evento más" fue procesada."
+_e("Mi primer evento");   //> "[LOG]: La cadena "Mi primer evento" fue procesada."
+_e("Otro evento más");    //> "[LOG]: La cadena "Otro evento más" fue procesada."
 ```
 
-### 2. Cascada de Ejecución y Herencia de Tipos
+### 2. Secuencia de Ejecución y Herencia de Tipos
 
-Cuando un valor (`input`) pertenece a múltiples tipos (como un `Array`, que también es un `Object`), se ejecutarán en cascada todos los nodos híbridos que coincidan, desde el más específico hasta el más general.
+Cuando un valor (`input`) pertenece a múltiples tipos (como un `Array`, que también es un `Object`), se ejecutarán en secuencia todos los nodos híbridos que coincidan, desde el más específico hasta el más general.
 
 Esto permite crear "middleware" o capas de lógica que se construyen unas sobre otras.
 
-> **Nota sobre el Nodo Híbrido Raíz:**
-> Puedes registrar un nodo híbrido que se ejecute para **cualquier** llamada a `_e()` pasándole una función directamente:
-> ```javascript
-> _e.fn(function() { ... })
-> ```
-
-**Ejemplo de cascada:**
+**Ejemplo de secuencia:**
 
 ```javascript
 // Nodo para Arrays (muy específico).
@@ -552,6 +557,15 @@ otherUser.send();            //> "Enviando con SMTP genérico..."
 ```
 
 Esta característica avanzada te permite construir mecanismos y flujos de trabajo de una manera increíblemente declarativa y potente.
+
+---
+
+## Notas Importantes sobre Versiones Anteriores
+
+*   **Hasta la v1.12.0**: Las actualizaciones se centraron principalmente en la documentación. La funcionalidad se ha mantenido estable.
+*   **En la v1.9.0**: Se actualizó la documentación `JSDoc` del código para reflejar cambios de versiones anteriores.
+*   **En la v1.8.0**: Se mejoró el adjuntador de métodos (`attach_resolved_methods`) y el aislamiento de instancias en los registradores de funciones (`fn`) y subtipos (`subtype`).
+*   **Anteriores a la v1.6.0**: El código en formato `ESM` no estaba configurado correctamente, lo que podía causar problemas de importación.
 
 ## Licencia
 
