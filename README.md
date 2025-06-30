@@ -4,26 +4,69 @@
 
 **Estructura** es un framework de JavaScript, ligero y sin dependencias, que implementa el **despacho múltiple (multiple dispatch)** basado en un sistema de tipado dinámico y extensible.
 
-En lugar de la programación orientada a objetos tradicional, donde los métodos pertenecen a clases estáticas (`miInstancia.metodo()`), Estructura te permite definir funciones que se "adjuntan" a un objeto dinámico basado en los tipos de los argumentos. Esto resulta en una sintaxis de uso fluida (`_e(datos).metodo()`), pero con una lógica de despacho mucho más flexible y polimórfica.
+En lugar de la programación orientada a objetos tradicional, donde los métodos pertenecen a clases estáticas (`miInstancia.method()`), Estructura te permite definir funciones que se "adjuntan" a un objeto dinámico basado en los tipos de todos los argumentos. Esto resulta en una sintaxis de uso fluida (`_e(datos).method()`), pero con una lógica de despacho mucho más flexible y polimórfica.
 
 ---
 
+## Índice General
+
+### 1. Introducción
+- [Características principales](#características-principales)  
+- [¿Por qué usar Estructura?](#por-qué-usar-estructura)  
+
+### 2. Instalación y Configuración
+- [Instalación](#instalación)  
+  - [npm](#instalación)  
+  - [CDN (navegador)](#instalación)  
+- [Compatibilidad](#compatibilidad)  
+  - [Formatos de Módulo](#formatos-de-módulo)  
+  - [Navegadores](#compatibilidad-con-navegadores)  
+  - [Node.js](#compatibilidad-con-nodejs)  
+
+### 3. Guía Rápida
+- [Ejemplo básico](#guía-de-inicio-rápido)  
+
+### 4. Documentación de la API
+- [Función principal `_e()`](#_earg1-arg2-)  
+- [`_e.fn()`](#_efndefinitions)  
+- [`_e.subtype()`](#_esubtypedefinitions)  
+- [`_e.instance()`](#_einstancename)  
+- [`_e.type()`](#_etypeinput)  
+
+### 5. Tipos y Subtipos
+- [Tipos predefinidos](#tipos-predefinidos)  
+- [Subtipo `browser-dom`](#subtipos-predefinidos-browser-dom)  
+  - [Node](#subtipo-node)
+  - [Nodes](#subtipo-nodes)  
+  - [Document](#subtipo-document)  
+  - [Browser](#subtipo-browser)  
+
+### 6. Conceptos Avanzados
+- [Manejadores](#conceptos-avanzados-manejadores)  
+  - [Auto-ejecución](#1-auto-ejecución-de-manejadores)  
+  - [Secuencia de ejecución](#2-secuencia-de-ejecución-por-especificidad)  
+  - [Métodos dinámicos](#3-sobrescribir-métodos-dinámicamente)  
+
+### 7. Notas Adicionales
+- [Versiones anteriores](#notas-importantes-sobre-versiones-anteriores)  
+- [Licencia](#licencia)  
+
 ## Características Principales
 
-*   **Despacho Múltiple Basado en Tipos:** Selecciona la lógica a ejecutar basándose en la combinación de todos los tipos de los argumentos, no solo del primero.
+*   **Despacho Múltiple Basado en Tipos:** Selecciona la lógica a ejecutar y/o métodos a despachar, basándose en la combinación de los tipos de los argumentos (no solo del primero).
 *   **Sistema de Tipos Extensible:** Define tus propios tipos y jerarquías (`subtype`) para cualquier estructura de datos, yendo mucho más allá de los tipos primitivos de JavaScript.
 *   **Instancias Aisladas (Sandboxing):** Crea múltiples instancias de Estructura (`instance`) que no interfieren entre sí, cada una con su propio registro de tipos y funciones.
-*   **Ligero y sin Dependencias:** Menos de 30 KB (menos de 10 KB minificado), ideal para el navegador o Node.js sin añadir peso innecesario.
-*   **Robusto y Predecible:** Las llamadas al despachador son deterministas. Para una misma configuración de tipos y funciones registradas, una llamada a `_e(arg1, arg2)` siempre devolverá el mismo conjunto de métodos, evitando efectos secundarios inesperados.
+*   **Ligero y sin Dependencias:** Menos de 30 KB (menos de 5 KB minificado y comprimido [gzipped]), ideal para el navegador o Node.js sin añadir peso innecesario.
+*   **Robusto y Predecible:** Las llamadas al despachador son deterministas. Para una misma configuración de tipos y funciones registradas, una llamada a `_e(arg1, arg2)` siempre seguirá una misma secuencia de ejecución y devolverá el mismo conjunto de métodos, evitando efectos secundarios inesperados.
 
 ## ¿Por qué usar Estructura?
 
-Estructura es ideal cuando necesitas manejar lógica compleja que depende de la naturaleza de tus datos. Es ideal para:
+Estructura es ideal cuando necesitas manejar lógica compleja que depende de la naturaleza de tus datos, como en:
 
 *   **APIs Polimórficas:** Crear funciones como `render(shape)`, `render(shape, context)`, `render(arrayOfShapes)` que se resuelven automáticamente.
 *   **Sistemas de Plugins:** Permitir que extensiones de terceros registren manejadores para nuevos tipos de datos sin modificar el núcleo de tu aplicación.
 *   **Procesamiento de Datos:** Escribir tuberías de datos limpias que reaccionan a diferentes formatos de entrada (JSON, XML, CSV, etc.).
-*   **Refactorizar Código Complejo:** Reemplazar largas cadenas de `if/else` o `switch` que comprueban `typeof` e `instanceof`.
+*   **Refactorización de Código Complejo:** Reemplazar largas cadenas de `if/else` o `switch` que comprueban `typeof` e `instanceof` con una solución más declarativa y mantenible.
 
 ## Instalación
 
@@ -86,7 +129,7 @@ El código de la distribución **UMD** está escrito en **sintaxis compatible co
 
 **Nota:** Los ejemplos utilizan sintaxis de ES6 por brevedad, pero pueden ser fácilmente convertidos a funciones `function() { ... }` para su uso en entornos ES5.
 
-### Compatibilidad con Node.js
+### Compatibilidad con `Node.js`
 
 Estructura funciona perfectamente en cualquier versión de Node.js que soporte la sintaxis ES5.
 
@@ -121,7 +164,7 @@ _e(12345).log();                //> "Un número: 12345"
 _e('texto', 67890).combine();   //> "Combinado: texto y 67890"
 ```
 
-## Documentación de la API
+## Documentación de la `API`
 
 ### `_e(arg1, arg2, ...)`
 
@@ -129,13 +172,17 @@ La función despachadora principal. Cada argumento representa un valor (`input`)
 
 1. Analiza los tipos de los argumentos proporcionados.
 2. Busca una función que coincida con toda la secuencia (combinación) de tipos.
-3. Devuelve un nuevo objeto con los métodos correspondientes adjuntos.
+3. Ejecuta funciones manejadoras y/o devuelve un nuevo objeto con los métodos correspondientes adjuntos.
 
-### `.fn(definitions)`
+---
 
-Registra las funciones o métodos para los tipos y sus combinaciones.
+### `_e.fn(definitions)`
 
-**`definitions`**: Un objeto anidado donde las *claves* son nombres de tipos y cada *valor* debe ser una función o un objeto con más definiciones.
+Registra funciones directas (`manejadores`) y/o métodos para los tipos y sus combinaciones. Es crucial distinguir dos patrones: los `Métodos`, que son funciones dentro de un objeto de definición y se invocan explícitamente (`_e(data).miMetodo()`), y los `Manejadores`, que son funciones asignadas directamente a un tipo y se ejecutan automáticamente cuando ese tipo coincide (`_e(data)` tal cual);
+
+**`definitions`**: Puede ser **un objeto o una función**. En general, se llaman **definiciones**. 
+
+**1. Objeto:** Donde cada *clave* debe ser un nombre de tipo y cada *valor* una función (`manejador`) o un objeto anidado con más funciones. **Cada nivel de anidación está relacionado directamente con los argumentos que se pasen a la función despachadora y sus tipos.**
 
 ```javascript
 _e.fn({
@@ -173,32 +220,74 @@ console.log(_e(123).timestamp());       //> "Procesado a las: 1700000000000"
 console.log(_e("abc").timestamp());     //> "Procesado a las: 1700000000001"
 ```
 
-> **Nota sobre Precedencia y Colisiones:**
+> **IMPORTANTE. Decisión de Diseño Clave**
+>
+> **Precedencia y Colisiones de Métodos Invertida**
 >
 > Cuando un valor (`input`) corresponde a múltiples tipos, todos sus métodos se fusionan en el objeto resultante. Si dos o más tipos definen un método con el mismo nombre, se producirá una colisión. En este caso, **el método del tipo más general (menos específico) prevalecerá, sobrescribiendo al del tipo más específico**.
 >
 > El orden de sobrescritura es el siguiente (el de abajo sobrescribe al de arriba):
 > 1. Métodos de **subtipos o alias**: Definidos con `.subtype()`. Ejemplo:
 > ```javascript
-> _e.fn({ MiTipoColeccion: { miMetodo: ... }})
+> _e.fn({ AnotherCollection: { myMethod: ... }})
 > ```
 >
 > 2. Métodos de **tipos base**: Tipos primitivos del valor (`Object`, `Array`, etc.). Ejemplo:
 > ```javascript
-> _e.fn({ Array: { miMetodo: ... }})
+> _e.fn({ Array: { myMethod: ... }})
 > ```
 >
 > 3. Métodos **globales**: Definidos en la raíz del objeto con `.fn()`. Ejemplo:
 > ```javascript
-> _e.fn({ miMetodo: ... })
+> _e.fn({ myMethod: ... })
 > ```
 >
-> En los ejemplos, esto significa que un método para `Array` sobrescribirá a uno con el mismo nombre en `MiTipoColeccion`.
+> En los ejemplos, esto significa que un método para `Array` sobrescribirá a uno con el mismo nombre en `AnotherCollection`.
 > Se puede saber el orden de especificidad con `.type()`.
+>
+>**Nota:** Esta decisión de diseño garantiza que los métodos globales (`Any`) puedan actuar como un `'fallback'` predecible y consistente, asegurando que una función siempre esté disponible si no se encuentra una más específica. O para prevenir que métodos menos importantes sobrescriban a otros de mayor importancia.
 
-### Fusión de Definiciones (Registro Aditivo)
+**2. Función:**  Puedes asignarla para que se ejecute **para cualquier llamada a una instancia**, se llama **manejador raíz**, por ejemplo:
+> ```javascript
+> _e.fn((arg1, arg2, /*...,*/ argN) => { ... })
+> ```
 
-Si llamas a `.fn()` varias veces con definiciones para el mismo tipo, estas se fusionan en lugar de sobrescribirse. Este comportamiento aditivo es ideal para sistemas de plugins o para organizar el código en módulos, ya que permite añadir nueva funcionalidad de forma segura.
+
+#### Fusión de Definiciones (Registro Aditivo)
+
+Si llamas a `.fn()` varias veces para registrar **definiciones con objetos o funciones** para los mismos tipos, estas se fusionan en lugar de sobrescribirse. Este comportamiento aditivo es ideal para sistemas de plugins o para organizar el código en módulos, ya que permite añadir nueva funcionalidad de forma segura.
+
+**1. Para Funciones (Manejadores)**
+
+Tiene una regla importante: **una vez que un tipo se define como un manejador, siempre se comportará como tal**.
+
+Si posteriormente registras un objeto de métodos para ese mismo tipo, los nuevos métodos se añadirán a la función manejador, pero esta no perderá su capacidad de auto-ejecutarse.
+
+**Ejemplo:**
+```javascript
+// 1. Definimos un manejador para 'Number'.
+_e.fn({
+  Number: (num) => console.log(`Manejador ejecutado para: ${num}`)
+});
+
+// 2. Fusionamos un objeto con un nuevo método.
+_e.fn({
+  Number: {
+    isEven: (args) => args[0] % 2 === 0
+  }
+});
+
+// 3. El manejador se auto-ejecuta y tiene el nuevo método disponible.
+const miNumero = _e(10); //> Manejador ejecutado para: 10
+
+console.log(miNumero.isEven()); //> true
+```
+
+**2. Para Objetos**
+
+Los objetos para los mismos tipos se fusionarán en lugar de sobrescribirse.
+
+**Ejemplo:**
 
 ```javascript
 // 1. Registro inicial en el núcleo de la aplicación.
@@ -222,33 +311,7 @@ miFrase.log();                      //> [LOG]: Estructura es muy flexible
 console.log(miFrase.wordCount());   //> 4
 ```
 
-> **Nota sobre la Fusión con Nodos Híbridos:**
->
-> La fusión también se aplica a los nodos híbridos, pero con una regla importante: **una vez que un tipo se define como un nodo híbrido, siempre se comportará como tal**.
->
-> Si posteriormente registras un objeto de métodos para ese mismo tipo, los nuevos métodos se añadirán a la función del nodo híbrido, pero esta no perderá su capacidad de auto-ejecutarse.
->
-**Ejemplo (Fusión con un Nodo Híbrido):**
-```javascript
-// 1. Definimos un nodo híbrido para 'Number'.
-_e.fn({
-  Number: (num) => console.log(`Nodo híbrido ejecutado para: ${num}`)
-});
-
-// 2. Fusionamos un objeto con un nuevo método.
-_e.fn({
-  Number: {
-    isEven: (args) => args[0] % 2 === 0
-  }
-});
-
-// 3. El nodo se auto-ejecuta y tiene el nuevo método disponible.
-const miNumero = _e(10); //> Nodo híbrido ejecutado para: 10
-
-console.log(miNumero.isEven()); //> true
-```
-
-### Una Distinción Crucial: Cómo se Pasan los Argumentos
+### Una Distinción Crucial: Cómo se Pasan los Argumentos de `_e()`
 
 Es vital entender una diferencia clave en cómo tus funciones reciben los argumentos, dependiendo de cómo las registres.
 
@@ -259,13 +322,13 @@ Reciben todos los argumentos originales de la llamada a `_e()` agrupados en un *
 _e.fn({
   String: {
     // 'args' es ['Hola']
-    miMetodo: (args) => console.log(`El primer argumento es: ${args[0]}`)
+    myMethod: (args) => console.log(`El primer argumento es: ${args[0]}`)
   }
 });
-_e('Hola').miMetodo(); //> "El primer argumento es: Hola"
+_e('Hola').myMethod(); //> "El primer argumento es: Hola"
 ```
 
-1.  **Nodos de Función Híbridos (funciones directas):**
+1.  **Manejadores (funciones directas):**
 Reciben los argumentos originales de `_e()` de forma **desplegada y directa**.
 
 ```javascript
@@ -276,7 +339,9 @@ _e.fn({
 _e('Hola'); //> "Recibí directamente: Hola"
 ```
 
-### `.subtype(definitions)`
+---
+
+### `_e.subtype(definitions)`
 
 Extiende el sistema de tipos de Estructura. Es la característica más potente.
 
@@ -299,8 +364,8 @@ _e.subtype({
   RegExp: 'RegexPattern',
 
   // 3. Con un array (múltiples alias).
-  // Un Array ahora también es de tipo 'Coleccion' y 'ListaOrdenada'.
-  Array: ['Coleccion', 'ListaOrdenada'] 
+  // Un Array ahora también es de tipo 'Collection' y 'OrderedList'.
+  Array: ['Collection', 'OrderedList'] 
 });
 
 // Registrar funciones para los nuevos tipos.
@@ -312,10 +377,10 @@ _e.fn({
     test: (args, str) => args[0].test(str)
   },
   // Se pueden registrar métodos para CUALQUIER alias.
-  Coleccion: {
-    esColeccion: () => true
+  Collection: {
+    isCollection: () => true
   },
-  ListaOrdenada: {
+  OrderedList: {
     count: (args) => args[0].length
   }
 });
@@ -329,7 +394,7 @@ console.log(hasNumber); //> true
 // Ahora los métodos de ambos alias están disponibles.
 const miLista = _e([1, 2, 3]);
 console.log(miLista.count());       //> 3
-console.log(miLista.esColeccion()); //> true
+console.log(miLista.isCollection()); //> true
 ```
 Además, **`definitions`** puede ser una cadena de texto como `'browser-dom'`, que sirve para cargar en la instancia subtipos predefinidos para el DOM de navegadores.
 
@@ -363,7 +428,7 @@ console.log(domAPI.type(window));          //> [ "Browser", "Window", "Object" ]
 
 **Resumen de Subtipos Identificados:**
 
-**Subtipo: Node**
+#### Subtipo: Node
 
 Representa cualquier elemento o nodo individual en el DOM. Esta es la categoría más amplia y abarca:
 
@@ -380,7 +445,7 @@ Representa cualquier elemento o nodo individual en el DOM. Esta es la categoría
 > *   Un elemento `<div>` se clasifica como `[ "Node.DIV", "Node", "HTMLDivElement", "Object" ]`.
 > *   Un elemento `<button>` se clasifica como `[ "Node.BUTTON", "Node", "HTMLButtonElement", "Object" ]`.
 
-**Subtipo: Nodes**
+#### Subtipo: Nodes
 
 Representa colecciones o listas de nodos, que típicamente son el resultado de consultas al DOM.
 
@@ -388,13 +453,13 @@ Representa colecciones o listas de nodos, que típicamente son el resultado de c
 *   `HTMLCollection` (devuelto por `document.getElementsByTagName()` o `element.children`).
 *   `HTMLAllCollection` (una colección legacy).
 
-**Subtipo: Document**
+#### Subtipo: Document
 
 Identifica específicamente el objeto `document` principal de la página.
 
 *   Se activa cuando el tipo del objeto es `HTMLDocument`.
 
-**Subtipo: Browser**
+#### Subtipo: Browser
 
 Identifica objetos globales de alto nivel del entorno del navegador que no son parte del contenido del DOM.
 
@@ -405,7 +470,9 @@ Identifica objetos globales de alto nivel del entorno del navegador que no son p
 *   `History` (el objeto `history` para la navegación).
 *   También se aplica al objeto `Document` como un tipo más general.
 
-### `.instance(name)`
+---
+
+### `_e.instance(name)`
 
 Crea o recupera una instancia aislada de Estructura. Esto es ideal para evitar colisiones en aplicaciones grandes o al crear librerías.
 
@@ -421,31 +488,31 @@ miApi('test').log();  //> "Log de miApi"
 otraApi('test').log(); //> "Log de otraApi"
 ```
 
-### `.type(input)`
+---
 
-Una herramienta de utilidad que te permite saber los tipos de cualquier variable. Devuelve un array/mapa de todos los tipos detectados.
+### `_e.type(input)`
+
+Una herramienta de utilidad que te permite saber los tipos de cualquier variable. Devuelve un array/mapa de todos los tipos detectados. Las propiedades que devuelve cuyo nombre es el tipo y valor `true` sirve para verificaciones rápidas.
 
 ```javascript
 const types = _e.type({ id: 1 }); 
 console.log(types); //> [ 'Object', Object: true ]
+
+if(types['Object']){
+  console.log('Verificación rápida, es un objeto.');
+}
 ```
 
-## Conceptos Avanzados: Nodos de Función Híbridos
+## Conceptos Avanzados: `Manejadores`
 
-Además de registrar objetos con métodos, Estructura permite registrar una **función directamente como un nodo** en el mapa de despacho. Estas funciones se comportan de manera especial y ofrecen una gran flexibilidad.
+Estas funciones se comportan de manera especial y ofrecen una gran flexibilidad.
 
-Un nodo de función es "híbrido" porque puede hacer dos cosas a la vez:
+Un manejador puede hacer dos cosas a la vez:
 1.  **Auto-ejecutarse:** Si la secuencia (combinación) completa de tipos coincide con la función, esa función se ejecutará automáticamente. Los argumentos del despachador se pasan directamente a esta función.
 
-2.  **Contener más definiciones:** Al ser una función, puede tener propiedades adjuntas que actúen como sub-nodos para un despacho más profundo.
+2.  **Contener más definiciones:** Al ser una función, puede tener propiedades adjuntas que actúen como sub-manejadores para un despacho más profundo.
 
-> **Nota sobre el Nodo Híbrido Raíz:**
-> Puedes registrar un nodo híbrido que se ejecute para **cualquier** llamada a una instancia pasándole una función directamente, por ejemplo:
-> ```javascript
-> _e.fn(function() { ... })
-> ```
-
-### 1. Auto-ejecución de Nodos
+### 1. Auto-ejecución de manejadores
 
 Puedes registrar una función que se ejecute en cuanto los tipos de los argumentos coincidan.
 
@@ -469,40 +536,40 @@ _e("Mi primer evento");   //> "[LOG]: La cadena "Mi primer evento" fue procesada
 _e("Otro evento más");    //> "[LOG]: La cadena "Otro evento más" fue procesada."
 ```
 
-### 2. Secuencia de Ejecución y Herencia de Tipos
+### 2. Secuencia de Ejecución por Especificidad
 
-Cuando un valor (`input`) pertenece a múltiples tipos (como un `Array`, que también es un `Object`), se ejecutarán en secuencia todos los nodos híbridos que coincidan, desde el más específico hasta el más general.
+Cuando un valor (`input`) pertenece a múltiples tipos (como un `Array`, que también es un `Object`), se ejecutarán en secuencia todos los manejadores que coincidan, desde el más específico hasta el más general.
 
 Esto permite crear "middleware" o capas de lógica que se construyen unas sobre otras.
 
 **Ejemplo de secuencia:**
 
 ```javascript
-// Nodo para Arrays (muy específico).
+// Manejador para Arrays (muy específico).
 _e.fn({
-  Array: (arr) => console.log(`[LOG]: Nodo para Array ejecutado para: ${arr}`)
+  Array: (arr) => console.log(`[LOG]: Manejador para Array ejecutado para: ${arr}`)
 });
 
-// Nodo para Objects (menos específico, ya que Array es un Object).
+// Manejador para Objects (menos específico, ya que Array es un Object).
 _e.fn({
-  Object: () => console.log('[LOG]: Nodo para Object ejecutado.')
+  Object: () => console.log('[LOG]: Manejador para Object ejecutado.')
 });
 
-// Nodo híbrido raíz (el más general).
-_e.fn(function(){
-  console.log('[LOG]: Nodo raíz ejecutado.');
+// Manejador raíz (el más general).
+_e.fn(() => {
+  console.log('[LOG]: Manejador raíz ejecutado.');
 });
 
-// Al llamar con un array, se disparan los tres nodos en orden de especificidad.
+// Al llamar con un array, se disparan los tres manejadores en orden de especificidad.
 _e(['a', 'b']);
-//> "[LOG]: Nodo para Array ejecutado para: a,b"
-//> "[LOG]: Nodo para Object ejecutado."
-//> "[LOG]: Nodo raíz ejecutado."
+//> "[LOG]: Manejador para Array ejecutado para: a,b"
+//> "[LOG]: Manejador para Object ejecutado."
+//> "[LOG]: Manejador raíz ejecutado."
 ```
 
 ### 3. Sobrescribir Métodos Dinámicamente
 
-Un nodo de función híbrido puede, además, **devolver un objeto**. Si lo hace, los métodos de ese objeto sobrescribirán el conjunto de métodos que el despachador está construyendo.
+Un manejador puede, además, **devolver un objeto**. Si lo hace, los métodos de ese objeto sobrescribirán el conjunto de métodos que el despachador está construyendo.
 
 Esto permite crear APIs dinámicas donde el resultado de una función puede cambiar los métodos disponibles.
 
@@ -515,7 +582,7 @@ _e.subtype({
   String: (input) => (input.includes('@') ? 'Email' : false)
 });
 
-// Nodo híbrido para el tipo 'Email'.
+// Manejador para el tipo 'Email'.
 // Recibe el email como primer argumento, no envuelto en un array.
 
 const validateEmail = (email) => {
@@ -537,7 +604,7 @@ const validateEmail = (email) => {
   }
 };
 
-// Registramos el nodo híbrido.
+// Registramos el manejador
 
 _e.fn({
   Email: validateEmail
@@ -567,7 +634,7 @@ Esta característica avanzada te permite construir mecanismos y flujos de trabaj
 *   **Hasta la v1.13.0**: Las actualizaciones se centraron principalmente en la documentación. La funcionalidad se ha mantenido estable.
 *   **En la v1.9.0**: Se actualizó la documentación `JSDoc` del código para reflejar cambios de versiones anteriores.
 *   **En la v1.8.0**: Se mejoró el adjuntador de métodos (`attach_resolved_methods`) y el aislamiento de instancias en los registradores de funciones (`fn`) y subtipos (`subtype`).
-*   **Anteriores a la v1.6.0**: El código en formato `ESM` no estaba configurado correctamente, lo que podía causar problemas de importación.
+*   **Anteriores a la v1.6.0**: El módulo en formato `ESM` no estaba configurado correctamente, lo que podía causar problemas de importación.
 
 ## Licencia
 
