@@ -1,5 +1,5 @@
 /**
- * Estructura v1.14.0
+ * Estructura v1.15.0
  * A lightweight, type-based dispatching JavaScript Framework.
  * 2025 (c) OKZGN
  * @license MIT
@@ -80,7 +80,7 @@
 					// For any input identified as a 'Node', create a more specific hierarchical subtype.
 					// e.g., A <div> element becomes 'Node.DIV'.
 					'Node': function(input, subtype){ return subtype + '.' + input.tagName; },
-					'Window': 'Browser', 'Document': 'Browser', 'Navigator': 'Browser', 'Screen': 'Browser', 'Location': 'Browser', 'History': 'Browser'
+					'Window': 'Browser', 'Navigator': 'Browser', 'Screen': 'Browser', 'Location': 'Browser', 'History': 'Browser'
 				};
 			}
 			return predefined_subtypes['browser-dom'].cache;
@@ -149,7 +149,7 @@
 	}
 
 	/**
-	 * Attaches methods from a resolved node to the result object. Executes hybrid node functions.
+	 * Attaches methods from a resolved node to the result object. Executes hybrid node functions called 'handlers'.
 	 * @private
 	 * @this EstructuraInstance
 	 * @param {object} result_object The object to which methods will be attached.
@@ -163,7 +163,7 @@
 		var actual_fns = resolved_node;
 		if(typeof actual_fns === typeof_fn_value){
 			try {
-				// A hybrid node can return a new object of functions to use.
+				// A hybrid node called 'handler' can return a new object of functions to use.
 				// If it returns a falsy value, we fall back to the original node.
 				// If it returns a non-object, we also fall back to protect against errors.
 				actual_fns = actual_fns.apply(result_object, main_fn_args) || resolved_node;
@@ -175,7 +175,7 @@
 		if(typeof actual_fns === typeof_str_value){ return (should_return_result ? result_object : null); }
 		for(var fn_name in actual_fns){
 			if(!verify_own_property_fn.call(actual_fns, fn_name) || typeof actual_fns[fn_name] !== typeof_fn_value){ continue; }
-			if(result_object[fn_name]){ message.call(this, 'warn', 'Method conflict for "' + fn_name + '". A definition from type "' + resolved_node_type + '" is overwriting another same name method or node function. This occurs when an input matches multiple types.'); }
+			if(result_object[fn_name]){ message.call(this, 'warn', 'Method conflict for "' + fn_name + '". A definition from type "' + resolved_node_type + '" is overwriting another same name method or "handler". This occurs when an input matches multiple types.'); }
 			result_object[fn_name] = adjust_method(this, fn_name, actual_fns, main_fn_args);
 		}
 		return (should_return_result ? result_object : null);
@@ -274,7 +274,7 @@
 	/**
 	 * Replaces a node in the dispatch tree, preserving the properties of the original node
 	 * by merging them onto the new one. This handles converting plain objects to hybrid
-	 * function-objects and merging properties between them.
+	 * function-objects called 'handlers' and merging properties between them.
 	 * @private
 	 * @param {object} target_object The parent object containing the node to be replaced (e.g., the 'fns' registry).
 	 * @param {string} property_name The key of the node to be replaced.

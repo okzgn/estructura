@@ -1,6 +1,6 @@
 {
-  "name": "estructura-js",
-  "version": "1.14.0",
+  "name": "@okzgn/estructura-js",
+  "version": "1.15.0",
   "description": "A lightweight, type-based dispatching JavaScript Framework.",
   "main": "./dist/estructura.umd.js",
   "module": "./dist/estructura.esm.mjs",
@@ -17,8 +17,8 @@
     "access": "public"
   },
   "scripts": {
-    "test": "node test.js",
-    "start": "node test.js"
+    "test": "jest",
+    "start": "jest"
   },
   "author": "Elías A. Soshina",
   "license": "MIT",
