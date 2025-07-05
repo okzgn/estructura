@@ -1,6 +1,6 @@
 const _e = require('./dist/estructura.umd');
 
-describe('Estructura Framework - Pruebas Unitarias', () => {
+describe('Estructura Framework v1.16.0 - Pruebas Unitarias', () => {
 
   // --- 1. GUÍA DE INICIO RÁPIDO ---
   describe('Guía de Inicio Rápido', () => {

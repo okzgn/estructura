@@ -5,7 +5,7 @@
 
 Estructura es un framework JavaScript ligero y sin dependencias que implementa **despacho múltiple (multiple dispatch)** basado en un sistema de tipos dinámico y extensible.
 
-En lugar de la programación orientada a objetos tradicional, donde los métodos pertenecen a clases estáticas (`miInstancia.method()`), Estructura te permite definir funciones que se "adjuntan" a un objeto dinámico basado en los tipos de todos los argumentos. Esto resulta en una sintaxis de uso fluida (`_e(datos).method()`), pero con una lógica de despacho mucho más flexible y polimórfica.
+En lugar de la programación orientada a objetos tradicional, donde los `métodos` pertenecen a clases estáticas (`myInstance.method()`), Estructura te permite definir funciones que se "adjuntan" a un objeto dinámico basado en los tipos de todos los argumentos. Esto resulta en una sintaxis de uso fluida (`_e(data).method()`), pero con una lógica de despacho mucho más flexible y polimórfica.
 
 **[Guía rápida, ejemplo básico...](#guía-de-inicio-rápido)**
 
@@ -46,9 +46,9 @@ En lugar de la programación orientada a objetos tradicional, donde los métodos
 
 ### 6. Conceptos Avanzados
 - [`Manejadores`](#conceptos-avanzados-manejadores)
-  - [Auto-ejecución](#1-auto-ejecución-de-manejadores)
-  - [Secuencia de ejecución](#2-secuencia-de-ejecución-por-especificidad)
-  - [Sobrescritura de métodos](#3-sobrescribir-métodos-dinámicamente)
+  - [Auto-ejecución](#auto-ejecución-de-manejadores)
+  - [Secuencia de ejecución](#secuencia-de-ejecución-por-especificidad)
+  - [Sobrescritura de `métodos`](#sobrescribir-métodos-dinámicamente)
 
 ### 7. Adicionales
 - [Notas de versiones](#notas-importantes-sobre-versiones-anteriores)
@@ -59,11 +59,11 @@ En lugar de la programación orientada a objetos tradicional, donde los métodos
 
 ## Características Principales
 
-*   **Despacho Múltiple Basado en Tipos:** Selecciona la lógica a ejecutar y/o métodos a despachar, basándose en la combinación de los tipos de los argumentos ([`.type()`](#_etypeinput)), no solo del primer argumento.
+*   **Despacho Múltiple Basado en Tipos:** Selecciona la lógica a ejecutar y/o `métodos` a despachar, basándose en la combinación de los tipos de los argumentos ([`.type()`](#_etypeinput)), no solo del primer argumento.
 *   **Sistema de Tipos Extensible:** Define tus propios tipos y jerarquías ([`.subtype()`](#_esubtypedefinitions)) para cualquier estructura de datos, yendo mucho más allá de los tipos primitivos de JavaScript.
 *   **Instancias Aisladas (Sandboxing):** Crea múltiples instancias de Estructura ([`.instance()`](#_einstancename)) que no interfieren entre sí, cada una con su propio registro de tipos y funciones.
 *   **Ligero y sin Dependencias:** Menos de 30 KB (menos de 5 KB minificado y comprimido [gzipped]), ideal para el navegador o Node.js sin añadir peso innecesario.
-*   **Robusto y Predecible:** Las llamadas al despachador son deterministas. Para una misma configuración de tipos y funciones registradas ([`.fn()`](#_efnassignments)), una llamada a [`_e(arg1, arg2, ...)`](#_earg1-arg2-) siempre seguirá una misma secuencia de ejecución y devolverá el mismo conjunto de métodos, sin efectos secundarios inesperados.
+*   **Robusto y Predecible:** Las llamadas al (`despachador`) son deterministas. Para una misma configuración de tipos y funciones registradas ([`.fn()`](#_efnassignments)), una llamada a [`_e(arg1, arg2, ...)`](#_earg1-arg2-) siempre seguirá una misma secuencia de ejecución y devolverá el mismo conjunto de `métodos`, sin efectos secundarios inesperados.
 
 ## ¿Por qué usar Estructura?
 
@@ -141,7 +141,7 @@ Estructura funciona perfectamente en cualquier entorno que soporte la sintaxis E
 
 ## Guía de Inicio Rápido
 
-El concepto central es simple: asignas funciones para tipos o combinaciones de tipos y luego llamas al despachador principal `_e()` con tus datos.
+El concepto central es simple: asigna funciones para tipos o combinaciones de tipos y llama al `despachador` `_e()` con los datos adecuados.
 
 ```javascript
 import _e from 'estructura-js';
@@ -174,25 +174,29 @@ _e('texto', 67890).combine();   //> "Combinado: texto y 67890"
 
 ### `_e(arg1, arg2, ...)`
 
-La función despachadora principal. **Cada argumento representa un valor (`input`)**.
+La función principal o `despachador`. **Cada argumento representa un valor (`input`)**.
 
 * Analiza los tipos de los argumentos proporcionados.
 * Busca asignaciones para toda la secuencia (combinación) de tipos.
-* Devuelve un nuevo objeto con los métodos correspondientes adjuntos y/o ejecuta funciones `manejadoras`.
+* **Devuelve un nuevo objeto (`output`)** con los `métodos` correspondientes adjuntos y/o ejecuta `manejadores`.
 
 ---
 
 ### `_e.fn(assignments)`
 
-Registra asignaciones de `métodos` y/o funciones [`manejadoras`](#conceptos-avanzados-manejadores), para los tipos o combinaciones de tipos:
-* **`Métodos`:** que son funciones dentro de objetos y se invocan explícitamente (`_e(input).method()`).
-* **`Manejadores`:** que son funciones asignadas directamente y se ejecutan automáticamente (`_e(input)`) antes de devolver el objeto con los métodos correspondientes adjuntos.
+Registra asignaciones de `métodos` y/o [`manejadores`](#conceptos-avanzados-manejadores), **para los tipos o combinaciones de tipos**:
+* **`Métodos`:**
+  
+  Son funciones que se llamarán *después* de que el `despachador` devuelva el objeto (`_e(data).method()`).
+* **`Manejadores`:** 
 
-**`assignments`:** Puede ser **un objeto o una función**: 
+  Son funciones directas que se ejecutarán automáticamente *antes* de que el `despachador` devuelva el objeto (`_e(data)`).
+
+**`assignments`:** Puede ser **un objeto o una función**.
 
 * **Objeto:**
 
-    Donde cada *clave* se refiere a un nombre de tipo y cada *valor* es un objeto anidado con más métodos o una función (`manejador`). Cada nivel de anidación está relacionado directamente con los argumentos que se pasen a la función despachadora y sus tipos.
+    Donde cada *clave* se refiere a un nombre de tipo y cada *valor* es un objeto anidado con más `métodos` o es una función (`manejador`). Cada nivel de anidación se refiere a cada argumento en orden que se pasa a la función principal ([`despachador`](#_earg1-arg2-)) y sus tipos.
 
     ```javascript
     _e.fn({
@@ -205,7 +209,7 @@ Registra asignaciones de `métodos` y/o funciones [`manejadoras`](#conceptos-ava
     console.log(keys); //> ["a", "b"]
     ```
 
-    Los métodos que registras reciben los argumentos del despachador como un **array en la primera posición**. (Véase "[Distinción Crucial: Cómo se Pasan los Argumentos de `_e()`](#distinción-crucial-cómo-se-pasan-los-argumentos-de-_e)").
+    Los `métodos` que registres recibirán los argumentos del (`despachador`) como un **`array` en el primer argumento**. (Véase "[Distinción Crucial: Cómo se Pasan los Argumentos de `_e()`](#distinción-crucial-cómo-se-pasan-los-argumentos-de-_e)").
 
     ```javascript
     _e.fn({
@@ -217,8 +221,8 @@ Registra asignaciones de `métodos` y/o funciones [`manejadoras`](#conceptos-ava
     const repeated = _e("hola ").repeat(3);
     console.log(repeated); //> "hola hola hola "
     ```
-
-    También puedes asignar métodos "globales" para una instancia y estarán disponibles sin importar el tipo de los argumentos (`Any`). Para ello, regístralos en el primer nivel del objeto de asignaciones.
+    #### **Métodos `Globales`**
+    También puedes asignar `métodos` que estarán disponibles sin importar el tipo de los argumentos (`Any`)  para una instancia registrándolos en el primer nivel del objeto de asignaciones.
 
     ```javascript
     _e.fn({
@@ -230,55 +234,60 @@ Registra asignaciones de `métodos` y/o funciones [`manejadoras`](#conceptos-ava
     console.log(_e("abc").timestamp());     //> "Procesado a las: 1700000000001"
     ```
     #### **Colisión de Métodos: Lo General Sobrescribe a lo Específico**
-    > **IMPORTANTE. Modo por Defecto del Framework**
+    > **IMPORTANTE**
     >
-    > Cuando un [valor (`input`)](#_earg1-arg2-) corresponde a múltiples tipos, todos sus métodos se fusionan en el objeto resultante. Si dos o más tipos asignan un método con el mismo nombre, se producirá una colisión. En este caso, **el método del tipo más general (menos específico) prevalecerá, sobrescribiendo al del tipo más específico**. Puedes consultar el orden de especificidad de cualquier valor usando [`.type()`](#_etypeinput).
+    > **Modo por Defecto del Framework**
+    >
+    > Cuando un [valor (`input`)](#_earg1-arg2-) corresponde a múltiples tipos, todos sus `métodos` se fusionan en el objeto resultante. Si dos o más tipos asignan un `método` con el mismo nombre, se producirá una colisión. En este caso, **el `método` del tipo más general (menos específico) prevalecerá, sobrescribiendo al del tipo más específico**. Puedes consultar el orden de especificidad de cualquier valor usando [`.type()`](#_etypeinput).
     >
     > El orden de sobrescritura es el siguiente (el de abajo sobrescribe al de arriba):
-    > 1. Métodos de **subtipos o alias**: Subtipos definidos con `.subtype()`.
+    > 1. `Métodos` de [**subtipos o alias**](#_esubtypedefinitions):
     > ```javascript
     > _e.fn({ AnotherCollection: { myMethod: ... }})
     > ```
     >
-    > 2. Métodos de **tipos derivados**: [Tipos derivados](#tipos-predefinidos) del valor (`Array`, `RegExp`, `Date`, etc.).
+    > 2. `Métodos` de [**tipos derivados**](#tipos-predefinidos):
     > ```javascript
     > _e.fn({ Array: { myMethod: ... }})
     > ```
     >
-    > 3. Métodos de **tipos primitivos**: [Tipos primitivos](#tipos-predefinidos) del valor (`Object`, `Function`, `String`, etc.).
+    > 3. `Métodos` de [**tipos primitivos**](#tipos-predefinidos):
     > ```javascript
     > _e.fn({ Object: { myMethod: ... }})
     > ```
     >
-    > 4. Métodos **globales**: Asignados en la raíz del objeto con `.fn()`.
+    > 4. [`Métodos` **`globales`**](#métodos-globales):
     > ```javascript
     > _e.fn({ myMethod: ... })
     > ```
     >
-    > En estos ejemplos, significa que un método para `Object` sobrescribirá a uno con el mismo nombre en `AnotherCollection`.
+    > En los ejemplos anteriores, significa que el `método` para `Object` sobrescribirá al de `AnotherCollection`.
+    >
+    >**Otro ejemplo:**
     >
     >```javascript
     >// Registramos métodos con el mismo nombre para 'Array' y 'Object'.
     >_e.fn({
-    > // Método para el tipo específico: Array
-    > Array: {
-    >   logType: () => console.log('Tipo Específico: Array')
-    > },
-    > // Método para el tipo general: Object
-    > Object: {
-    >   logType: () => console.log('Tipo General: Object')
-    > }
+    >   // Método para el tipo derivado: Array
+    >   Array: {
+    >     logType: () => console.log('Tipo Derivado: Array')
+    >   },
+    >   // Método para el tipo general: Object
+    >   Object: {
+    >     logType: () => console.log('Tipo General: Object')
+    >   }
     >});
+    >
     >// Un array es tanto de tipo 'Array' como de tipo 'Object'.
-    >// Al haber una colisión, se ejecutará el método del tipo más general ('Object').
+    >// Al haber una colisión, se prevalecerá el método del tipo más general ('Object').
     >_e([1, 2, 3]).logType();
     >```
     >
-    >**Nota:** Esta decisión de diseño garantiza que los métodos globales (`Any`) puedan actuar como un `'fallback'` predecible y consistente, asegurando que una función siempre esté disponible si no se encuentra una más específica. O para prevenir que métodos menos importantes sobrescriban a otros de mayor importancia o precedencia.
+    >**Nota:** Esta decisión de diseño garantiza que los `métodos` `globales` (`Any`) puedan actuar como un `'fallback'` predecible y consistente, asegurando que una función siempre esté disponible si no se encuentra una más específica. O para prevenir que `métodos` registrados más recientes sobrescriban a los anteriores.
 
 * **Función:**
 
-    Puedes asignarla para que se ejecute **para cualquier llamada a una instancia**, se llama **`manejador` raíz**.
+    Se puede asignar para que se ejecute **en cualquier llamada a una instancia**, se llama **`manejador` raíz**.
     ```javascript
     _e.fn((arg1, arg2, /*...,*/ argN) => {
       // Código...
@@ -288,13 +297,13 @@ Registra asignaciones de `métodos` y/o funciones [`manejadoras`](#conceptos-ava
 
 ### Fusión de Registros de Asignaciones (Registro Aditivo)
 
-Si llamas a `.fn()` varias veces para registrar asignaciones de `manejadores` o métodos **para los mismos tipos**, estas se fusionan en lugar de sobrescribirse. Este comportamiento aditivo sirve para sistemas de plugins o para organizar el código en módulos, ya que permite añadir nueva funcionalidad de forma segura.
+Si llamas a `.fn()` varias veces para registrar asignaciones de `manejadores` o `métodos` **para los mismos tipos**, las asignaciones se fusionan en lugar de sobrescribirse. Este comportamiento aditivo sirve para sistemas de plugins o para organizar el código en módulos, ya que permite añadir nueva funcionalidad de forma segura.
 
 * **Para `Manejadores`:**
 
-    Tiene una regla importante: **una vez que un tipo se asigna como un `manejador`, siempre se comportará como tal**.
+    Hay una regla importante: **una vez que se asigna un `manejador` a un tipo, seguirá siendo un `manejador`**.
 
-    Si posteriormente registras un objeto de métodos para ese mismo tipo, los nuevos métodos se añadirán a la función `manejadora`, pero esta no perderá su capacidad de auto-ejecutarse.
+    Si a continuación registras un objeto de `métodos` para ese mismo tipo, los nuevos `métodos` se añadirán al `manejador`, pero no perderá su capacidad de auto-ejecutarse.
 
     ```javascript
     // Asignamos un manejador para 'Number'
@@ -316,9 +325,9 @@ Si llamas a `.fn()` varias veces para registrar asignaciones de `manejadores` o 
     ```
     Véase "[Conceptos Avanzados: `Manejadores`](#conceptos-avanzados-manejadores)".
 
-* **Para Métodos:**
+* **Para `Métodos`:**
 
-    Los objetos con métodos para los mismos tipos se fusionarán en lugar de sobrescribirse.
+    Los objetos con `métodos` para los mismos tipos se fusionarán en lugar de sobrescribirse.
 
     ```javascript
     // Registro inicial en el núcleo de la aplicación
@@ -328,7 +337,7 @@ Si llamas a `.fn()` varias veces para registrar asignaciones de `manejadores` o 
       }
     });
 
-    // Más tarde, un "plugin" añade nueva funcionalidad al tipo String
+    // Más tarde, un 'plugin' añade nueva funcionalidad al tipo String
     _e.fn({
       String: {
         wordCount: (args) => args[0].split(' ').length
@@ -344,11 +353,11 @@ Si llamas a `.fn()` varias veces para registrar asignaciones de `manejadores` o 
 
 ### Distinción Crucial: Cómo se Pasan los Argumentos de `_e()`
 
-Hay una diferencia clave en **cómo tus métodos o `manejadores` reciben los argumentos**:
+Hay una diferencia clave en **cómo tus `métodos` o `manejadores` reciben los argumentos**:
 
-* **Métodos:**
+* **`Métodos`:**
 
-    Reciben los argumentos de `_e()` agrupados en un único array, que se pasa como el primer parámetro.
+    Reciben los argumentos del `despachador` agrupados en un **`array` que se pasa como el primer parámetro**.
 
     ```javascript
     _e.fn({
@@ -362,7 +371,7 @@ Hay una diferencia clave en **cómo tus métodos o `manejadores` reciben los arg
 
 * **`Manejadores`:**
 
-    Reciben los argumentos de `_e()` de forma **desplegada y directa**.
+    Reciben los argumentos del `despachador` de forma **desplegada y directa**.
 
     ```javascript
     _e.fn({
@@ -376,16 +385,16 @@ Hay una diferencia clave en **cómo tus métodos o `manejadores` reciben los arg
 
 ### `_e.subtype(definitions)`
 
-Registra definiciones de tipos nuevos para cada instancia de Estructura (`subtipos`).
+Registra definiciones de tipos nuevos para cada instancia de Estructura. **Se llaman subtipos o alias**.
 
-**`definitions`:** Un objeto donde las *claves* son nombres de tipos predefinidos y los *valores* pueden ser:
+**`definitions`:** Un objeto donde cada *clave* es un nombre de tipo predefinido y cada *valor* puede ser:
 
 *   Una cadena de texto (`string`) para crear un alias simple.
 *   Un `array` de cadenas de texto para asignar múltiples alias nuevos a la vez.
 *   Una función que recibe el [valor (`input`)](#_earg1-arg2-) y puede devolver:
-    * Una cadena de texto con el nombre del subtipo nuevo.
+    * Una cadena de texto con el nombre nuevo del subtipo.
     * Un *booleano* **`true`** si el nombre de la *clave* debe usarse como el nombre del subtipo.
-    * Un *booleano* **`false`**, o **`undefined`, `null`, `void`**. Si no coincide con el subtipo.
+    * Si no coincide con el subtipo: **`false`**, **`undefined`**, **`null`**, o **`void`**.
 
 ```javascript
 // Crear subtipos
@@ -397,7 +406,7 @@ _e.subtype({
   RegExp: 'RegexPattern',
 
   // Con un array (múltiples alias)
-  // Un Array ahora también es de tipo 'Collection' y 'OrderedList'
+  // Un 'Array' ahora también es de tipo 'Collection' y 'OrderedList'
   Array: ['Collection', 'OrderedList'] 
 });
 
@@ -426,15 +435,15 @@ console.log(hasNumber); //> true
 
 // Ahora los métodos de ambos alias están disponibles
 const miLista = _e([1, 2, 3]);
-console.log(miLista.count());       //> 3
-console.log(miLista.isCollection()); //> true
+console.log(miLista.count());         //> 3
+console.log(miLista.isCollection());  //> true
 ```
-Además, **`definitions`** podría ser una cadena de texto como `'browser-dom'`, que sirve para cargar en instancias [subtipos predefinidos para el DOM de navegadores](#subtipos-predefinidos-browser-dom).
+Además, **`definitions`** puede ser una cadena de texto como `'browser-dom'`, que sirve para cargar [subtipos predefinidos para el DOM de navegadores](#subtipos-predefinidos-browser-dom) en instancias.
 
 ### Tipos Predefinidos
 * **Primitivos:**
 
-    `Null`, `Undefined`, `Boolean`, `String`, `Number`, `NaN`, `Bigint`, `Symbol`, `Function`, `Object`.
+    `Null`, `Undefined`, `Boolean`, `String`, `Number`, `NaN`, `BigInt`, `Symbol`, `Function`, `Object`.
 * **Derivados de `Object`:**
 
     `Array`, `RegExp`, `Date`, `Map`, `Set`, `Promise`, etc.
@@ -468,16 +477,16 @@ console.log(domAPI.type(window));          //> [ "Browser", "Window", "Object" ]
 
 ##### Subtipo `Node`
 
-Representa nodos o elementos individuales en el DOM. Esta es la categoría más amplia y abarca:
+Representa nodos o elementos individuales en el DOM. Es la categoría más amplia y abarca:
 
-*   **Todos los Elementos HTML:** Desde `HTMLHtmlElement` hasta `HTMLDivElement`, `HTMLInputElement`, `HTMLTemplateElement`, etc. (cualquier etiqueta que puedas escribir).
+*   **Todos los Elementos HTML:** Desde `HTMLHtmlElement` hasta `HTMLDivElement`, `HTMLInputElement`, `HTMLTemplateElement`, etc. (cualquier etiqueta que se pueda escribir).
   > **Subtipo Dinámico: `Node.<TAG_NAME>`**
   >
-  > Después de que un elemento es identificado como `Node`, el framework crea un subtipo adicional usando su propiedad `tagName` para más precisión.
+  > Después de que un elemento es identificado como `Node`, para más precisión, el framework crea un subtipo adicional usando su propiedad `tagName`.
   >
   > **Ejemplos:**
   >
-  > **Nota:** Para mayor claridad, en los siguientes ejemplos, los tipos se muestran ordenados desde el más específico al más general, pero el orden que `.type()` devuelve por defecto es el inverso.
+  > **Nota:** En los siguientes ejemplos, por claridad, los tipos se muestran ordenados desde el más específico al más general, pero el orden que devuelve `.type()` es el inverso.
   > *   Un elemento `<div>` se clasifica como `[ "Node.DIV", "Node", "HTMLDivElement", "Object" ]`.
   > *   Un elemento `<button>` se clasifica como `[ "Node.BUTTON", "Node", "HTMLButtonElement", "Object" ]`.
 *   **Elementos SVG y MathML:** Como `SVGSVGElement` y `MathMLMathElement`.
@@ -486,7 +495,7 @@ Representa nodos o elementos individuales en el DOM. Esta es la categoría más 
 
 ##### Subtipo `Nodes`
 
-Representa colecciones o listas de nodos, que típicamente son el resultado de consultas al DOM.
+Representa colecciones o listas de nodos, que son el resultado de consultas al DOM.
 
 *   `NodeList` (devuelto por `document.querySelectorAll()`).
 *   `HTMLCollection` (devuelto por `document.getElementsByTagName()` o `element.children`).
@@ -494,7 +503,7 @@ Representa colecciones o listas de nodos, que típicamente son el resultado de c
 
 ##### Subtipo `Document`
 
-Identifica específicamente el objeto `document` principal de la página cuando el tipo del objeto es `HTMLDocument` (en algunos navegadores).
+Identifica específicamente el objeto `document` principal de la página, para normalizar cuando el tipo del objeto es `HTMLDocument` (en ciertos navegadores).
 
 ##### Subtipo `Browser`
 
@@ -520,15 +529,15 @@ const otraApi = _e.instance('otraApi');
 miApi.fn({ String: { log: () => console.log('Log de miApi') } });
 otraApi.fn({ String: { log: () => console.log('Log de otraApi') } });
 
-miApi('test').log();  //> "Log de miApi"
-otraApi('test').log(); //> "Log de otraApi"
+miApi('test').log();    //> "Log de miApi"
+otraApi('test').log();  //> "Log de otraApi"
 ```
 
 ---
 
 ### `_e.type(input)`
 
-Una herramienta de utilidad que te permite saber los tipos de cualquier variable en orden de especificidad (desde el más general en el índice 0, hasta el más específico en el último índice). Devuelve un array que también funciona como mapa de todos los tipos detectados (las propiedades devueltas con el nombre del tipo y valor `true` sirven para verificaciones rápidas).
+Una herramienta de utilidad que te permite saber los tipos de cualquier variable en orden de especificidad (desde el más general en el índice 0, hasta el más específico en el último índice). Devuelve un `array` que también funciona como mapa de todos los tipos detectados (las propiedades devueltas con el nombre del tipo y valor `true` sirven para verificaciones rápidas).
 
 ```javascript
 const types = _e.type({ id: 1 }); 
@@ -541,10 +550,19 @@ if(types['Object']){
 
 ## Conceptos Avanzados: `Manejadores`
 
-Estas funciones se comportan de manera especial, ofrecen más flexibilidad y pueden:
-* **Auto-ejecutarse:** Si la secuencia (combinación) de tipos coincide con la función, se ejecutará automáticamente. Los argumentos del despachador se pasan directamente a esta función.
+Estas funciones se comportan de manera diferente, ofrecen más flexibilidad y pueden:
 
-* **Contener más `asignaciones`:** Al ser una función, puede tener propiedades adjuntas que actúen como `sub-manejadores` para un despacho más profundo.
+* **Auto-ejecutarse:**
+
+  Si la secuencia (combinación) de tipos coincide con la función, se ejecutará automáticamente *antes* de que el `despachador` devuelva el objeto (que tiene como referencia en **`this`** en funciones clásicas).
+
+  Los argumentos del `despachador` se pasan directamente a la función (véase "[Distinción Crucial: Cómo se Pasan los Argumentos de `_e()`](#distinción-crucial-cómo-se-pasan-los-argumentos-de-_e)").
+
+* **Contener más `manejadores` o `métodos`:**
+
+  Al ser una función, puede tener propiedades que actúen como `sub-manejadores` o `métodos` para un despacho más profundo.
+
+* [**Sobrescribir `métodos` dinámicamente**](#sobrescribir-métodos-dinámicamente).
 
 #### Auto-ejecución de `Manejadores`
 
@@ -555,7 +573,7 @@ Puedes registrar una función que se ejecute si los tipos de los argumentos coin
 // Nota: La función recibe los argumentos del despachador directamente
 
 const logString = (str) => {
-  console.log(`[LOG]: La cadena "${str}" fue procesada.`);
+  console.log(`[LOG]: La cadena '${str}' fue procesada.`);
 };
 
 // Asignamos la función directamente bajo el tipo 'String'
@@ -566,8 +584,8 @@ _e.fn({
 
 // Al llamar a '_e()' con una string, la función se ejecuta automáticamente
 
-_e("Mi primer evento");   //> "[LOG]: La cadena "Mi primer evento" fue procesada."
-_e("Otro evento más");    //> "[LOG]: La cadena "Otro evento más" fue procesada."
+_e("Mi primer evento");   //> "[LOG]: La cadena 'Mi primer evento' fue procesada."
+_e("Otro evento más");    //> "[LOG]: La cadena 'Otro evento más' fue procesada."
 ```
 
 #### Secuencia de Ejecución por Especificidad
@@ -601,13 +619,13 @@ _e(['a', 'b']);
 //> "[LOG]: Manejador raíz ejecutado."
 ```
 
-#### Sobrescribir Métodos Dinámicamente
+#### Sobrescribir `Métodos` Dinámicamente
 
-Un `manejador` incluso puede **devolver un objeto**. Si lo hace, los métodos de ese objeto sobrescribirán el conjunto de métodos que el despachador está construyendo.
+**Si un `manejador` devuelve un objeto**, los `métodos` o `sub-manejadores` que contenga sobrescribirán el conjunto de `métodos` que el `despachador` está agregando al objeto principal que devolverá (que tiene como referencia en **`this`** en funciones clásicas).
 
-Esto permite crear `APIs` dinámicas donde el resultado de una función puede cambiar los métodos disponibles.
+Esto permite crear `APIs` dinámicas donde el resultado de una función puede cambiar los `métodos` disponibles.
 
-**Ejemplo: Un validador que devuelve métodos diferentes según el resultado.**
+**Ejemplo: Un validador que devuelve `métodos` diferentes según el resultado.**
 
 ```javascript
 // Subtipo para identificar emails
@@ -661,26 +679,31 @@ otherUser.send();            //> "Enviando con SMTP genérico..."
 // otherUser.addToContacts(); // Esto causa error, porque el método no fue devuelto
 ```
 
-Esta característica avanzada te permite construir mecanismos y flujos de trabajo de una manera declarativa y potente.
-
 ## Notas Importantes sobre Versiones Anteriores
+
+*   **Hasta la v1.16.0:**
+
+    * Las actualizaciones se centraron principalmente en la documentación.
+    * En general, la funcionalidad se ha mantenido igual y estable.
 
 *   **Hasta la v1.15.0:**
 
-    * Las actualizaciones se centraron principalmente en la documentación.
     * Se agregaron pruebas unitarias con Jest v30.0.0.
     * En los subtipos predefinidos `browser-dom` se eliminó el alias `Browser` para el subtipo `Document`.
     * Se actualizó la documentación `JSDoc` del código para reflejar las referencias a "`manejador/es`".
-    * En general, la funcionalidad se ha mantenido igual y estable.
+
 *   **En la v1.14.0:**
 
     Se cambiaron las referencias a "nodo/s híbrido/s" por "`manejador/es`" en la documentación.
+
 *   **En la v1.9.0:**
 
     Se actualizó la documentación `JSDoc` del código para reflejar cambios de versiones anteriores.
+
 *   **En la v1.8.0:**
 
-    Se mejoró: el adjuntador de métodos (`attach_resolved_methods`), y el aislamiento de instancias en los registradores de funciones (`fn`) y subtipos (`subtype`) para entornos JavaScript como Node.js.
+    Se mejoró: el adjuntador de `métodos` (`attach_resolved_methods`), y el aislamiento de instancias en los registradores de funciones (`fn`) y subtipos (`subtype`) para entornos JavaScript como Node.js.
+
 *   **Anteriores a la v1.6.0:**
 
     El módulo en formato `ESM` no estaba configurado correctamente, lo que podía causar problemas de importación.
@@ -691,21 +714,21 @@ Esta característica avanzada te permite construir mecanismos y flujos de trabaj
 
   No está diseñado para usarse con TypeScript, Estructura es una alternativa a la verbosidad de TypeScript.
 
-* **¿Tiene alguna manera para depurar integrada?**
+* **¿Tiene alguna manera integrada para depurar?**
 
   Sí, actualmente se emiten advertencias y errores en consola (o se lanza una excepción en entornos sin consola) en estos casos:
   * Si registras un subtipo con una función con error o si devuelve un tipo incorrecto.
-  * Si tratas de usar nombres no permitidos para instancias o métodos.
+  * Si tratas de usar nombres no permitidos para instancias o `métodos`.
   * Si la instancia que tratas de crear ya existe.
-  * Si hubo un conflicto con nombres de métodos (colisiones).
+  * Si hubo un conflicto con nombres de `métodos` (colisiones).
   * Si un `manejador` presenta errores al ejecutarse.
-  * Si tratas de registrar un subtipo o método de manera incorrecta.
+  * Si tratas de registrar un subtipo o `método` de manera incorrecta.
 
-* **¿Cómo depurar métodos no encontrados?**
+* **¿Cómo depurar `métodos` no encontrados?**
 
   Véase "[Problemas comunes](#problemas-comunes)".
 
-* **¿Es posible incluir llamadas a Estructura dentro de bucles muy repetitivos?**
+* **¿Se puede incluir llamadas a Estructura en bucles muy repetitivos?**
 
   Véase "[Consideraciones](#consideraciones)".
 
@@ -713,15 +736,15 @@ Esta característica avanzada te permite construir mecanismos y flujos de trabaj
 
 * **`Manejador` no se ejecuta**
 
-  Compruebe que fue asignado a los tipos de datos o argumentos correctos verificando con [`.type()`](#_etypeinput) los tipos detectados. Y revise como funciona el orden de ejecución en "[Secuencia de Ejecución por Especificidad](#secuencia-de-ejecución-por-especificidad)".
+  Compruebe que fue asignado a los tipos de datos o argumentos adecuados verificando con [`.type()`](#_etypeinput) los tipos detectados. Y revise "[Secuencia de Ejecución por Especificidad](#secuencia-de-ejecución-por-especificidad)" o "[Conceptos Avanzados: `Manejadores`](#conceptos-avanzados-manejadores)".
 
-* **Error de métodos no encontrados**
+* **Error de `métodos` no encontrados**
 
-  Si al invocar un método aparece un error, asegúrese de que el método esté registrado para los tipos de datos o argumentos correctos, y que los datos sean exactamente de esos tipos, se puede usar [`.type()`](#_etypeinput) para verificar los tipos detectados de los datos.
+  Si al invocar un `método` aparece un error, asegúrese de que el `método` esté registrado para los tipos de datos o argumentos correctos, y que los datos sean exactamente de esos tipos, se puede usar [`.type()`](#_etypeinput) para verificar los tipos detectados de los datos.
 
-* **Métodos se sobrescriben**
+* **`Métodos` se sobrescriben**
 
-  Revise cómo funciona el orden de sobrescritura en caso de métodos con el mismo nombre en "[Colisión de Métodos: Lo General Sobrescribe a lo Específico](#colisión-de-métodos-lo-general-sobrescribe-a-lo-específico)" y la sección de sobrescritura dinámica "[Sobrescribir Métodos Dinámicamente](#3-sobrescribir-métodos-dinámicamente)".
+  Revise cómo funciona el orden de sobrescritura en caso de `métodos` con el mismo nombre en "[Colisión de `Métodos`: Lo General Sobrescribe a lo Específico](#colisión-de-métodos-lo-general-sobrescribe-a-lo-específico)" y la sección de sobrescritura dinámica "[Sobrescribir `Métodos` Dinámicamente](#3-sobrescribir-métodos-dinámicamente)".
 
 ## Consideraciones
 
@@ -731,7 +754,16 @@ Esta característica avanzada te permite construir mecanismos y flujos de trabaj
 
 * **Inconsistencias**
 
-  Como se menciona en la documentación del código de [`jQuery`](https://code.jquery.com/jquery-3.7.1.js) (en los comentarios de la función `.isFunction()`), en ciertas versiones antiguas de navegadores (pocos casos y raros) hay nodos del DOM que podrían retornar como tipo primitivo `'Function'` en lugar de `'Object'`, lo que causaría que en esas versiones de navegadores no sean disponibles los subtipos predefinidos `browser-dom`.
+  Como se menciona en la documentación del código de [`jQuery`](https://code.jquery.com/jquery-3.7.1.js) (comentarios de la función `isFunction`), en ciertas versiones antiguas de navegadores (pocos casos y raros) hay nodos del DOM que podrían retornar como tipo primitivo `'Function'` en lugar de `'Object'`, lo que causaría que en esas versiones de navegadores no sean disponibles los subtipos predefinidos `browser-dom`.
+
+  Solución en caso de requerir compatibilidad:
+  ```javascript
+  _e.subtype({
+    'Function': function(input){
+      return typeof input.nodeType === "number" || typeof input.item === "function" ? 'Object' : null;
+    }
+  });
+  ```
 
 ## Licencia
 
