@@ -1,6 +1,11 @@
 const _e = require('./dist/estructura.umd');
 
-describe('Estructura Framework v1.16.0 - Pruebas Unitarias', () => {
+// Estructura utiliza un temporizador interno fijo de 1000 ms
+// antes de emitir advertencias o errores asíncronos.
+// Esperamos 1010 ms para asegurarnos de que el mensaje se ha procesado.
+const waitForConsole = (ms = 1010) => new Promise(resolve => setTimeout(resolve, ms));
+
+describe('Estructura Framework v1.17.0 - Pruebas Unitarias', () => {
 
   // --- 1. GUÍA DE INICIO RÁPIDO ---
   describe('Guía de Inicio Rápido', () => {
@@ -98,7 +103,8 @@ describe('Estructura Framework v1.16.0 - Pruebas Unitarias', () => {
         logSpy.mockRestore();
       });
 
-      it('debería sobrescribir métodos específicos con otros más generales (regla de colisión)', () => {
+      it('debería sobrescribir métodos específicos con otros más generales (regla de colisión)', async () => {
+        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
         e.subtype({ Array: 'CustomList' });
 
         e.fn({ CustomList: { getPriority: () => 1 } }); // Más específico
@@ -109,6 +115,9 @@ describe('Estructura Framework v1.16.0 - Pruebas Unitarias', () => {
         // Según la documentación, el más general (global) debe prevalecer.
         const result = e([]).getPriority();
         expect(result).toBe(4);
+
+        await waitForConsole();
+        warnSpy.mockRestore();
       });
     });
 
@@ -138,7 +147,7 @@ describe('Estructura Framework v1.16.0 - Pruebas Unitarias', () => {
     });
 
     describe('_e.subtype() - Registro de tipos', () => {
-      it('debería registrar y utilizar subtipos, alias y subtipos funcionales', () => {
+      it('debería registrar y utilizar subtipos, alias y subtipos funcionales', async () => {
         const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
 
         e.subtype({
@@ -304,6 +313,182 @@ describe('Estructura Framework v1.16.0 - Pruebas Unitarias', () => {
       const otherUser = e('user@outlook.com');
       expect(otherUser.send()).toBe('Enviando con SMTP genérico...');
       expect(otherUser.addToContacts).toBeUndefined(); // Verifica que el método no existe
+    });
+  });
+
+  // --- 4. COBERTURAS EXTRAS ---
+  describe('Cobertura extra: Validaciones y colisiones complejas', () => {
+    let e;
+    let warnSpy;
+
+    beforeEach(() => {
+      e = _e.instance(`extra-test-${Date.now()}${Math.random()}`);
+      warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      warnSpy.mockRestore();
+    });
+
+    it('debería advertir y no registrar métodos con nombres reservados', async () => {
+      e.fn({
+        String: {
+          toString: () => 'Esto no debería registrarse',
+        },
+      });
+
+      await waitForConsole();
+
+      const result = e('hola');
+      expect(typeof result.toString).toBe('function'); // aún existe la versión nativa
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Name "toString" is a reserved word')
+      );
+    });
+
+    it('debería advertir si se pasa un tipo no válido a _e.fn()', async () => {
+      
+      e.fn({
+        String: 123, // valor inválido, debe ser Function u Object
+      });
+
+      await waitForConsole();
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Invalid definition for "fn.String"')
+      );
+    });
+
+    it('debería aplicar el orden de sobrescritura correcto en colisiones múltiples', async () => {
+      // Orden documentado:
+      // 1. Subtipos o alias (más específicos)
+      // 2. Tipos derivados
+      // 3. Tipos principales
+      // 4. Métodos globales (más generales) → prevalece
+      e.subtype({ Array: 'AliasArray' });
+
+      e.fn({ AliasArray: { whoWins: () => 'AliasArray' } });
+      e.fn({ Array: { whoWins: () => 'Array' } });
+      e.fn({ Object: { whoWins: () => 'Object' } });
+      e.fn({ whoWins: () => 'Global' });
+
+      const result = e([]).whoWins();
+      expect(result).toBe('Global');
+
+      await waitForConsole();
+    });
+  });
+
+  describe('Cobertura extra: Validaciones en _e.subtype()', () => {
+    let e;
+    let warnSpy;
+    let errorSpy;
+
+    beforeEach(() => {
+      e = _e.instance(`subtype-extra-${Date.now()}${Math.random()}`);
+      warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      warnSpy.mockRestore();
+      errorSpy.mockRestore();
+    });
+
+    it('debería advertir si se intenta registrar un subtipo con nombre reservado', async () => {
+
+      e.subtype({
+        Object: 'toString', // Nombre reservado
+      });
+
+      await waitForConsole();
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Name "toString" is a reserved word')
+      );
+    });
+
+    it('debería advertir si un función de subtipo devuelve un valor no válido', async () => {
+      
+      e.subtype({
+          String: () => 42 // Valor inválido, no string ni true
+      });
+
+      // Creamos un string para disparar el subtipo
+      e('test');
+
+      await waitForConsole();
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('should return a string or `true`')
+      );
+    });
+
+    it('debería capturar errores lanzados en funciones de subtipo y registrarlos como error', async () => {
+            
+      e.subtype({
+        Number: () => {
+          throw new Error('Fallo en definición de subtipo');
+        },
+      });
+
+      e(123); // Ejecuta la función de subtipo que lanza error
+
+      await waitForConsole();
+
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Subtype definition "Number" function error')
+      );
+    });
+
+    it('debería ignorar alias duplicados y no romper la ejecución', () => {
+      e.subtype({
+        Array: ['Collection', 'Collection'], // Duplicado intencional
+      });
+
+      // Registrar método para el alias y verificar que funciona
+      e.fn({
+        Collection: { ok: () => true },
+      });
+
+      const result = e([1, 2, 3]).ok();
+      expect(result).toBe(true); // Funciona aunque el alias esté repetido
+    });
+  });
+
+  describe('Cobertura extra: casos límite finales', () => {
+    let e;
+    let warnSpy;
+
+    beforeEach(() => {
+      e = _e.instance(`final-extra-${Date.now()}${Math.random()}`);
+      warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      warnSpy.mockRestore();
+    });
+
+    it('debería advertir si se intenta registrar un método global con nombre reservado', async () => {
+      
+      e.fn({
+        toString: () => 'Método global inválido',
+      });
+
+      await waitForConsole();
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Name "toString" is a reserved word')
+      );
+    });
+
+    it('debería devolver un objeto vacío si no hay coincidencia de tipo', () => {
+      // No registramos nada
+      const result = e(Symbol('sin-métodos'));
+
+      // El objeto resultado no debe tener métodos propios
+      expect(Object.keys(result)).toHaveLength(0);
+      expect(result.constructor).toBe(Object);
     });
   });
 });

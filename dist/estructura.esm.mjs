@@ -1,11 +1,9 @@
 /**
- * Estructura v1.16.0
- * A lightweight, type-based dispatching JavaScript Framework.
+ * Estructura v1.17.0
+ * A lightweight dependency-free JavaScript framework that lets you assign functions to be automatically attached to custom or extended data types, based on one or multiple arguments.
  * 2025 (c) OKZGN
  * @license MIT
  */
-
-'use strict';
 
 /**
  * Describes the result of a type analysis operation.
@@ -50,6 +48,7 @@
 let messages = {};
 const instances = {};
 const typeof_str_value = typeof '';
+const typeof_obj_value = typeof {};
 const typeof_fn_value = typeof function(){};
 const typeof_undef_value = typeof undefined;
 const get_primitive_type_fn = Object.prototype.toString;
@@ -66,7 +65,9 @@ const predefined_subtypes = {
 				// For any input identified as a 'Node', create a more specific hierarchical subtype.
 				// e.g., A <div> element becomes 'Node.DIV'.
 				'Node': function(input, subtype){ return subtype + '.' + input.tagName; },
-				'Window': 'Browser', 'Navigator': 'Browser', 'Screen': 'Browser', 'Location': 'Browser', 'History': 'Browser'
+				'Window': 'Browser', 'Navigator': 'Browser', 'Screen': 'Browser', 'Location': 'Browser', 'History': 'Browser',
+				// Solution for some browser incompatibilities that return 'Function' instead of 'Object' for DOM nodes and collections.
+				'Function': function(input){ return typeof input.nodeType === "number" || typeof input.item === "function" ? 'Object' : null; }
 			};
 		}
 		return predefined_subtypes['browser-dom'].cache;
@@ -113,12 +114,18 @@ function message(message_type, message){
  * @returns {boolean} Returns `true` if the name is valid.
  */
 function is_correct_object_property_name(object, property){
-	if(!verify_own_property_fn.call(object, property)){ return false; }
-	if(incorrect_fns_and_subtypes_names[property]){
-		message.call(this, 'warn', 'Name "' + property + '" is a reserved word and cannot be used.');
-		return false;
+	let object_type = type.call(this, object);
+	let it_is = true;
+
+	if(object_type['Array'] && incorrect_fns_and_subtypes_names[object[property]]){
+		property = object[property];
+		it_is = false;
 	}
-	return true;
+	else if(object_type['Object'] && (!verify_own_property_fn.call(object, property) || incorrect_fns_and_subtypes_names[property])){ it_is = false; }
+
+	if(!it_is){ message.call(this, 'warn', 'Name "' + property + '" is a reserved word and cannot be used.'); }
+
+	return it_is;
 }
 
 /**
@@ -151,16 +158,19 @@ function attach_resolved_methods(result_object, resolved_node, resolved_node_typ
 		try {
 			// A hybrid node called 'handler' can return a new object of functions to use.
 			// If it returns a falsy value, we fall back to the original node.
+			// If it returns a non-object, we also fall back to protect against errors.
 			actual_fns = actual_fns.apply(result_object, main_fn_args) || resolved_node;
 			if(typeof actual_fns === typeof_str_value){ actual_fns = resolved_node; }
 		}
-		catch(error){ message.call(this, 'error', 'Type function "' + resolved_node_type + '" error: ' + String(error)); }
+		catch(error){ message.call(this, 'error', 'Type handler function "' + resolved_node_type + '" error: ' + String(error)); }
 	}
 	// If it is a string, the function stops to protect against string iteration. Another data types don't cause issues, including falsy values.
 	if(typeof actual_fns === typeof_str_value){ return (should_return_result ? result_object : null); }
 	for(let fn_name in actual_fns){
 		if(!verify_own_property_fn.call(actual_fns, fn_name) || typeof actual_fns[fn_name] !== typeof_fn_value){ continue; }
-		if(result_object[fn_name]){ message.call(this, 'warn', 'Method conflict for "' + fn_name + '". A definition from type "' + resolved_node_type + '" is overwriting another same name method or "handler". This occurs when an input matches multiple types.'); }
+		// The collisions order is strictly inherited from the inverted iteration order in main_dispatcher (while(type_iterator--)),
+		// ensuring the most general type is processed last and overwrites more specific matches.
+		if(result_object[fn_name]){ message.call(this, 'warn', 'Conflict for "' + fn_name + '". A definition from type "' + resolved_node_type + '" is overwriting another same name method or handler. This occurs when an input matches multiple types.'); }
 		result_object[fn_name] = adjust_method(this, fn_name, actual_fns, main_fn_args);
 	}
 	return (should_return_result ? result_object : null);
@@ -183,7 +193,7 @@ function adjust_method(instance_context, method_name, methods, main_fn_args){
 		let method_args = [Array.prototype.slice.call(main_fn_args)];
 		for(let i = 0; i < arguments.length; i++){ method_args.push(arguments[i]); }
 		try { return methods[method_name].apply(this, method_args); }
-		catch(error){ message.call(instance_context, 'error', 'Method "' + method_name + '" error: '  + String(error)); }
+		catch(error){ message.call(instance_context, 'error', 'Method "' + method_name + '" error: ' + String(error)); }
 		return this;
 	};
 }
@@ -200,8 +210,8 @@ function adjust_method(instance_context, method_name, methods, main_fn_args){
  * @returns {*|false} The result of the subtype function, or `false` if an error occurs.
  */
 function subtype_definition_execution(subtype_name, subtype_definition_fn, input, primitive_type, matched_subtypes){
-	try { return subtype_definition_fn(input, primitive_type, matched_subtypes); }
-	catch(error){ message.call(this, 'error', 'Subtype definition "' + subtype_name + '" function error: '  + String(error)); }
+	try { return subtype_definition_fn(input, primitive_type, function(){ return simple_object_extend([], matched_subtypes); }); }
+	catch(error){ message.call(this, 'error', 'Subtype definition "' + subtype_name + '" function error: ' + String(error)); }
 	return false;
 }
 
@@ -269,7 +279,7 @@ function merge_type_fns_node(target_object, property_name, new_function_or_objec
 	let previous_object_or_fn_copy = {};
 	// Note: The extend operation is safe; it will do nothing if target_object[property_name] is not an object.
 	simple_object_extend(previous_object_or_fn_copy, target_object[property_name]);
-	target_object[property_name] = new_function_or_object;
+	if(!target_object[property_name] || typeof target_object[property_name] === typeof_obj_value){ target_object[property_name] = new_function_or_object; }
 	simple_object_extend(target_object[property_name], previous_object_or_fn_copy);
 }
 
@@ -345,6 +355,7 @@ function subtype(subtype_definitions, parent_subtype){
 						message.call(this, 'warn', 'Subtype definition "' + definition_name + '" contains an invalid value which has been ignored.');
 						continue;
 					}
+					if(!is_correct_object_property_name.call(this, inline_subtype_definitions, inline_subtype_definitions_iterator)){ continue; }
 					existent_subtypes_reference.push({ name: definition_name, value: inline_subtype_definitions[inline_subtype_definitions_iterator] });
 				}
 			break;

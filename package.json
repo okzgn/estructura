@@ -1,7 +1,7 @@
 {
   "name": "estructura-js",
-  "version": "1.16.0",
-  "description": "A lightweight, type-based dispatching JavaScript Framework.",
+  "version": "1.17.0",
+  "description": "A lightweight dependency-free JavaScript framework that lets you assign functions to be automatically attached to custom or extended data types, based on one or multiple arguments.",
   "main": "./dist/estructura.umd.js",
   "module": "./dist/estructura.esm.mjs",
   "exports": {
@@ -17,10 +17,9 @@
     "access": "public"
   },
   "scripts": {
-    "test": "jest",
-    "start": "jest"
+    "test": "jest"
   },
-  "author": "Elías A. Soshina",
+  "author": "OKZGN",
   "license": "MIT",
   "homepage": "https://github.com/okzgn/estructura#readme",
   "repository": {
@@ -37,5 +36,8 @@
     "data-types",
     "lightweight",
     "zero-dependencies"
-  ]
+  ],
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
 }
