@@ -5,7 +5,7 @@ const _e = require('./dist/estructura.umd');
 // Esperamos 1010 ms para asegurarnos de que el mensaje se ha procesado.
 const waitForConsole = (ms = 1010) => new Promise(resolve => setTimeout(resolve, ms));
 
-describe('Estructura Framework v1.17.0 - Pruebas Unitarias', () => {
+describe('Estructura Framework v1.18.0 - Pruebas Unitarias', () => {
 
   // --- 1. GUÍA DE INICIO RÁPIDO ---
   describe('Guía de Inicio Rápido', () => {

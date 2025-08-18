@@ -1,5 +1,5 @@
 /**
- * Estructura v1.17.0
+ * Estructura v1.18.0
  * A lightweight dependency-free JavaScript framework that lets you assign functions to be automatically attached to custom or extended data types, based on one or multiple arguments.
  * 2025 (c) OKZGN
  * @license MIT
