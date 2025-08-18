@@ -449,17 +449,11 @@ if(setinterval_is_on){
 					console[messages[instance_name][message_content]](message_content);
 				}
 			}
+			messages[instance_name] = {};
 		}
-		messages = {};
 	}, 1000);
 }
 
 /** @type {EstructuraPublicInterface} */
 const _e = get_instance('');
-/**
- * Retrieves or creates a named, sandboxed instance of Estructura.
- * @param {string} name The name of the instance. Use an empty string ('') for the default instance.
- * @returns {EstructuraPublicInterface} The requested instance.
- */
-_e.instance = function(name){ return get_instance(name); };
 export default _e;

@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Estructura es un framework JavaScript ligero y sin dependencias, que te permite asignar funciones que se adjuntarán automáticamente a tipos de datos que puedes crear o extender y que pueden ser de uno o múltiples argumentos.
+Estructura es un framework JavaScript ligero y sin dependencias, que te permite asignar funciones que se vincularán automáticamente a tipos de datos que puedes crear o extender y que pueden ser de uno o múltiples argumentos.
 
 **[Guía de inicio rápido](#guía-de-inicio-rápido)**
 
@@ -114,10 +114,10 @@ _e(myData, format, destination).process();
   - [Sobrescribir Métodos Dinámicamente](#sobrescribir-métodos-dinámicamente)
 
 ### 8. Adicionales
-- [Notas sobre Versiones Anteriores y Actual](#notas-sobre-versiones-anteriores-y-actual)
 - [Preguntas Frecuentes](#faq-preguntas-frecuentes)
 - [Problemas Comunes](#problemas-comunes)
 - [Consideraciones](#consideraciones)
+- [Notas sobre Versiones Anteriores y Actual](#notas-sobre-versiones-anteriores-y-actual)
 - [Licencia](#licencia)
 
 </details>
@@ -1015,40 +1015,6 @@ otherUser.send();            //> "Enviando con SMTP genérico..."
 // otherUser.addToContacts(); // Esto causa error, porque el método no fue devuelto
 ```
 
-## Notas sobre Versiones Anteriores y Actual
-
-*   **Hasta la v1.17.0:**
-
-    * Se ha mejorado la seguridad en `subtype_definition_execution` y muestra de advertencias y errores en consola.
-    * Se corregieron inconsistencias en `subtype`, `is_correct_object_property_name`, `merge_type_fns_node` y mensajes de consola.
-    * Compatibilidad integrada para inconsistencias de ciertos navegadores con subtipos predefinidos `browser-dom`.
-    * Se ha degradado la versión de Jest para pruebas unitarias a v29.7+ para asegurar la compatibilidad con versiones anteriores de Node.js (v14.15+).
-    * Se mejoraron y agregaron pruebas unitarias para cobertura extra.
-    * Las actualizaciones se centraron principalmente en la documentación.
-    * En general, la funcionalidad se ha mantenido estable.
-
-*   **En la v1.15.0:**
-
-    * Se agregaron pruebas unitarias con Jest.
-    * En los subtipos predefinidos `browser-dom` se eliminó el alias `Browser` para el subtipo `Document` (`no breaking change`).
-    * Se actualizó la documentación `JSDoc` del código para reflejar las referencias a "`manejadores`".
-
-*   **En la v1.14.0:**
-
-    En la documentación, los "`manejadores`" reemplazaron a los "nodo/s híbrido/s".
-
-*   **En la v1.9.0:**
-
-    Se actualizó la documentación `JSDoc` del código para reflejar cambios de versiones anteriores.
-
-*   **En la v1.8.0:**
-
-    Se mejoró: el adjuntador de `métodos` (`attach_resolved_methods`), y el aislamiento de instancias en los registradores de funciones (`fn`) y subtipos (`subtype`) para entornos JavaScript como Node.js.
-
-*   **Anteriores a la v1.6.0:**
-
-    El módulo en formato `ESM` no estaba configurado correctamente, lo que podía causar problemas de importación.
-
 ## FAQ (Preguntas Frecuentes)
 
 * **¿Puedo usar Estructura con TypeScript?**
@@ -1101,7 +1067,7 @@ otherUser.send();            //> "Enviando con SMTP genérico..."
   - **Procesos simultáneos:** procesos comunes del S.O. ejecutándose.
   - **Entorno de ejecución:** "Google Chrome 138.0".
   - **Contexto de ejecución:** limpio, 10 tipos de datos variados definidos con 100 `métodos` simples en total asignados equitativamente.
-  - **Resumen:** bucle `for` de 10000 repeticiones con 10 llamadas al `despachador` para los tipos definidos.
+  - **Resumen de ejecución:** bucle `for` de 10000 repeticiones con 10 llamadas al `despachador` para los tipos definidos.
 
 * **Inconsistencias**
 
@@ -1114,6 +1080,44 @@ otherUser.send();            //> "Enviando con SMTP genérico..."
     }
   });
   ```
+
+## Notas sobre Versiones Anteriores y Actual
+
+*   **Hasta la v1.18.0:**
+
+    * Se han eliminado redundancias y se ha corregido el flujo de mensajes de consola.
+    * En general, la funcionalidad se ha mantenido estable.
+
+*   **En la v1.17.0:**
+
+    * Se ha mejorado la seguridad en `subtype_definition_execution` y muestra de advertencias y errores en consola.
+    * Se corregieron inconsistencias en `subtype`, `is_correct_object_property_name`, `merge_type_fns_node` y mensajes de consola.
+    * Compatibilidad integrada para inconsistencias de ciertos navegadores con subtipos predefinidos `browser-dom`.
+    * Se ha degradado la versión de Jest para pruebas unitarias a v29.7+ para asegurar la compatibilidad con versiones anteriores de Node.js (v14.15+).
+    * Se mejoraron y agregaron pruebas unitarias para cobertura extra.
+    * Las actualizaciones se centraron principalmente en la documentación.
+
+*   **En la v1.15.0:**
+
+    * Se agregaron pruebas unitarias con Jest.
+    * En los subtipos predefinidos `browser-dom` se eliminó el alias `Browser` para el subtipo `Document` (`no breaking change`).
+    * Se actualizó la documentación `JSDoc` del código para reflejar las referencias a "`manejadores`".
+
+*   **En la v1.14.0:**
+
+    En la documentación, los "`manejadores`" reemplazaron a los "nodo/s híbrido/s".
+
+*   **En la v1.9.0:**
+
+    Se actualizó la documentación `JSDoc` del código para reflejar cambios de versiones anteriores.
+
+*   **En la v1.8.0:**
+
+    Se mejoró: el adjuntador de `métodos` (`attach_resolved_methods`), y el aislamiento de instancias en los registradores de funciones (`fn`) y subtipos (`subtype`) para entornos JavaScript como Node.js.
+
+*   **Anteriores a la v1.6.0:**
+
+    El módulo en formato `ESM` no estaba configurado correctamente, lo que podía causar problemas de importación.
 
 ## Licencia
 

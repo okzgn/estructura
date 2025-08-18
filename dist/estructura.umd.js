@@ -462,18 +462,12 @@
 						console[messages[instance_name][message_content]](message_content);
 					}
 				}
+				messages[instance_name] = {};
 			}
-			messages = {};
 		}, 1000);
 	}
 
 	/** @type {EstructuraPublicInterface} */
 	var _e = get_instance('');
-	/**
-	 * Retrieves or creates a named, sandboxed instance of Estructura.
-	 * @param {string} name The name of the instance. Use an empty string ('') for the default instance.
-	 * @returns {EstructuraPublicInterface} The requested instance.
-	 */
-	_e.instance = function(name){ return get_instance(name); };
 	return _e;
 }));
