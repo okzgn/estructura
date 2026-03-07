@@ -712,7 +712,14 @@ Registra definiciones de tipos nuevos para cada instancia de Estructura. **Se ll
 
 *   Una cadena de texto (`string`) para crear un alias simple.
 *   Un `array` de cadenas de texto para asignar múltiples alias a la vez.
-*   Una función que recibe el [valor (`input`)](#_earg1-arg2-) y puede devolver:
+*   **Una función evaluadora** que recibe el [valor (`input`)](#_earg1-arg2-) y decide el tipo/subtipo de `input`:
+    > **Argumentos disponibles en la función:**
+    > * **`input`**: El valor que se está analizando.
+    > * **`primitive_type`**: El nombre del tipo principal o derivado del que proviene (ej. `'Object'`, `'String'`).
+    > * **`getTypes`**: Una función que, al ejecutarse `getTypes()`, devuelve una copia segura del *array/mapa* con todos los tipos detectados hasta ese momento en la cadena de recursividad. (Al ser una función, garantiza un rendimiento óptimo al no clonar el mapa a menos que lo solicites explícitamente).
+
+    **Valores que puede retornar la función:**
+
     * Una cadena de texto con el nombre nuevo del subtipo.
     * Un *booleano* **`true`** si el nombre de la *clave* debe usarse como el nombre del subtipo.
     * Si no coincide con el subtipo: **`undefined`**, **`null`**, **`false`**, o **`''`**.
@@ -1057,17 +1064,23 @@ otherUser.send();            //> "Enviando con SMTP genérico..."
 
 * **Rendimiento**
 
-  **En dispositivos de gama baja** se experimentan retrasos (`lags`) en bucles de alta frecuencia. Por ejemplo:
-  
-  `Lag` de aprox. 1 segundo por cada 100000 ejecuciones seguidas en:
+  * **En la v1.19.0:**
 
-  - **Dispositivo:** "HP 15 Notebook PC".
-  - **Procesador:** "AMD A8-7410 APU with AMD Radeon R5 Graphics, 2200 Mhz, 4 Core(s), 4 Logical Processor(s)".
-  - **S.O.:** "Windows 10 Home" de 64 bits.
-  - **Procesos simultáneos:** procesos comunes del S.O. ejecutándose.
-  - **Entorno de ejecución:** "Google Chrome 138.0".
-  - **Contexto de ejecución:** limpio, 10 tipos de datos variados definidos con 100 `métodos` simples en total asignados equitativamente.
-  - **Resumen de ejecución:** bucle `for` de 10000 repeticiones con 10 llamadas al `despachador` para los tipos definidos.
+    Se optimizó el registro de subtipos anidados en `subtype`, reduciendo a la mitad el tiempo de resolución en anidaciones profundas.
+
+  * **Hasta la v1.18.0:**
+
+    **En dispositivos de gama baja** se experimentan retrasos (`lags`) en bucles de alta frecuencia. Por ejemplo:
+    
+    `Lag` de aprox. 1 segundo por cada 100000 ejecuciones seguidas en:
+
+    - **Dispositivo:** "HP 15 Notebook PC".
+    - **Procesador:** "AMD A8-7410 APU with AMD Radeon R5 Graphics, 2200 Mhz, 4 Core(s), 4 Logical Processor(s)".
+    - **S.O.:** "Windows 10 Home" de 64 bits.
+    - **Procesos simultáneos:** procesos comunes del S.O. ejecutándose.
+    - **Entorno de ejecución:** "Google Chrome 138.0".
+    - **Contexto de ejecución:** limpio, 10 tipos de datos variados definidos con 100 `métodos` simples en total asignados equitativamente.
+    - **Resumen de ejecución:** bucle `for` de 10000 repeticiones con 10 llamadas al `despachador` para los tipos definidos.
 
 * **Inconsistencias**
 
@@ -1086,7 +1099,7 @@ otherUser.send();            //> "Enviando con SMTP genérico..."
 *   **Hasta la v1.19.0:**
 
     * **`Bugfix` crítico:** se resolvió una fuga de memoria (`Memory Leak`) en el sistema interno de cola de mensajes (`setInterval`).
-    * **Rendimiento:** se optimizó drásticamente el registro de subtipos anidados (`trash code` eliminado), reduciendo a la mitad el tiempo de resolución en anidaciones profundas.
+    * **Rendimiento:** se optimizó el registro de subtipos anidados (`trash code` eliminado en `subtype`), reduciendo a la mitad el tiempo de resolución en anidaciones profundas.
     * Se mejoraron los comentarios JSDoc del código y documentación.
     * En general, la funcionalidad se ha mantenido estable.
 
