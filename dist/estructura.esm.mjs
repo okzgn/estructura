@@ -290,7 +290,7 @@ function merge_type_fns_node(target_object, property_name, new_function_or_objec
  * @this EstructuraInstance
  * @param {object|function} new_type_fns An object representing the function tree to merge, or a single function to act as a node.
  * @param {object} [existent_type_fns] Internal use for recursion.
- * @returns {void}
+ * @returns {undefined}
  */
 function fn(new_type_fns, existent_type_fns){
 	if(typeof new_type_fns === typeof_fn_value){
@@ -324,9 +324,10 @@ function fn(new_type_fns, existent_type_fns){
  * @this EstructuraInstance
  * @param {object|string} subtype_definitions An object with definitions or a predefined set name.
  * @param {Array} [parent_subtype] Internal use for recursion.
- * @returns {void}
+ * @param {boolean} [should_not_create_nested_definitions] If true, prevents registering functions or values during structural initialization of nested subtypes.
+ * @returns {undefined}
  */
-function subtype(subtype_definitions, parent_subtype){
+function subtype(subtype_definitions, parent_subtype, should_not_create_nested_definitions){
 	if(typeof subtype_definitions === typeof_str_value && typeof predefined_subtypes[subtype_definitions] === typeof_fn_value){
 		return subtype.call(this, predefined_subtypes[subtype_definitions](), parent_subtype);
 	}
@@ -345,7 +346,9 @@ function subtype(subtype_definitions, parent_subtype){
 				subtype.call(this, subtype_definitions[definition_name], current_subtypes[definition_name]);
 			break;
 			case 'Function':
-				existent_subtypes_reference.push({ name: definition_name, fn: subtype_definitions[definition_name] });
+				if(!should_not_create_nested_definitions){
+					existent_subtypes_reference.push({ name: definition_name, fn: subtype_definitions[definition_name] });
+				}
 			break;
 			case 'Array': case 'String':
 				let inline_subtype_definitions = typeof subtype_definitions[definition_name] === typeof_str_value ? [subtype_definitions[definition_name]] : subtype_definitions[definition_name];
@@ -356,7 +359,9 @@ function subtype(subtype_definitions, parent_subtype){
 						continue;
 					}
 					if(!is_correct_object_property_name.call(this, inline_subtype_definitions, inline_subtype_definitions_iterator)){ continue; }
-					existent_subtypes_reference.push({ name: definition_name, value: inline_subtype_definitions[inline_subtype_definitions_iterator] });
+					if(!should_not_create_nested_definitions){
+						existent_subtypes_reference.push({ name: definition_name, value: inline_subtype_definitions[inline_subtype_definitions_iterator] });
+					}
 				}
 			break;
 			default: message.call(this, 'warn', 'Invalid definition for "subtype.' + definition_name + '". Only Object, Function, Array, or String are allowed.');
@@ -447,9 +452,9 @@ if(setinterval_is_on){
 			for(let message_content in messages[instance_name]){
 				if(verify_own_property_fn.call(messages[instance_name], message_content)){
 					console[messages[instance_name][message_content]](message_content);
+					delete messages[instance_name][message_content];
 				}
 			}
-			messages[instance_name] = {};
 		}
 	}, 1000);
 }

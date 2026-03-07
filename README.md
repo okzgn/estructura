@@ -533,7 +533,7 @@ Registra asignaciones de [`métodos`](#métodos) y/o [`manejadores`](#manejadore
     ```
     #### **Colisión de `Métodos` o `Manejadores`**
 
-    **⚠️ IMPORTANTE: Modo del Framework, Lo General Sobrescribe a lo Específico**
+    **⚠️ IMPORTANTE: Modo del Framework, En Colisiones Lo General Sobrescribe a lo Específico**
     
     Cuando un [valor (`input`)](#_earg1-arg2-) corresponde a múltiples tipos, todos sus `métodos` se fusionan en el objeto resultante. Si dos o más tipos asignan un `método` o `manejador` con el mismo nombre, se producirá una colisión. En este caso, **el `método` o `manejador` del tipo más general (menos específico, principal) prevalecerá, sobrescribiendo al de subtipo o alias más específico**. Puedes consultar el orden de especificidad de cualquier valor usando [`.type()`](#_etypeinput).
     
