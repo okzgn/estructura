@@ -356,7 +356,7 @@
 			switch(subtype_definition_type[0]){
 				case 'Object':
 					// Put subtype definitions in the first level of definitions to create container for another subtypes.
-					subtype.call(this, subtype_definitions[definition_name]);
+					subtype.call(this, subtype_definitions[definition_name], null, true);
 					// This puts subtype definitions into the subtype definition that is infered from.
 					subtype.call(this, subtype_definitions[definition_name], current_subtypes[definition_name]);
 				break;
