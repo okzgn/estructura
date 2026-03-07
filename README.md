@@ -1066,7 +1066,7 @@ otherUser.send();            //> "Enviando con SMTP genérico..."
 
   * **En la v1.19.0:**
 
-    Se optimizó el registro de subtipos anidados en `subtype`, reduciendo a la mitad el tiempo de resolución en anidaciones profundas.
+    Se optimizó el registro de subtipos anidados en [`.subtype()`](#_esubtypedefinitions), reduciendo a la mitad el tiempo de resolución en anidaciones profundas.
 
   * **Hasta la v1.18.0:**
 
@@ -1098,12 +1098,12 @@ otherUser.send();            //> "Enviando con SMTP genérico..."
 
 *   **Hasta la v1.19.0:**
 
-    * **`Bugfix` crítico:** se resolvió una fuga de memoria (`Memory Leak`) en el sistema interno de cola de mensajes (`setInterval`).
-    * **Rendimiento:** se optimizó el registro de subtipos anidados (`trash code` eliminado en `subtype`), reduciendo a la mitad el tiempo de resolución en anidaciones profundas.
-    * Se mejoraron los comentarios JSDoc del código y documentación.
+    * **`Bugfix` crítico:** se resolvió una fuga de memoria (`Memory Leak`) en el sistema interno de cola de mensajes de consola (`setInterval`).
+    * **Rendimiento:** se optimizó el registro de subtipos anidados (`trash code` eliminado en [`.subtype()`](#_esubtypedefinitions)), reduciendo a la mitad el tiempo de resolución en anidaciones profundas.
+    * Se mejoraron o actualizaron los comentarios JSDoc del código y documentación.
     * En general, la funcionalidad se ha mantenido estable.
 
-*   **Hasta la v1.18.0:**
+*   **En la v1.18.0:**
 
     * Se han eliminado redundancias y se ha corregido el flujo de mensajes de consola.
 
