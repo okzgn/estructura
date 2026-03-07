@@ -5,7 +5,7 @@ const _e = require('./dist/estructura.umd');
 // Esperamos 1010 ms para asegurarnos de que el mensaje se ha procesado.
 const waitForConsole = (ms = 1010) => new Promise(resolve => setTimeout(resolve, ms));
 
-describe('Estructura Framework v1.18.0 - Pruebas Unitarias', () => {
+describe('Estructura Framework v1.19.0 - Pruebas Unitarias', () => {
 
   // --- 1. GUÍA DE INICIO RÁPIDO ---
   describe('Guía de Inicio Rápido', () => {
@@ -489,6 +489,22 @@ describe('Estructura Framework v1.18.0 - Pruebas Unitarias', () => {
       // El objeto resultado no debe tener métodos propios
       expect(Object.keys(result)).toHaveLength(0);
       expect(result.constructor).toBe(Object);
+    });
+
+    it('debería ejecutar las funciones de validación de subtipos anidados una sola vez (optimización de rendimiento)', () => {
+      const validatorSpy = jest.fn((input) => input.isAdmin ? 'Admin' : false);
+      
+      e.subtype({
+        Object: {
+          Admin: validatorSpy
+        }
+      });
+
+      // Validación de número de ejecuciones
+      e({ isAdmin: true });
+
+      // En la v1.18.0 esto era 2, innecesario/redundante. En la v1.19.0 debe ser estrictamente 1.
+      expect(validatorSpy).toHaveBeenCalledTimes(1); 
     });
   });
 });

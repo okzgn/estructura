@@ -1083,10 +1083,16 @@ otherUser.send();            //> "Enviando con SMTP genérico..."
 
 ## Notas sobre Versiones Anteriores y Actual
 
+*   **Hasta la v1.19.0:**
+
+    * **`Bugfix` crítico:** se resolvió una fuga de memoria (`Memory Leak`) en el sistema interno de cola de mensajes (`setInterval`).
+    * **Rendimiento:** se optimizó drásticamente el registro de subtipos anidados (`trash code` eliminado), reduciendo a la mitad el tiempo de resolución en anidaciones profundas.
+    * Se mejoraron los comentarios JSDoc del código y documentación.
+    * En general, la funcionalidad se ha mantenido estable.
+
 *   **Hasta la v1.18.0:**
 
     * Se han eliminado redundancias y se ha corregido el flujo de mensajes de consola.
-    * En general, la funcionalidad se ha mantenido estable.
 
 *   **En la v1.17.0:**
 
