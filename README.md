@@ -1140,7 +1140,9 @@ otherUser.send();            //> "Enviando con SMTP genérico..."
 
 ## Licencia
 
-MIT © Desarrollado por [OKZGN](https://okzgn.com)
+MIT License
+
+Copyright (c) 2025 [OKZGN](https://okzgn.com)
 
 ---
 
