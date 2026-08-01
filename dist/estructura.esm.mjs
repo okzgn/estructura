@@ -1,5 +1,5 @@
 /**
- * Estructura v1.19.0
+ * Estructura v1.20.0
  * A lightweight dependency-free JavaScript framework that lets you assign functions to be automatically attached to custom or extended data types, based on one or multiple arguments.
  * 2025 (c) OKZGN
  * @license MIT
@@ -75,7 +75,7 @@ const predefined_subtypes = {
 };
 const incorrect_fns_and_subtypes_names = {
 	// Object/Function prototype properties
-	'hasOwnProperty': true, 'toString': true, 'valueOf': true, 'constructor': true, 'isPrototypeOf': true, 'propertyIsEnumerable': true, 'toLocaleString': true, 'name': true, 'arguments': true, 'caller': true, 'apply': true, 'bind': true, 'call': true, '__defineGetter__': true, '__defineSetter__': true, '__lookupGetter__': true, '__lookupSetter__': true, '__proto__': true, 'prototype': true, 'length': true, 
+	'hasOwnProperty': true, 'toString': true, 'valueOf': true, 'constructor': true, 'isPrototypeOf': true, 'propertyIsEnumerable': true, 'toLocaleString': true, 'name': true, 'arguments': true, 'caller': true, 'apply': true, 'bind': true, 'call': true, '__defineGetter__': true, '__defineSetter__': true, '__lookupGetter__': true, '__lookupSetter__': true, '__proto__': true, 'prototype': true, 'length': true,
 	// JavaScript reserved keywords
 	'await': true, 'break': true, 'case': true, 'catch': true, 'class': true, 'const': true, 'continue': true, 'debugger': true, 'default': true, 'delete': true, 'do': true, 'else': true, 'enum': true, 'export': true, 'extends': true, 'false': true, 'finally': true, 'for': true, 'function': true, 'if': true, 'implements': true, 'import': true, 'in': true, 'instanceof': true, 'interface': true, 'let': true, 'new': true, 'null': true, 'package': true, 'private': true, 'protected': true, 'public': true, 'return': true, 'static': true, 'super': true, 'switch': true, 'this': true, 'throw': true, 'true': true, 'try': true, 'typeof': true, 'var': true, 'void': true, 'while': true, 'with': true, 'yield': true,
 	// Internal framework properties
@@ -447,7 +447,7 @@ function get_instance(name){
 
 // Periodically dispatch all queued info, warn, and error messages.
 if(setinterval_is_on){
-	setInterval(function(){
+	let interval = setInterval(function(){
 		for(let instance_name in messages){
 			for(let message_content in messages[instance_name]){
 				if(verify_own_property_fn.call(messages[instance_name], message_content)){
@@ -456,7 +456,10 @@ if(setinterval_is_on){
 				}
 			}
 		}
-	}, 1000);
+  }, 1000);
+	if(interval.unref){
+		interval.unref();
+	}
 }
 
 /** @type {EstructuraPublicInterface} */

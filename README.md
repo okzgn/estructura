@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Estructura es un framework JavaScript ligero y sin dependencias, que te permite asignar funciones que se vincularán automáticamente a tipos de datos que puedes crear o extender y que pueden ser de uno o múltiples argumentos.
+Estructura es un framework de JavaScript ligero y sin dependencias que te permite asignar funciones que se vincularán automáticamente a tipos de datos personalizados o extendidos, basándose en uno o múltiples argumentos.
 
 **[Guía de inicio rápido](#guía-de-inicio-rápido)**
 
@@ -803,7 +803,7 @@ domAPI.subtype('browser-dom');
  * el orden que devuelve '.type()' por defecto es el inverso.
  */
 console.log(domAPI.type(document.head));   //> [ "Node.HEAD", "Node", "HTMLHeadElement", "Object" ]
-console.log(domAPI.type(document));        //> [ "Document", "Browser", "HTMLDocument", "Object" ]
+console.log(domAPI.type(document));        //> [ "Document", "HTMLDocument", "Object" ]
 console.log(domAPI.type(window));          //> [ "Browser", "Window", "Object" ]
 ```
 
@@ -1096,12 +1096,17 @@ otherUser.send();            //> "Enviando con SMTP genérico..."
 
 ## Notas sobre Versiones Anteriores y Actual
 
-*   **Hasta la v1.19.0:**
+*   **Hasta la v1.20.0:**
+
+    * **Corrección relevante:** se inicializó `.unref()` en el `setInterval` del sistema interno de mensajes de consola, específicamente para entornos como Node.js, de modo que el proceso pueda terminar en lugar de mantenerse indefinidamente activo.
+    * Pequeños ajustes de coherencia en la documentación.
+    * En general, la funcionalidad se ha mantenido estable.
+
+*   **En la v1.19.0:**
 
     * **`Bugfix` crítico:** se resolvió una fuga de memoria (`Memory Leak`) en el sistema interno de cola de mensajes de consola (`setInterval`).
     * **Rendimiento:** se optimizó el registro de subtipos anidados (`trash code` eliminado en [`.subtype()`](#_esubtypedefinitions)), reduciendo a la mitad el tiempo de resolución en anidaciones profundas.
     * Se mejoraron o actualizaron los comentarios JSDoc del código y documentación.
-    * En general, la funcionalidad se ha mantenido estable.
 
 *   **En la v1.18.0:**
 
@@ -1112,7 +1117,7 @@ otherUser.send();            //> "Enviando con SMTP genérico..."
     * Se ha mejorado la seguridad en `subtype_definition_execution` y muestra de advertencias y errores en consola.
     * Se corregieron inconsistencias en `subtype`, `is_correct_object_property_name`, `merge_type_fns_node` y mensajes de consola.
     * Compatibilidad integrada para inconsistencias de ciertos navegadores con subtipos predefinidos `browser-dom`.
-    * Se ha degradado la versión de Jest para pruebas unitarias a v29.7+ para asegurar la compatibilidad con versiones anteriores de Node.js (v14.15+).
+    * Se ha degradado la versión mínima de Jest para pruebas unitarias a v29.7+ para asegurar la compatibilidad con versiones anteriores de Node.js (v14.15+).
     * Se mejoraron y agregaron pruebas unitarias para cobertura extra.
     * Las actualizaciones se centraron principalmente en la documentación.
 

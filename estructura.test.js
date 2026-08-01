@@ -5,7 +5,7 @@ const _e = require('./dist/estructura.umd');
 // Esperamos 1010 ms para asegurarnos de que el mensaje se ha procesado.
 const waitForConsole = (ms = 1010) => new Promise(resolve => setTimeout(resolve, ms));
 
-describe('Estructura Framework v1.19.0 - Pruebas Unitarias', () => {
+describe('Estructura Framework v1.20.0 - Pruebas Unitarias', () => {
 
   // --- 1. GUÍA DE INICIO RÁPIDO ---
   describe('Guía de Inicio Rápido', () => {
@@ -75,7 +75,7 @@ describe('Estructura Framework v1.19.0 - Pruebas Unitarias', () => {
         e.fn({
           timestamp: () => `Procesado a las: ${Date.now()}`,
         });
-        
+
         expect(e(123).timestamp()).toBe('Procesado a las: 1700000000000');
         expect(e('abc').timestamp()).toBe('Procesado a las: 1700000000000');
         dateSpy.mockRestore();
@@ -184,7 +184,7 @@ describe('Estructura Framework v1.19.0 - Pruebas Unitarias', () => {
         const miLista = e([1, 2, 3]);
         expect(miLista.count()).toBe(3);
         expect(miLista.isCollection()).toBe(true);
-        
+
         logSpy.mockRestore();
       });
     });
@@ -194,7 +194,7 @@ describe('Estructura Framework v1.19.0 - Pruebas Unitarias', () => {
         // Creamos dos instancias diferentes
         const miApi = _e.instance('miApi');
         const otraApi = _e.instance('otraApi');
-        
+
         const mockLog1 = jest.fn(); // Spy para miApi
         const mockLog2 = jest.fn(); // Spy para otraApi
 
@@ -229,7 +229,7 @@ describe('Estructura Framework v1.19.0 - Pruebas Unitarias', () => {
   // --- 3. CONCEPTOS AVANZADOS: MANEJADORES ---
   describe('Conceptos Avanzados: Manejadores', () => {
     let e;
-    
+
     beforeEach(() => {
       e = _e.instance(`handler-test-${Date.now()}${Math.random()}`);
     });
@@ -255,19 +255,19 @@ describe('Estructura Framework v1.19.0 - Pruebas Unitarias', () => {
       e.fn(() => callOrder.push('Raíz')); // Manejador raíz
 
       e([]);
-      
+
       // Según la documentación, la ejecución es del más específico al más general
       expect(callOrder).toEqual(['MyList', 'Array', 'Object', 'Raíz']);
     });
-    
+
     it('debería fusionar métodos en un manejador sin que este pierda su capacidad de auto-ejecución', () => {
         const logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-        
+
         // Asignamos un manejador
         e.fn({
             Number: (args) => console.log(`Manejador ejecutado para: ${args}`)
         });
-        
+
         // Fusionamos un método
         e.fn({
             Number: {
@@ -347,7 +347,7 @@ describe('Estructura Framework v1.19.0 - Pruebas Unitarias', () => {
     });
 
     it('debería advertir si se pasa un tipo no válido a _e.fn()', async () => {
-      
+
       e.fn({
         String: 123, // valor inválido, debe ser Function u Object
       });
@@ -409,7 +409,7 @@ describe('Estructura Framework v1.19.0 - Pruebas Unitarias', () => {
     });
 
     it('debería advertir si un función de subtipo devuelve un valor no válido', async () => {
-      
+
       e.subtype({
           String: () => 42 // Valor inválido, no string ni true
       });
@@ -425,7 +425,7 @@ describe('Estructura Framework v1.19.0 - Pruebas Unitarias', () => {
     });
 
     it('debería capturar errores lanzados en funciones de subtipo y registrarlos como error', async () => {
-            
+
       e.subtype({
         Number: () => {
           throw new Error('Fallo en definición de subtipo');
@@ -470,7 +470,7 @@ describe('Estructura Framework v1.19.0 - Pruebas Unitarias', () => {
     });
 
     it('debería advertir si se intenta registrar un método global con nombre reservado', async () => {
-      
+
       e.fn({
         toString: () => 'Método global inválido',
       });
@@ -493,7 +493,7 @@ describe('Estructura Framework v1.19.0 - Pruebas Unitarias', () => {
 
     it('debería ejecutar las funciones de validación de subtipos anidados una sola vez (optimización de rendimiento)', () => {
       const validatorSpy = jest.fn((input) => input.isAdmin ? 'Admin' : false);
-      
+
       e.subtype({
         Object: {
           Admin: validatorSpy
@@ -503,8 +503,8 @@ describe('Estructura Framework v1.19.0 - Pruebas Unitarias', () => {
       // Validación de número de ejecuciones
       e({ isAdmin: true });
 
-      // En la v1.18.0 esto era 2, innecesario/redundante. En la v1.19.0 debe ser estrictamente 1.
-      expect(validatorSpy).toHaveBeenCalledTimes(1); 
+      // En la v1.18.0 esto era 2, innecesario/redundante. En la v1.20.0 debe ser estrictamente 1.
+      expect(validatorSpy).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -1,5 +1,5 @@
 /**
- * Estructura v1.19.0
+ * Estructura v1.20.0
  * A lightweight dependency-free JavaScript framework that lets you assign functions to be automatically attached to custom or extended data types, based on one or multiple arguments.
  * 2025 (c) OKZGN
  * @license MIT
@@ -25,13 +25,13 @@
 	 * This array also acts as a hash map for O(1) lookups.
 	 * @typedef {string[]} EstructuraTypeResult
 	 */
-	
+
 	/**
 	 * The main dispatcher function of an Estructura instance. It analyzes the argument types
 	 * and returns a new object containing the methods from all matching function definitions.
 	 * @typedef {function(...*): object} EstructuraDispatcher
 	 */
-	
+
 	/**
 	 * The internal state object for a single sandboxed instance of Estructura.
 	 * @typedef {object} EstructuraInstance
@@ -40,7 +40,7 @@
 	 * @property {object} fns - The registry for function dispatching.
 	 * @property {object} subtypes - The registry for subtype definitions.
 	 */
-	
+
 	/**
 	 * The main public interface of an Estructura instance.
 	 * @typedef {EstructuraDispatcher & {
@@ -58,7 +58,7 @@
 	 * @property {object|Function} fns - The actual function or object of methods at this node.
 	 * @property {string} type - The specific type that matched to find this node.
 	 */
-	
+
 	var
 	messages = {},
 	instances = {},
@@ -90,7 +90,7 @@
 	},
 	incorrect_fns_and_subtypes_names = {
 		// Object/Function prototype properties
-		'hasOwnProperty': true, 'toString': true, 'valueOf': true, 'constructor': true, 'isPrototypeOf': true, 'propertyIsEnumerable': true, 'toLocaleString': true, 'name': true, 'arguments': true, 'caller': true, 'apply': true, 'bind': true, 'call': true, '__defineGetter__': true, '__defineSetter__': true, '__lookupGetter__': true, '__lookupSetter__': true, '__proto__': true, 'prototype': true, 'length': true, 
+		'hasOwnProperty': true, 'toString': true, 'valueOf': true, 'constructor': true, 'isPrototypeOf': true, 'propertyIsEnumerable': true, 'toLocaleString': true, 'name': true, 'arguments': true, 'caller': true, 'apply': true, 'bind': true, 'call': true, '__defineGetter__': true, '__defineSetter__': true, '__lookupGetter__': true, '__lookupSetter__': true, '__proto__': true, 'prototype': true, 'length': true,
 		// JavaScript reserved keywords
 		'await': true, 'break': true, 'case': true, 'catch': true, 'class': true, 'const': true, 'continue': true, 'debugger': true, 'default': true, 'delete': true, 'do': true, 'else': true, 'enum': true, 'export': true, 'extends': true, 'false': true, 'finally': true, 'for': true, 'function': true, 'if': true, 'implements': true, 'import': true, 'in': true, 'instanceof': true, 'interface': true, 'let': true, 'new': true, 'null': true, 'package': true, 'private': true, 'protected': true, 'public': true, 'return': true, 'static': true, 'super': true, 'switch': true, 'this': true, 'throw': true, 'true': true, 'try': true, 'typeof': true, 'var': true, 'void': true, 'while': true, 'with': true, 'yield': true,
 		// Internal framework properties
@@ -212,7 +212,7 @@
 			return this;
 		};
 	}
-	
+
 	/**
 	 * Safely executes a user-provided subtype definition function.
 	 * @private
@@ -460,7 +460,7 @@
 
 	// Periodically dispatch all queued info, warn, and error messages.
 	if(setinterval_is_on){
-		setInterval(function(){
+		var interval = setInterval(function(){
 			for(var instance_name in messages){
 				for(var message_content in messages[instance_name]){
 					if(verify_own_property_fn.call(messages[instance_name], message_content)){
@@ -469,7 +469,10 @@
 					}
 				}
 			}
-		}, 1000);
+    }, 1000);
+		if(interval.unref){
+			interval.unref();
+		}
 	}
 
 	/** @type {EstructuraPublicInterface} */
