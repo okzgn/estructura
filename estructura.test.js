@@ -1,11 +1,14 @@
 const _e = require('./dist/estructura.umd');
+const { execFileSync } = require('child_process');
+const { pathToFileURL } = require('url');
+const path = require('path');
 
 // Estructura utiliza un temporizador interno fijo de 1000 ms
 // antes de emitir advertencias o errores asíncronos.
 // Esperamos 1010 ms para asegurarnos de que el mensaje se ha procesado.
 const waitForConsole = (ms = 1010) => new Promise(resolve => setTimeout(resolve, ms));
 
-describe('Estructura Framework v1.20.0 - Pruebas Unitarias', () => {
+describe('Estructura Framework v1.21.0 - Pruebas Unitarias', () => {
 
   // --- 1. GUÍA DE INICIO RÁPIDO ---
   describe('Guía de Inicio Rápido', () => {
@@ -507,4 +510,347 @@ describe('Estructura Framework v1.20.0 - Pruebas Unitarias', () => {
       expect(validatorSpy).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe('Opciones de instancia (v1.21.0): collision y args', () => {
+    let warnSpy;
+    let counter = 0;
+    const newName = () => `options-${Date.now()}-${counter++}`;
+
+    beforeEach(() => {
+      warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      warnSpy.mockRestore();
+    });
+
+    describe('Valores por defecto y configuración', () => {
+      it('debería tener por defecto collision "general" y args "array" (comportamiento de la v1.20)', () => {
+        const e = _e.instance(newName());
+        expect(e.config()).toEqual({ collision: 'general', args: 'array' });
+      });
+
+      it('debería aceptar opciones al crear la instancia con .instance(name, options)', () => {
+        const e = _e.instance(newName(), { collision: 'specific', args: 'spread' });
+        expect(e.config()).toEqual({ collision: 'specific', args: 'spread' });
+      });
+
+      it('debería permitir cambiar opciones con .config(options) y devolver la instancia para encadenar', () => {
+        const e = _e.instance(newName());
+        expect(e.config({ args: 'spread' })).toBe(e);
+        expect(e.config()).toEqual({ collision: 'general', args: 'spread' });
+      });
+
+      it('.config() debería devolver una copia: modificarla no afecta a la instancia', () => {
+        const e = _e.instance(newName());
+        e.config().collision = 'specific';
+        expect(e.config().collision).toBe('general');
+      });
+
+      it('debería ignorar con advertencia las opciones inválidas y conservar el valor actual', async () => {
+        const e = _e.instance(newName(), { collision: 'invalid', unknown: true });
+        e.config({ args: 123 });
+        expect(e.config()).toEqual({ collision: 'general', args: 'array' });
+
+        await waitForConsole();
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid value for option "collision"'));
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid value for option "args"'));
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Unknown option "unknown" ignored'));
+      });
+
+      it('debería ignorar con advertencia las opciones de .instance() si la instancia ya existe', async () => {
+        const name = newName();
+        const e = _e.instance(name);
+        expect(_e.instance(name, { collision: 'specific' })).toBe(e);
+        expect(e.config().collision).toBe('general');
+
+        await waitForConsole();
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('The instance already exists'));
+      });
+
+      it('debería advertir si las opciones no son un objeto', async () => {
+        const e = _e.instance(newName(), 'specific');
+        e.config(null);
+        expect(e.config()).toEqual({ collision: 'general', args: 'array' });
+
+        await waitForConsole();
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Options must be an object'));
+      });
+
+      it('.fn() y .subtype() deberían devolver la instancia para encadenar, sin exponer el estado interno', () => {
+        const e = _e.instance(newName());
+        expect(e.fn({ String: { a: () => 'a' } })).toBe(e);
+        expect(e.fn(() => {})).toBe(e);
+        expect(e.subtype({ String: 'Text' })).toBe(e);
+        expect(e.subtype('browser-dom')).toBe(e);
+        expect(e.fn({ Text: { b: () => 'b' } }).subtype({ Number: 'Num' }).config({ args: 'spread' })).toBe(e);
+        expect(e('x').b()).toBe('b');
+      });
+
+      it('getTypes() en una definición de subtipo debería devolver una copia del array/mapa de tipos detectados', () => {
+        const e = _e.instance(newName());
+        let detected;
+        e.subtype({
+          Array: 'Collection',
+          Collection: (input, primitiveType, getTypes) => {
+            detected = getTypes();
+            // Modificar la copia no debe afectar al resultado.
+            detected.push('Hacked');
+            return primitiveType === 'Collection' ? 'List' : false;
+          },
+        });
+
+        const types = e.type([1]);
+        expect(Array.isArray(detected)).toBe(true);
+        expect(detected.slice(0, 3)).toEqual(['Object', 'Array', 'Collection']);
+        expect(detected['Array']).toBe(true);
+        expect([...types]).toEqual(['Object', 'Array', 'Collection', 'List']); // Copia plana: el resultado también tiene claves de mapa
+        expect(types['Hacked']).toBeUndefined();
+      });
+
+      it('las opciones de una instancia no deberían afectar a otra', () => {
+        const a = _e.instance(newName(), { collision: 'specific', args: 'spread' });
+        const b = _e.instance(newName());
+        expect(a.config()).toEqual({ collision: 'specific', args: 'spread' });
+        expect(b.config()).toEqual({ collision: 'general', args: 'array' });
+      });
+    });
+
+    describe('collision: orden de especificidad en colisiones', () => {
+      const register = (e) => e.fn({
+        Array: { who: () => 'Array' },
+        Object: { who: () => 'Object' },
+        who: () => 'Global',
+      });
+
+      it('"general" (por defecto): prevalece el más general (el global)', () => {
+        const e = _e.instance(newName());
+        register(e);
+        expect(e([1, 2]).who()).toBe('Global');
+      });
+
+      it('"specific": prevalece el más específico (Array sobre Object y sobre el global)', () => {
+        const e = _e.instance(newName(), { collision: 'specific' });
+        register(e);
+        expect(e([1, 2]).who()).toBe('Array');
+      });
+
+      it('"specific": sin tipo más específico se usa el siguiente (Object), y el global solo es fallback', () => {
+        const e = _e.instance(newName(), { collision: 'specific' });
+        register(e);
+        expect(e({}).who()).toBe('Object');
+        expect(e('texto').who()).toBe('Global');
+      });
+
+      it('"specific": un subtipo o alias prevalece sobre el tipo principal', () => {
+        const e = _e.instance(newName(), { collision: 'specific' });
+        e.subtype({ Array: 'Collection' });
+        e.fn({
+          Collection: { who: () => 'Collection' },
+          Array: { who: () => 'Array' },
+          Object: { who: () => 'Object' },
+        });
+        expect(e.type([1])).toEqual(expect.arrayContaining(['Array', 'Collection']));
+        expect(e([1]).who()).toBe('Collection');
+      });
+
+      it('"specific": debería funcionar con secuencias de varios argumentos', () => {
+        const e = _e.instance(newName(), { collision: 'specific' });
+        e.fn({
+          Array: { String: { who: () => 'Array+String' } },
+          Object: { String: { who: () => 'Object+String' } },
+        });
+        expect(e([1], 'a').who()).toBe('Array+String');
+      });
+
+      it('"specific": en secuencias con varios niveles de especificidad prevalece el más específico en cada argumento (el primero pesa más)', () => {
+        const e = _e.instance(newName(), { collision: 'specific' });
+        e.subtype({ String: 'Text' });
+        e.fn({
+          Object: { String: { who: () => 'Object+String' }, Text: { who: () => 'Object+Text' } },
+          Array: { String: { who: () => 'Array+String' }, Text: { who: () => 'Array+Text' } },
+          who: () => 'Global',
+        });
+        expect(e([1], 'a').who()).toBe('Array+Text');
+        expect(e({}, 'a').who()).toBe('Object+Text');
+        expect(e([1], 1).who()).toBe('Global');
+      });
+
+      it('"specific": usa la secuencia general si es la única que coincide, aunque exista otra más específica en otro camino', () => {
+        const e = _e.instance(newName(), { collision: 'specific' });
+        e.fn({
+          Object: { String: { who: () => 'Object+String' } },
+          Array: { Number: { who: () => 'Array+Number' } },
+        });
+        expect(e([1], 'a').who()).toBe('Object+String');
+      });
+
+      it('"specific": debería advertir de la colisión indicando que se ignoró la definición general', async () => {
+        const name = newName();
+        const e = _e.instance(name, { collision: 'specific' });
+        register(e);
+        e([1]);
+
+        await waitForConsole();
+        // El espía es global: se filtran solo los mensajes de esta instancia.
+        const messages = warnSpy.mock.calls.map(call => call[0]).filter(m => m.includes('(' + name + ')'));
+        expect(messages.some(m => m.includes('was ignored because a more specific definition'))).toBe(true);
+        expect(messages.some(m => m.includes('is overwriting'))).toBe(false);
+      });
+
+      it('"specific": no debería cambiar el orden de ejecución de los manejadores (específico -> general)', () => {
+        const e = _e.instance(newName(), { collision: 'specific' });
+        const order = [];
+        e.fn({
+          Array: () => { order.push('Array'); },
+          Object: () => { order.push('Object'); },
+        });
+        e.fn(() => { order.push('root'); });
+        e([1]);
+        expect(order).toEqual(['Array', 'Object', 'root']);
+      });
+
+      it('"specific": los métodos que devuelve un manejador también respetan el orden', () => {
+        const e = _e.instance(newName(), { collision: 'specific' });
+        e.fn({
+          Array: () => ({ who: () => 'Array handler' }),
+          Object: { who: () => 'Object' },
+        });
+        expect(e([1]).who()).toBe('Array handler');
+      });
+
+      it('se puede cambiar en caliente con .config() para las siguientes llamadas', () => {
+        const e = _e.instance(newName());
+        register(e);
+        expect(e([1]).who()).toBe('Global');
+        e.config({ collision: 'specific' });
+        expect(e([1]).who()).toBe('Array');
+        e.config({ collision: 'general' });
+        expect(e([1]).who()).toBe('Global');
+      });
+    });
+
+    describe('args: forma de pasar los argumentos a los métodos', () => {
+      it('"array" (por defecto): ([dispatcher args], ...method args)', () => {
+        const e = _e.instance(newName());
+        const spy = jest.fn();
+        e.fn({ String: { Number: { m: spy } } });
+        e('a', 1).m('x', 'y');
+        expect(spy).toHaveBeenCalledWith(['a', 1], 'x', 'y');
+      });
+
+      it('"spread": (...dispatcher args, [method args])', () => {
+        const e = _e.instance(newName(), { args: 'spread' });
+        const spy = jest.fn();
+        e.fn({ String: { Number: { m: spy } } });
+        e('a', 1).m('x', 'y');
+        expect(spy).toHaveBeenCalledWith('a', 1, ['x', 'y']);
+      });
+
+      it('"spread": el array de argumentos del método es [] si se llama sin argumentos', () => {
+        const e = _e.instance(newName(), { args: 'spread' });
+        const spy = jest.fn();
+        e.fn({ String: { m: spy } });
+        e('a').m();
+        expect(spy).toHaveBeenCalledWith('a', []);
+      });
+
+      it('"spread": permite usar parámetros con nombre y devuelve el resultado del método', () => {
+        const e = _e.instance(newName(), { args: 'spread' });
+        e.fn({
+          Array: { String: { join: (arr, sep, [prefix]) => prefix + arr.join(sep) } },
+        });
+        expect(e([1, 2, 3], '-').join('>')).toBe('>1-2-3');
+      });
+
+      it('"spread": aplica también a los métodos globales', () => {
+        const e = _e.instance(newName(), { args: 'spread' });
+        const spy = jest.fn();
+        e.fn({ global: spy });
+        e(1, 2, 3).global('z');
+        expect(spy).toHaveBeenCalledWith(1, 2, 3, ['z']);
+      });
+
+      it('"spread": los manejadores siguen recibiendo los argumentos directamente', () => {
+        const e = _e.instance(newName(), { args: 'spread' });
+        const handler = jest.fn();
+        e.fn({ String: { String: handler } });
+        e('a', 'b');
+        expect(handler).toHaveBeenCalledWith('a', 'b');
+      });
+
+      it('"spread": `this` sigue siendo el objeto resultado (encadenado)', () => {
+        const e = _e.instance(newName(), { args: 'spread' });
+        e.fn({ String: { self: function(){ return this; } } });
+        const result = e('a');
+        expect(result.self()).toBe(result);
+      });
+
+      it('"spread": un error en el método se maneja igual que antes (se registra y devuelve el resultado)', async () => {
+        const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+        const e = _e.instance(newName(), { args: 'spread' });
+        e.fn({ String: { boom: () => { throw new Error('fallo'); } } });
+        const result = e('a');
+        expect(result.boom()).toBe(result);
+
+        await waitForConsole();
+        expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Method "boom" error'));
+        errorSpy.mockRestore();
+      });
+
+      it('se puede cambiar en caliente con .config(): afecta a los resultados de las llamadas posteriores', () => {
+        const e = _e.instance(newName());
+        const spy = jest.fn();
+        e.fn({ String: { m: spy } });
+
+        e('a').m('x');
+        e.config({ args: 'spread' });
+        e('a').m('x');
+
+        expect(spy).toHaveBeenNthCalledWith(1, ['a'], 'x');
+        expect(spy).toHaveBeenNthCalledWith(2, 'a', ['x']);
+      });
+
+      it('"collision" y "args" se pueden combinar', () => {
+        const e = _e.instance(newName(), { collision: 'specific', args: 'spread' });
+        e.fn({
+          Array: { who: (arr, [suffix]) => 'Array' + suffix },
+          Object: { who: () => 'Object' },
+        });
+        expect(e([1]).who('!')).toBe('Array!');
+      });
+    });
+  });
+
+  describe('Build ESM: paridad con la build UMD', () => {
+    // Jest no puede cargar el .mjs con require(), así que se ejecuta en un proceso hijo de Node.
+    const runInESM = (body) => {
+      const url = pathToFileURL(path.join(__dirname, 'dist', 'estructura.esm.mjs')).href;
+      const script = `import _e from ${JSON.stringify(url)}; const out = (() => { ${body} })(); console.log(JSON.stringify(out));`;
+      return JSON.parse(execFileSync(process.execPath, ['--input-type=module', '-e', script], { encoding: 'utf8' }).trim());
+    };
+
+    it('debería exportar por defecto la instancia con la API completa', () => {
+      expect(runInESM(`return ['fn', 'subtype', 'type', 'instance', 'config'].map((k) => typeof _e[k]);`)).toEqual(['function', 'function', 'function', 'function', 'function']);
+    });
+
+    it('debería ejecutar las funciones de validación de subtipos anidados una sola vez (igual que la build UMD)', () => {
+      expect(runInESM(`
+        const e = _e.instance('esm-nested'); let calls = 0;
+        e.subtype({ Object: { Admin: (input) => { calls++; return input.isAdmin ? 'Admin' : false; } } });
+        return [calls, e({ isAdmin: true }) && calls, [...e.type({ isAdmin: true })]];
+      `)).toEqual([0, 1, ['Object', 'Admin']]);
+    });
+
+    it('debería soportar las opciones collision y args, el encadenado y getTypes()', () => {
+      expect(runInESM(`
+        const e = _e.instance('esm-options', { collision: 'specific', args: 'spread' });
+        let seen;
+        e.subtype({ Array: 'Collection', Collection: (input, primitiveType, getTypes) => { seen = [...getTypes()]; return true; } })
+         .fn({ Array: { who: (arr, [suffix]) => 'Array' + suffix }, Object: { who: () => 'Object' }, who: () => 'Global' });
+        return [e.config(), e([1]).who('!'), e({}).who(), e('s').who(), seen, e.fn(() => {}) === e];
+      `)).toEqual([{ collision: 'specific', args: 'spread' }, 'Array!', 'Object', 'Global', ['Object', 'Array', 'Collection'], true]);
+    });
+  });
+
 });

@@ -73,6 +73,7 @@ _e(myData, format, destination).process();
   - [Formatos de Módulo](#formatos-de-módulo)
   - [Compatibilidad con Navegadores](#compatibilidad-con-navegadores)
   - [Compatibilidad con Entornos](#compatibilidad-con-entornos)
+  - [TypeScript](#typescript)
 
 ### 3. Guía de Inicio Rápido
 - [Ejemplo Básico](#guía-de-inicio-rápido)
@@ -96,7 +97,8 @@ _e(myData, format, destination).process();
 - [Función Principal o Despachador](#_earg1-arg2-)
 - [Registrar Funciones para Tipos](#_efnassignments)
 - [Registrar Nuevos Tipos](#_esubtypedefinitions)
-- [Crear Instancias](#_einstancename)
+- [Crear Instancias](#_einstancename-options)
+- [Configurar Opciones](#_econfigoptions)
 - [Identificar Tipos](#_etypeinput)
 
 ### 6. Tipos y Subtipos
@@ -215,6 +217,32 @@ El código de la distribución **`UMD`** no necesita transpilación, está escri
 ### Compatibilidad con Entornos
 
 Estructura funciona perfectamente en cualquier entorno que soporte la sintaxis ES5 (Node.js, Deno, Bun, etc.). 
+
+### TypeScript
+
+Desde la v1.21.0 el paquete incluye sus declaraciones de tipos (`.d.ts`), tanto para `import` como para `require`, sin instalar nada más:
+
+```typescript
+import _e, { type Instance, type TypeResult } from 'estructura-js';
+
+const api: Instance = _e.instance('api', { collision: 'specific' });
+const types: TypeResult = api.type([1, 2]); //> ['Object', 'Array'], con types['Array'] === true
+```
+
+Como los `métodos` solo se conocen en tiempo de ejecución, el objeto que devuelve el `despachador` admite cualquier `método`. Para más precisión, indica su forma con el parámetro genérico:
+
+```typescript
+const list = _e<{ join(sep: string): string }>(['a', 'b']);
+list.join('-'); // Tipado: devuelve string
+```
+
+Si cargas la distribución `UMD` con un `<script>` (variable global `_e`), declara el global en tu proyecto:
+
+```typescript
+declare const _e: import('estructura-js').Instance;
+```
+
+> **Nota:** con `moduleResolution` `node16`, `nodenext` o `bundler` los tipos se resuelven automáticamente. Con la resolución clásica (`node`/`node10`), `import _e from 'estructura-js'` requiere `esModuleInterop` (o `allowSyntheticDefaultImports`); la alternativa es `import _e = require('estructura-js')`.
 
 ## Guía de Inicio Rápido
 
@@ -481,6 +509,8 @@ Registra asignaciones de [`métodos`](#métodos) y/o [`manejadores`](#manejadore
 
 **`assignments`:** Puede ser **un objeto o una función**.
 
+**Devuelve la instancia** *(v1.21.0+)*, por lo que las llamadas se pueden encadenar: `_e.fn({ /*...*/ }).subtype({ /*...*/ })`.
+
 * **Objeto:**
 
     En el cual cada *clave* se refiere a un nombre de tipo y cada *valor* es un objeto anidado con `métodos` o una función (`manejador`). Cada nivel de anidación se refiere al tipo de cada argumento en orden que se pasa al [`despachador`](#_earg1-arg2-) (función principal).
@@ -596,6 +626,31 @@ Registra asignaciones de [`métodos`](#métodos) y/o [`manejadores`](#manejadore
     
     **Nota:** Esta decisión de diseño garantiza que los `métodos` o `manejadores globales` puedan actuar como un `'fallback'` predecible y consistente, asegurando que una función siempre esté disponible si no se encuentra una más específica. O para prevenir que `métodos` o `manejadores` registrados más recientes sobrescriban a los anteriores.
 
+    **Cambiar el orden de especificidad (v1.21.0+):** con la opción `collision` de [`.config()`](#_econfigoptions) o de [`.instance()`](#_einstancename-options) se elige qué definición prevalece en una colisión:
+
+    | Valor                  | Prevalece                                                                                          |
+    |------------------------|----------------------------------------------------------------------------------------------------|
+    | `'general'` (defecto) | El tipo más general (comportamiento descrito arriba).                                              |
+    | `'specific'`          | El tipo más específico. Los `métodos`/`manejadores` globales actúan solo como `fallback` real.    |
+
+    ```javascript
+    const e = _e.instance('myAPI', { collision: 'specific' });
+
+    e.fn({
+      Array: { logType: () => 'Tipo Derivado: Array' },
+      Object: { logType: () => 'Tipo General (Principal): Object' },
+      logType: () => 'Global'
+    });
+
+    e([1, 2, 3]).logType(); //> "Tipo Derivado: Array"
+    e({}).logType();        //> "Tipo General (Principal): Object"
+    e('texto').logType();   //> "Global"
+    ```
+
+    Con `'specific'`, en las secuencias de varios argumentos el primer argumento es el que más pesa: se comparan los tipos del primer argumento y, a igualdad, los del segundo, y así sucesivamente. La advertencia de colisión se sigue mostrando, indicando que se ignoró la definición más general. El orden de **ejecución** de los `manejadores` (del más específico al más general) **no cambia** con esta opción.
+
+    > **Nota:** con `'general'` (el valor por defecto) se conserva exactamente el orden de resolución de las versiones anteriores. En secuencias de varios argumentos ese orden no sigue siempre la regla "lo general sobrescribe a lo específico" (por ejemplo, entre `Array + String` y `Object + String` prevalece `Array + String`). Si necesitas un orden consistente en varios argumentos usa `'specific'`.
+
 * **Función:**
 
     Se puede asignar para que se ejecute **en cualquier llamada a una instancia**, se llama **`manejador` raíz**.
@@ -676,6 +731,30 @@ Hay una diferencia clave en **cómo los `métodos` o `manejadores` reciben los a
 | `Método`    | `(args, extra...)`            | `args[0]`         |
 | `Manejador` | `(arg1, arg2, ...)`           | `arg1`            |
 
+**Con la opción `args: 'spread'` (v1.21.0+)**, los `métodos` reciben los argumentos del `despachador` uno a uno, y los argumentos con los que se llama al `método` van juntos en un `array` como **último** argumento (véase [`.config()`](#_econfigoptions)):
+
+| Opción `args`        | Argumentos de función del `método`           | Para `_e(a, b).method(c, d)` |
+|-----------------------|-----------------------------------------------|-------------------------------|
+| `'array'` (defecto)  | `(args, ...methodArgs)`                       | `([a, b], c, d)`              |
+| `'spread'`           | `(...dispatcherArgs, methodArgs)`             | `(a, b, [c, d])`              |
+
+```javascript
+const e = _e.instance('spreadAPI', { args: 'spread' });
+
+e.fn({
+  Array: {
+    String: {
+      // (arr, sep) son los argumentos del despachador; [prefix] son los del método
+      join: (arr, sep, [prefix]) => prefix + arr.join(sep)
+    }
+  }
+});
+
+e([1, 2, 3], '-').join('>'); //> ">1-2-3"
+```
+
+Con `'spread'` el último parámetro es siempre un `array` (`[]` si el `método` se llama sin argumentos). Para un `método` registrado en una secuencia de tipos, la cantidad de argumentos del `despachador` es fija: la longitud de la secuencia. Para los [`métodos globales`](#métodos-globales) varía con cada llamada; por eso el `array` de argumentos del `método` va siempre al final: `(...all) => { const methodArgs = all.pop(); /* 'all' queda con los del despachador */ }`. Los `manejadores` **no cambian**: siguen recibiendo los argumentos directamente.
+
 **Ejemplos:**  
 
 * **`Métodos`:**
@@ -706,7 +785,7 @@ Hay una diferencia clave en **cómo los `métodos` o `manejadores` reciben los a
 
 ### `_e.subtype(definitions)`
 
-Registra definiciones de tipos nuevos para cada instancia de Estructura. **Se llaman subtipos y alias**.
+Registra definiciones de tipos nuevos para cada instancia de Estructura. **Se llaman subtipos y alias**. Devuelve la instancia *(v1.21.0+)*, por lo que las llamadas se pueden encadenar.
 
 **`definitions`:** Un objeto donde cada *clave* es un nombre de tipo predefinido y cada *valor* puede ser:
 
@@ -851,9 +930,15 @@ Identifica objetos `globales` del entorno del navegador que no son parte del con
 
 ---
 
-### `_e.instance(name)`
+### `_e.instance(name, options)`
 
 Crea o recupera una instancia aislada de Estructura. Esto es ideal para evitar colisiones en aplicaciones grandes o al crear librerías.
+
+**`options`** *(opcional, v1.21.0+)*: objeto con las [opciones](#_econfigoptions) iniciales de la instancia. Solo se aplican cuando la instancia se **crea**; si la instancia ya existe se ignoran con una advertencia (usa [`.config()`](#_econfigoptions) para cambiarlas).
+
+```javascript
+const strictAPI = _e.instance('strictAPI', { collision: 'specific', args: 'spread' });
+```
 
 ```javascript
 const myAPI = _e.instance('myAPI');
@@ -866,6 +951,26 @@ anotherAPI.fn({ String: { log: () => console.log('Log de anotherAPI') } });
 myAPI('test').log();    //> "Log de myAPI"
 anotherAPI('test').log();  //> "Log de anotherAPI"
 ```
+
+---
+
+### `_e.config(options)`
+
+*(v1.21.0+)* Cambia las opciones de una instancia (cada instancia tiene las suyas, la instancia por defecto `_e` incluida) y devuelve la instancia para encadenar. Llamada **sin argumentos**, devuelve una copia de las opciones actuales. Los valores inválidos y las opciones desconocidas se ignoran con una advertencia.
+
+| Opción        | Valores                                  | Descripción                                                                                                              |
+|---------------|------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
+| `collision`  | `'general'` (defecto), `'specific'`      | Qué definición prevalece cuando un `input` coincide con varios tipos que asignan un `método` con el mismo nombre. Véase "[Colisión de `Métodos` o `Manejadores`](#colisión-de-métodos-o-manejadores)". |
+| `args`       | `'array'` (defecto), `'spread'`           | Cómo reciben los argumentos los `métodos`. Véase "[Cómo se Pasan los Argumentos del `Despachador`](#cómo-se-pasan-los-argumentos-del-despachador)". |
+
+```javascript
+_e.config(); //> { collision: 'general', args: 'array' }
+
+_e.config({ collision: 'specific' }).config({ args: 'spread' });
+_e.config(); //> { collision: 'specific', args: 'spread' }
+```
+
+Los valores por defecto reproducen el comportamiento de las versiones anteriores, por lo que no hace falta cambiar nada en el código existente. Un cambio de opciones se aplica a las llamadas al `despachador` posteriores; los objetos que ya devolvió el `despachador` conservan la forma de pasar argumentos con la que se crearon.
 
 ---
 
@@ -1026,7 +1131,7 @@ otherUser.send();            //> "Enviando con SMTP genérico..."
 
 * **¿Puedo usar Estructura con TypeScript?**
 
-  No está diseñado para usarse con TypeScript, Estructura es una alternativa a la verbosidad de TypeScript.
+  Sí. Desde la v1.21.0 el paquete incluye sus declaraciones de tipos (véase "[TypeScript](#typescript)"). Estructura resuelve los tipos en tiempo de ejecución, así que sigue siendo una alternativa ligera a la verbosidad del tipado estático, y ahora también puede usarse desde proyectos TypeScript.
 
 * **¿Tiene alguna manera integrada para depurar?**
 
@@ -1095,6 +1200,18 @@ otherUser.send();            //> "Enviando con SMTP genérico..."
   ```
 
 ## Notas sobre Versiones Anteriores y Actual
+
+*   **En la v1.21.0:**
+
+    * **Nueva opción `collision`** (`'general'` | `'specific'`) para elegir qué definición prevalece en las colisiones de `métodos`: [`.config()`](#_econfigoptions).
+    * **Nueva opción `args`** (`'array'` | `'spread'`) para elegir cómo reciben los argumentos los `métodos`: `(...argumentos del despachador, [argumentos del método])`.
+    * Nuevo método [`.config()`](#_econfigoptions) y segundo parámetro opcional en [`.instance()`](#_einstancename-options).
+    * **TypeScript:** se incluyen declaraciones de tipos (`.d.ts`) para `import` y `require`, con pruebas de tipos (`npm run test:types`). Véase "[TypeScript](#typescript)".
+    * [`.fn()`](#_efnassignments) y [`.subtype()`](#_esubtypedefinitions) devuelven la instancia, por lo que se pueden encadenar con [`.config()`](#_econfigoptions).
+    * **`Bugfix`:** `getTypes()` en las funciones evaluadoras de [`.subtype()`](#_esubtypedefinitions) devolvía `undefined` en lugar de la copia del *array/mapa* de tipos detectados.
+    * **`Bugfix`:** [`.fn()`](#_efnassignments) con un `manejador` raíz devolvía el estado interno de la instancia.
+    * **`Bugfix`:** la distribución `ESM` no incluía la optimización de la v1.19.0 para subtipos anidados (las funciones evaluadoras se ejecutaban dos veces). Ambas distribuciones vuelven a estar sincronizadas y las pruebas unitarias ahora también cubren la `ESM`.
+    * Sin `breaking changes`: los valores por defecto mantienen el comportamiento de la v1.20.0.
 
 *   **Hasta la v1.20.0:**
 

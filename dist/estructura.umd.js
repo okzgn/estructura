@@ -1,5 +1,5 @@
 /**
- * Estructura v1.20.0
+ * Estructura v1.21.0
  * A lightweight dependency-free JavaScript framework that lets you assign functions to be automatically attached to custom or extended data types, based on one or multiple arguments.
  * 2025 (c) OKZGN
  * @license MIT
@@ -39,6 +39,7 @@
 	 * @property {object} messages - A queue for pending console messages to prevent flooding.
 	 * @property {object} fns - The registry for function dispatching.
 	 * @property {object} subtypes - The registry for subtype definitions.
+	 * @property {{collision: string, args: string}} options - The instance options (see `config`).
 	 */
 
 	/**
@@ -47,7 +48,8 @@
 	 *   type: function(*): EstructuraTypeResult,
 	 *   fn: function(object|Function): EstructuraPublicInterface,
 	 *   subtype: function(object|string): EstructuraPublicInterface,
-	 *   instance: function(string): EstructuraPublicInterface
+	 *   config: function(object=): (EstructuraPublicInterface|object),
+	 *   instance: function(string, object=): EstructuraPublicInterface
 	 * }} EstructuraPublicInterface
 	 */
 
@@ -183,9 +185,17 @@
 		if(typeof actual_fns === typeof_str_value){ return (should_return_result ? result_object : null); }
 		for(var fn_name in actual_fns){
 			if(!verify_own_property_fn.call(actual_fns, fn_name) || typeof actual_fns[fn_name] !== typeof_fn_value){ continue; }
-			// The collisions order is strictly inherited from the inverted iteration order in main_dispatcher (while(type_iterator--)),
-			// ensuring the most general type is processed last and overwrites more specific matches.
-			if(result_object[fn_name]){ message.call(this, 'warn', 'Conflict for "' + fn_name + '". A definition from type "' + resolved_node_type + '" is overwriting another same name method or handler. This occurs when an input matches multiple types.'); }
+			// The nodes are processed from the most specific type to the most general one (inverted iteration order in main_dispatcher,
+			// while(type_iterator--)), and the root ('Any') node is processed last.
+			// options.collision = 'general' (default): the last processed definition overwrites, so the most general type prevails.
+			// options.collision = 'specific': the first processed definition is kept, so the most specific type prevails.
+			if(result_object[fn_name]){
+				if(this.options.collision === 'specific'){
+					message.call(this, 'warn', 'Conflict for "' + fn_name + '". A definition from type "' + resolved_node_type + '" was ignored because a more specific definition with the same name already exists (collision: "specific"). This occurs when an input matches multiple types.');
+					continue;
+				}
+				message.call(this, 'warn', 'Conflict for "' + fn_name + '". A definition from type "' + resolved_node_type + '" is overwriting another same name method or handler. This occurs when an input matches multiple types.');
+			}
 			result_object[fn_name] = adjust_method(this, fn_name, actual_fns, main_fn_args);
 		}
 		return (should_return_result ? result_object : null);
@@ -202,11 +212,21 @@
 	 */
 	function adjust_method(instance_context, method_name, methods, main_fn_args){
 		// This factory is for compatibility with arrow functions and to provide a unified calling interface.
+		var spread_args = instance_context.options.args === 'spread';
 		return function(){
-			// The original dispatcher arguments are consistently passed as an array, becoming the first argument for the user's method.
-			// e.g., _e(a, b).method(c) -> user's method receives ([a, b], c)
-			var method_args = [Array.prototype.slice.call(main_fn_args)];
-			for(var i = 0; i < arguments.length; i++){ method_args.push(arguments[i]); }
+			var method_args;
+			if(spread_args){
+				// options.args = 'spread': the dispatcher arguments are passed one by one, and the method call arguments go together in an array as the last argument.
+				// e.g., _e(a, b).method(c, d) -> user's method receives (a, b, [c, d])
+				method_args = Array.prototype.slice.call(main_fn_args);
+				method_args.push(Array.prototype.slice.call(arguments));
+			}
+			else {
+				// options.args = 'array' (default): the dispatcher arguments are passed as an array, becoming the first argument for the user's method.
+				// e.g., _e(a, b).method(c) -> user's method receives ([a, b], c)
+				method_args = [Array.prototype.slice.call(main_fn_args)];
+				for(var i = 0; i < arguments.length; i++){ method_args.push(arguments[i]); }
+			}
 			try { return methods[method_name].apply(this, method_args); }
 			catch(error){ message.call(instance_context, 'error', 'Method "' + method_name + '" error: ' + String(error)); }
 			return this;
@@ -225,7 +245,7 @@
 	 * @returns {*|false} The result of the subtype function, or `false` if an error occurs.
 	 */
 	function subtype_definition_execution(subtype_name, subtype_definition_fn, input, primitive_type, matched_subtypes){
-		try { return subtype_definition_fn(input, primitive_type, function(){ return simple_object_extend([], matched_subtypes); }); }
+		try { return subtype_definition_fn(input, primitive_type, function(){ var types_copy = []; simple_object_extend(types_copy, matched_subtypes); return types_copy; }); }
 		catch(error){ message.call(this, 'error', 'Subtype definition "' + subtype_name + '" function error: ' + String(error)); }
 		return false;
 	}
@@ -310,7 +330,7 @@
 	function fn(new_type_fns, existent_type_fns){
 		if(typeof new_type_fns === typeof_fn_value){
 			merge_type_fns_node(this, 'fns', new_type_fns);
-			return this;
+			return;
 		}
 		existent_type_fns = existent_type_fns || this.fns;
 		for(var type_name in new_type_fns){
@@ -394,6 +414,10 @@
 	 */
 	function main_dispatcher(){
 		var deep_length = arguments.length - 1, types_start = [this.fns], result_object = {};
+		// options.collision = 'specific': the candidate nodes are walked most specific first at every argument level, so the nodes are attached
+		// in lexicographic order of specificity (the first argument is the most significant) and the first attached definition prevails.
+		// Otherwise the legacy walk order is kept, so the behavior of 'general' (default) is the same as in previous versions.
+		var specific_first = this.options.collision === 'specific';
 
 		// The dispatching algorithm works by iteratively filtering a list of possible function nodes.
 		// It walks down the 'fns' tree, collecting potential next-level nodes at each step.
@@ -401,10 +425,13 @@
 			// If no potential paths remain, break early.
 			if(!types_start.length){ break; }
 			var found_object = [];
-			var result_iterator = types_start.length;
+			var parents_length = types_start.length;
+			var parents_iterator = parents_length;
+			var result_iterator;
 			var arg_types_iterator = type.call(this, arguments[args_iterator]);
 			var type_iterator;
-			while(result_iterator--){
+			while(parents_iterator--){
+				result_iterator = (specific_first ? parents_length - 1 - parents_iterator : parents_iterator);
 				type_iterator = arg_types_iterator.length;
 				while(type_iterator--){
 					var current_node_fns = types_start[result_iterator];
@@ -423,21 +450,57 @@
 	};
 
 	/**
+	 * Valid values for each instance option. The first value of each list is the default one.
+	 * - collision: 'general' (the most general type prevails on method name collisions) | 'specific' (the most specific type prevails).
+	 * - args: 'array' (methods receive `([dispatcher args], ...method args)`) | 'spread' (methods receive `(...dispatcher args, [method args])`).
+	 * @private
+	 */
+	var valid_options = { 'collision': ['general', 'specific'], 'args': ['array', 'spread'] };
+
+	/**
+	 * Validates and applies options to an instance. Invalid options are ignored with a warning.
+	 * @private
+	 * @this EstructuraInstance
+	 * @param {object} options The options to apply.
+	 */
+	function configure(options){
+		if(options === undefined){ return; }
+		if(get_primitive_type_fn.call(options) !== '[object Object]'){ message.call(this, 'warn', 'Options must be an object. The given value was ignored.'); return; }
+		for(var option_name in options){
+			if(!verify_own_property_fn.call(options, option_name)){ continue; }
+			if(!verify_own_property_fn.call(valid_options, option_name)){ message.call(this, 'warn', 'Unknown option "' + option_name + '" ignored.'); continue; }
+			var accepted_values = valid_options[option_name], value = options[option_name], is_valid = false;
+			for(var i = 0; i < accepted_values.length; i++){ if(accepted_values[i] === value){ is_valid = true; break; } }
+			if(!is_valid){ message.call(this, 'warn', 'Invalid value for option "' + option_name + '". Accepted values: "' + accepted_values.join('", "') + '". The current value "' + this.options[option_name] + '" was kept.'); continue; }
+			this.options[option_name] = value;
+		}
+	}
+
+	/**
 	 * Creates a sandboxed instance of Estructura.
 	 * @private
 	 * @param {string} name The name for the new instance.
+	 * @param {object} [options] Initial options for the instance.
 	 * @returns {EstructuraPublicInterface} A new, isolated Estructura instance.
 	 */
-	function create_instance(name){
+	function create_instance(name, options){
 		messages[name] = {};
 		/** @type {EstructuraInstance} */
-		var instance = { name: name, messages: messages[name], fns: {}, subtypes: {} };
+		var instance = { name: name, messages: messages[name], fns: {}, subtypes: {}, options: { collision: valid_options.collision[0], args: valid_options.args[0] } };
+		configure.call(instance, options);
 		/** @type {EstructuraPublicInterface} */
 		var public_interface = function(){ return main_dispatcher.apply(instance, arguments); };
 		public_interface.type = function(input){ return type.call(instance, input); };
-		public_interface.fn = function(new_fns){ return fn.call(instance, new_fns); };
-		public_interface.subtype = function(new_subtypes){ return subtype.call(instance, new_subtypes); };
-		public_interface.instance = function(name){ return get_instance(name); };
+		// The registrars return the public interface so the calls can be chained.
+		public_interface.fn = function(new_fns){ fn.call(instance, new_fns); return public_interface; };
+		public_interface.subtype = function(new_subtypes){ subtype.call(instance, new_subtypes); return public_interface; };
+		// Without arguments returns a copy of the current options, otherwise validates and applies the given ones.
+		public_interface.config = function(new_options){
+			if(arguments.length === 0){ return { collision: instance.options.collision, args: instance.options.args }; }
+			configure.call(instance, new_options);
+			return public_interface;
+		};
+		public_interface.instance = function(name, options){ return get_instance(name, options); };
 		subtype.call(instance, 'object-constructors');
 		return public_interface;
 	}
@@ -446,15 +509,17 @@
 	 * Retrieves or creates a named, sandboxed instance of Estructura.
 	 * @private
 	 * @param {string} name The name of the instance.
+	 * @param {object} [options] Options applied only when the instance is created. To change them later use `config`.
 	 * @returns {EstructuraPublicInterface|undefined} The requested instance.
 	 */
-	function get_instance(name){
+	function get_instance(name, options){
 		if(typeof name !== typeof_str_value){ return; }
 		if(incorrect_fns_and_subtypes_names[name]){
 			 message.call({ name: name }, 'error', 'Name "' + name + '" is a reserved word. Using default instance instead.');
 			 return get_instance('');
 		}
-		if(!instances[name]){ instances[name] = create_instance(name); }
+		if(!instances[name]){ instances[name] = create_instance(name, options); }
+		else if(options !== undefined){ message.call({ name: name, messages: messages[name] }, 'warn', 'The instance already exists, so the options passed to "instance" were ignored. Use "config" to change them.'); }
 		return instances[name];
 	}
 
