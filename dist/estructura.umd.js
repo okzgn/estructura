@@ -1,5 +1,5 @@
 /**
- * Estructura v1.21.0
+ * Estructura v1.22.0
  * A lightweight dependency-free JavaScript framework that lets you assign functions to be automatically attached to custom or extended data types, based on one or multiple arguments.
  * 2025 (c) OKZGN
  * @license MIT
@@ -39,7 +39,7 @@
 	 * @property {object} messages - A queue for pending console messages to prevent flooding.
 	 * @property {object} fns - The registry for function dispatching.
 	 * @property {object} subtypes - The registry for subtype definitions.
-	 * @property {{collision: string, args: string}} options - The instance options (see `config`).
+	 * @property {{collision: string, args: string, handlers: string, errors: string}} options - The instance options (see `config`).
 	 */
 
 	/**
@@ -123,6 +123,20 @@
 	}
 
 	/**
+	 * Handles an error thrown by a user-provided function (a method, a handler or a subtype definition).
+	 * options.errors = 'console' (default): the error is reported through the message handler and the flow continues.
+	 * options.errors = 'throw': the original error is rethrown, so it keeps its stack and its class.
+	 * @private
+	 * @this EstructuraInstance
+	 * @param {*} error The value thrown by the user's function.
+	 * @param {string} origin The description of the function that failed, for the message.
+	 */
+	function handle_user_error(error, origin){
+		if(this.options.errors === 'throw'){ throw error; }
+		message.call(this, 'error', origin + ' error: ' + String(error));
+	}
+
+	/**
 	 * Checks if a property name is valid for registration.
 	 * @private
 	 * @this EstructuraInstance
@@ -131,7 +145,7 @@
 	 * @returns {boolean} Returns `true` if the name is valid.
 	 */
 	function is_correct_object_property_name(object, property){
-		var object_type = type.call(this, object);
+		var object_type = raw_type(object);
 		var it_is = true;
 
 		if(object_type['Array'] && incorrect_fns_and_subtypes_names[object[property]]){
@@ -143,6 +157,29 @@
 		if(!it_is){ message.call(this, 'warn', 'Name "' + property + '" is a reserved word and cannot be used.'); }
 
 		return it_is;
+	}
+
+	/**
+	 * Detects the structural type of a value for the registrars (`fn` and `subtype`): its primitive type and,
+	 * for objects, its constructor name (e.g., 'Array'). It returns the same shape as `type` (an array that also
+	 * works as a map), but it never runs the subtype definitions of the instance, so registering has no side
+	 * effects on them.
+	 * @private
+	 * @param {*} input The value to be type-checked.
+	 * @returns {EstructuraTypeResult}
+	 */
+	function raw_type(input){
+		var primitive_type = (input == null ? primitive_types_map[String(input)] : (primitive_types_map[typeof input] || 'Number'));
+		var types = [primitive_type];
+		types[primitive_type] = true;
+		if(primitive_type === 'Object'){
+			var constructor_name = get_primitive_type_fn.call(input).slice(8, -1);
+			if(constructor_name !== primitive_type){
+				types.push(constructor_name);
+				types[constructor_name] = true;
+			}
+		}
+		return types;
 	}
 
 	/**
@@ -173,18 +210,22 @@
 		var actual_fns = resolved_node;
 		if(typeof actual_fns === typeof_fn_value){
 			try {
-				// A hybrid node called 'handler' can return a new object of functions to use.
-				// If it returns a falsy value, we fall back to the original node.
-				// If it returns a non-object, we also fall back to protect against errors.
-				actual_fns = actual_fns.apply(result_object, main_fn_args) || resolved_node;
-				if(typeof actual_fns === typeof_str_value){ actual_fns = resolved_node; }
+				// A hybrid node called 'handler' can return a new object (or function) of functions to use.
+				// If it returns anything else (a falsy value, a string, `true`, a number...), we keep the original node.
+				var returned_fns = actual_fns.apply(result_object, main_fn_args);
+				if(typeof returned_fns === typeof_fn_value || (returned_fns && typeof returned_fns === typeof_obj_value)){ actual_fns = returned_fns; }
 			}
-			catch(error){ message.call(this, 'error', 'Type handler function "' + resolved_node_type + '" error: ' + String(error)); }
+			catch(error){ handle_user_error.call(this, error, 'Type handler function "' + resolved_node_type + '"'); }
 		}
 		// If it is a string, the function stops to protect against string iteration. Another data types don't cause issues, including falsy values.
 		if(typeof actual_fns === typeof_str_value){ return (should_return_result ? result_object : null); }
+		// options.handlers = 'exposed' (default): a function assigned to a type name is also attached as a method, as in previous versions.
+		// options.handlers = 'hidden': a name starting with an uppercase letter is a type name, so its function is only a handler
+		// (it runs when its type matches) and it is never attached as a method.
+		var hidden_handlers = this.options.handlers === 'hidden', first_char;
 		for(var fn_name in actual_fns){
 			if(!verify_own_property_fn.call(actual_fns, fn_name) || typeof actual_fns[fn_name] !== typeof_fn_value){ continue; }
+			if(hidden_handlers && (first_char = fn_name.charAt(0)) !== first_char.toLowerCase()){ continue; }
 			// The nodes are processed from the most specific type to the most general one (inverted iteration order in main_dispatcher,
 			// while(type_iterator--)), and the root ('Any') node is processed last.
 			// options.collision = 'general' (default): the last processed definition overwrites, so the most general type prevails.
@@ -228,7 +269,7 @@
 				for(var i = 0; i < arguments.length; i++){ method_args.push(arguments[i]); }
 			}
 			try { return methods[method_name].apply(this, method_args); }
-			catch(error){ message.call(instance_context, 'error', 'Method "' + method_name + '" error: ' + String(error)); }
+			catch(error){ handle_user_error.call(instance_context, error, 'Method "' + method_name + '"'); }
 			return this;
 		};
 	}
@@ -246,7 +287,7 @@
 	 */
 	function subtype_definition_execution(subtype_name, subtype_definition_fn, input, primitive_type, matched_subtypes){
 		try { return subtype_definition_fn(input, primitive_type, function(){ var types_copy = []; simple_object_extend(types_copy, matched_subtypes); return types_copy; }); }
-		catch(error){ message.call(this, 'error', 'Subtype definition "' + subtype_name + '" function error: ' + String(error)); }
+		catch(error){ handle_user_error.call(this, error, 'Subtype definition "' + subtype_name + '" function'); }
 		return false;
 	}
 
@@ -278,6 +319,9 @@
 						subtypes_recognition.call(this, input, matched_subtypes);
 					}
 				}
+				// A detected type is flagged with an own `true`. Any other value is a native member of the array of types
+				// (e.g., 'map', 'length' or an index), so that name cannot be used for a subtype.
+				else if(matched_subtypes[subtype_found] !== true){ message.call(this, 'warn', 'Subtype name "' + subtype_found + '" cannot be used because it is a native property of the array of types. It was ignored.'); }
 			}
 		}
 		return matched_subtypes;
@@ -285,7 +329,7 @@
 
 	/**
 	 * The core type detection engine for an instance. It analyzes an input and returns
-	 * an array of all its detected types, from most to least specific.
+	 * an array of all its detected types, from the most general to the most specific.
 	 * @private
 	 * @this EstructuraInstance
 	 * @param {*} input The value to be type-checked.
@@ -302,20 +346,26 @@
 
 
 	/**
-	 * Replaces a node in the dispatch tree, preserving the properties of the original node
-	 * by merging them onto the new one. This handles converting plain objects to hybrid
-	 * function-objects called 'handlers' and merging properties between them.
+	 * Places a function node in the dispatch tree. If the previous node is a plain object, its properties are
+	 * merged onto the new function, converting it to a hybrid function-object called 'handler'.
+	 * If a function is already registered there, it is kept (the first registered one prevails) and the new
+	 * one is ignored with a warning.
 	 * @private
-	 * @param {object} target_object The parent object containing the node to be replaced (e.g., the 'fns' registry).
-	 * @param {string} property_name The key of the node to be replaced.
-	 * @param {function|object} new_function_or_object The new function or object that will replace the existing node.
+	 * @this EstructuraInstance
+	 * @param {object} target_object The parent object containing the node (the instance itself for the root 'fns' registry).
+	 * @param {string} property_name The key of the node.
+	 * @param {function} new_function The function to place as the node.
 	 */
-	function merge_type_fns_node(target_object, property_name, new_function_or_object){
-		var previous_object_or_fn_copy = {};
-		// Note: The extend operation is safe; it will do nothing if target_object[property_name] is not an object.
-		simple_object_extend(previous_object_or_fn_copy, target_object[property_name]);
-		if(!target_object[property_name] || typeof target_object[property_name] === typeof_obj_value){ target_object[property_name] = new_function_or_object; }
-		simple_object_extend(target_object[property_name], previous_object_or_fn_copy);
+	function merge_type_fns_node(target_object, property_name, new_function){
+		var existent_node = target_object[property_name];
+		if(typeof existent_node === typeof_fn_value){
+			// Registering the same function again is harmless, so it does not warn.
+			if(existent_node !== new_function){ message.call(this, 'warn', 'A method or handler is already registered for "' + (target_object === this ? 'Any' : property_name) + '", so the new one was ignored. The first registered function is kept.'); }
+			return;
+		}
+		// Note: The extend operation is safe; it will do nothing if there is no previous node.
+		simple_object_extend(new_function, existent_node);
+		target_object[property_name] = new_function;
 	}
 
 
@@ -329,20 +379,20 @@
 	 */
 	function fn(new_type_fns, existent_type_fns){
 		if(typeof new_type_fns === typeof_fn_value){
-			merge_type_fns_node(this, 'fns', new_type_fns);
+			merge_type_fns_node.call(this, this, 'fns', new_type_fns);
 			return;
 		}
 		existent_type_fns = existent_type_fns || this.fns;
 		for(var type_name in new_type_fns){
 			if(!is_correct_object_property_name.call(this, new_type_fns, type_name)){ continue; }
 			var new_field = new_type_fns[type_name];
-			var new_field_type = type.call(this, new_field);
+			var new_field_type = raw_type(new_field);
 			switch(new_field_type[0]){
 				case 'Function':
-					merge_type_fns_node(existent_type_fns, type_name, new_field);
+					merge_type_fns_node.call(this, existent_type_fns, type_name, new_field);
 				break;
 				case 'Object':
-					var existent_field_type = type.call(this, existent_type_fns[type_name]);
+					var existent_field_type = raw_type(existent_type_fns[type_name]);
 					if(!existent_field_type['Object'] && !existent_field_type['Function']){
 						existent_type_fns[type_name] = {};
 					}
@@ -363,14 +413,19 @@
 	 * @returns {undefined}
 	 */
 	function subtype(subtype_definitions, parent_subtype, should_not_create_nested_definitions){
-		if(typeof subtype_definitions === typeof_str_value && typeof predefined_subtypes[subtype_definitions] === typeof_fn_value){
+		// A string is the name of a predefined set of subtypes.
+		if(typeof subtype_definitions === typeof_str_value){
+			if(!verify_own_property_fn.call(predefined_subtypes, subtype_definitions)){
+				message.call(this, 'warn', 'Unknown predefined set of subtypes "' + subtype_definitions + '". Nothing was registered.');
+				return;
+			}
 			return subtype.call(this, predefined_subtypes[subtype_definitions](), parent_subtype);
 		}
 		var current_subtypes = parent_subtype || this.subtypes;
 		for(var definition_name in subtype_definitions){
 			if(!is_correct_object_property_name.call(this, subtype_definitions, definition_name)){ continue; }
-			var subtype_definition_type = type.call(this, subtype_definitions[definition_name]);
-			var existent_definition_type = type.call(this, current_subtypes[definition_name]);
+			var subtype_definition_type = raw_type(subtype_definitions[definition_name]);
+			var existent_definition_type = raw_type(current_subtypes[definition_name]);
 			if(!parent_subtype && !existent_definition_type['Array']){ current_subtypes[definition_name] = []; }
 			var existent_subtypes_reference = (!parent_subtype ? current_subtypes[definition_name] : current_subtypes);
 			switch(subtype_definition_type[0]){
@@ -453,9 +508,11 @@
 	 * Valid values for each instance option. The first value of each list is the default one.
 	 * - collision: 'general' (the most general type prevails on method name collisions) | 'specific' (the most specific type prevails).
 	 * - args: 'array' (methods receive `([dispatcher args], ...method args)`) | 'spread' (methods receive `(...dispatcher args, [method args])`).
+	 * - handlers: 'exposed' (a function assigned to a type name is also attached as a method) | 'hidden' (names starting with an uppercase letter are type names: their functions are only handlers).
+	 * - errors: 'console' (errors thrown by methods, handlers and subtype definitions are reported through the console and the flow continues) | 'throw' (the original error is rethrown).
 	 * @private
 	 */
-	var valid_options = { 'collision': ['general', 'specific'], 'args': ['array', 'spread'] };
+	var valid_options = { 'collision': ['general', 'specific'], 'args': ['array', 'spread'], 'handlers': ['exposed', 'hidden'], 'errors': ['console', 'throw'] };
 
 	/**
 	 * Validates and applies options to an instance. Invalid options are ignored with a warning.
@@ -486,7 +543,11 @@
 	function create_instance(name, options){
 		messages[name] = {};
 		/** @type {EstructuraInstance} */
-		var instance = { name: name, messages: messages[name], fns: {}, subtypes: {}, options: { collision: valid_options.collision[0], args: valid_options.args[0] } };
+		var instance = { name: name, messages: messages[name], fns: {}, subtypes: {}, options: {} };
+		// Every option starts with its default value: the first one of its list of valid values.
+		for(var option_name in valid_options){
+			if(verify_own_property_fn.call(valid_options, option_name)){ instance.options[option_name] = valid_options[option_name][0]; }
+		}
 		configure.call(instance, options);
 		/** @type {EstructuraPublicInterface} */
 		var public_interface = function(){ return main_dispatcher.apply(instance, arguments); };
@@ -496,7 +557,7 @@
 		public_interface.subtype = function(new_subtypes){ subtype.call(instance, new_subtypes); return public_interface; };
 		// Without arguments returns a copy of the current options, otherwise validates and applies the given ones.
 		public_interface.config = function(new_options){
-			if(arguments.length === 0){ return { collision: instance.options.collision, args: instance.options.args }; }
+			if(arguments.length === 0){ var options_copy = {}; simple_object_extend(options_copy, instance.options); return options_copy; }
 			configure.call(instance, new_options);
 			return public_interface;
 		};

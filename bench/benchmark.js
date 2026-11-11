@@ -1,15 +1,15 @@
 'use strict';
-// Benchmark de despacho de Estructura.
+// Estructura dispatch benchmark.
 //
-// Uso:
-//   node bench/benchmark.js [--target=ruta/al/build] [--samples=31] [--json]
+// Usage:
+//   node bench/benchmark.js [--target=path/to/build] [--samples=31] [--json]
 //
-// - Cada escenario se ejecuta en un proceso hijo propio (JIT limpio, sin que un escenario
-//   contamine la retroalimentacion de tipos de otro) y con `--expose-gc` para forzar un GC
-//   antes de cada muestra.
-// - `--target` permite comparar otra build (p. ej. la 2.0) con la misma bateria.
-// - Escenario base tomado del README: 10 tipos, 100 metodos repartidos por igual,
-//   10000 repeticiones x 10 llamadas = 100000 despachos por muestra.
+// - Each scenario runs in its own child process (clean JIT, so that no scenario
+//   pollutes the type feedback of another) and with `--expose-gc` to force a GC
+//   before each sample.
+// - `--target` allows comparing another build (e.g. 2.0) with the same suite.
+// - Base scenario taken from the README: 10 types, 100 methods evenly distributed,
+//   10000 repetitions x 10 calls = 100000 dispatches per sample.
 
 const path = require('path');
 const os = require('os');
@@ -29,8 +29,8 @@ const WARMUP = 5;
 const DISPATCHES = 100000;
 
 // ---------------------------------------------------------------------------------------
-// Escenarios. Cada `build(_e)` registra lo necesario y devuelve { run, ops }:
-// `run()` ejecuta `ops` operaciones y devuelve un numero (sumidero anti-eliminacion de codigo).
+// Scenarios. Each `build(_e)` registers what it needs and returns { run, ops }:
+// `run()` performs `ops` operations and returns a number (a sink against dead-code elimination).
 // ---------------------------------------------------------------------------------------
 
 const BASE_TYPES = ['String', 'Number', 'Array', 'Object', 'Boolean', 'Function', 'Null', 'Undefined', 'BigInt', 'Symbol'];
@@ -68,23 +68,23 @@ const SUBTYPES = {
 };
 
 const scenarios = {
-  'despacho-1arg': {
-    title: '1 argumento, solo despacho (10 tipos, 100 metodos)',
+  'dispatch-1arg': {
+    title: '1 argument, dispatch only (10 types, 100 methods)',
     build: function(_e){
       const e = _e.instance('b1'); register_base(e);
       return { run: loop_1arg(e, base_inputs()), ops: DISPATCHES };
     }
   },
-  'despacho-1arg+llamada': {
-    title: '1 argumento, despacho + llamada a un metodo (escenario del README)',
+  'dispatch-1arg+call': {
+    title: '1 argument, dispatch + method call (README scenario)',
     build: function(_e){
       const e = _e.instance('b2'); register_base(e);
       const names = BASE_TYPES.map(function(t){ return t + '_0'; });
       return { run: loop_1arg(e, base_inputs(), names), ops: DISPATCHES };
     }
   },
-  'despacho-2args': {
-    title: '2 argumentos, despacho + llamada (10 pares de tipos, 100 metodos)',
+  'dispatch-2args': {
+    title: '2 arguments, dispatch + call (10 type pairs, 100 methods)',
     build: function(_e){
       const e = _e.instance('b3');
       const values = { String: 's', Number: 1, Boolean: true, Function: function(){}, Null: null, Undefined: undefined, BigInt: BigInt(10), Symbol: Symbol('x'), Array: [1], Object: { a: 1 } };
@@ -106,8 +106,8 @@ const scenarios = {
       } };
     }
   },
-  'subtipos': {
-    title: '1 argumento con subtipos personalizados (11 nodos, ~100 metodos), despacho + llamada',
+  'subtypes': {
+    title: '1 argument with custom subtypes (11 nodes, ~100 methods), dispatch + call',
     build: function(_e){
       const e = _e.instance('b4'); e.subtype(SUBTYPES);
       const nodes = ['String', 'Email', 'Numeric', 'Object', 'User', 'Product', 'Array', 'Matrix', 'Tuple', 'Number', 'Integer'];
@@ -122,8 +122,8 @@ const scenarios = {
       return { run: loop_1arg(e, inputs, names), ops: DISPATCHES };
     }
   },
-  'conflictos': {
-    title: '1 argumento con conflicto de nombres en cada llamada (ruta de aviso), despacho + llamada',
+  'conflicts': {
+    title: '1 argument with a name conflict on every call (warning path), dispatch + call',
     silence_console: true,
     build: function(_e){
       const e = _e.instance('b5'); e.subtype(SUBTYPES);
@@ -135,8 +135,8 @@ const scenarios = {
       return { run: loop_1arg(e, inputs, names), ops: DISPATCHES };
     }
   },
-  'registro': {
-    title: 'Registro: crear instancia + subtipos + 100 metodos (coste por instancia)',
+  'registration': {
+    title: 'Registration: create instance + subtypes + 100 methods (cost per instance)',
     build: function(_e){
       const reps = 200; let n = 0;
       return { ops: reps, run: function(){
@@ -152,7 +152,7 @@ const scenarios = {
 };
 
 // ---------------------------------------------------------------------------------------
-// Proceso hijo: ejecuta un escenario y emite sus muestras como JSON en la ultima linea.
+// Child process: runs one scenario and emits its samples as JSON on the last line.
 // ---------------------------------------------------------------------------------------
 
 async function load_target(){
@@ -172,13 +172,13 @@ async function child(name){
     const t0 = process.hrtime.bigint();
     sink += built.run();
     const t1 = process.hrtime.bigint();
-    if(i >= WARMUP){ samples.push(Number(t1 - t0) / built.ops); } // ns por operacion
+    if(i >= WARMUP){ samples.push(Number(t1 - t0) / built.ops); } // ns per operation
   }
   process.stdout.write('\n@@RESULT@@' + JSON.stringify({ name: name, samples: samples, sink: sink }) + '\n');
 }
 
 // ---------------------------------------------------------------------------------------
-// Proceso padre: lanza un hijo por escenario y presenta el informe.
+// Parent process: spawns one child per scenario and prints the report.
 // ---------------------------------------------------------------------------------------
 
 function stats(samples){
@@ -197,7 +197,7 @@ function parent(){
   const results = [];
   Object.keys(scenarios).forEach(function(name){
     const r = spawnSync(process.execPath, ['--expose-gc', __filename, '--child=' + name, '--target=' + TARGET, '--samples=' + SAMPLES], { encoding: 'utf8', maxBuffer: 1 << 26 });
-    if(r.status !== 0){ console.error('Fallo el escenario ' + name + ':\n' + r.stderr); process.exit(1); }
+    if(r.status !== 0){ console.error('Scenario ' + name + ' failed:\n' + r.stderr); process.exit(1); }
     const line = r.stdout.split('\n').filter(function(l){ return l.indexOf('@@RESULT@@') === 0; })[0];
     const data = JSON.parse(line.slice('@@RESULT@@'.length));
     results.push({ name: name, title: scenarios[name].title, stats: stats(data.samples) });
@@ -206,8 +206,8 @@ function parent(){
   if(argv.json){ console.log(JSON.stringify({ version: version, node: process.version, results: results }, null, 2)); return; }
 
   console.log('Estructura v' + version + '  |  Node ' + process.version + '  |  ' + os.cpus()[0].model.trim() + ' x' + os.cpus().length + '  |  ' + os.platform() + ' ' + os.arch());
-  console.log('Muestras por escenario: ' + SAMPLES + ' (+' + WARMUP + ' de calentamiento descartadas). Tiempos por operacion.\n');
-  const cols = ['escenario', 'mediana', 'min', 'p90', 'max', 'rsd', 'ops/s (mediana)'];
+  console.log('Samples per scenario: ' + SAMPLES + ' (+' + WARMUP + ' warm-up samples discarded). Times per operation.\n');
+  const cols = ['scenario', 'median', 'min', 'p90', 'max', 'rsd', 'ops/s (median)'];
   const rows = results.map(function(r){
     const s = r.stats;
     return [r.name, fmt(s.median), fmt(s.min), fmt(s.p90), fmt(s.max), s.rsd.toFixed(1) + '%', Math.round(1e9 / s.median).toLocaleString('en-US')];

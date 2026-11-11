@@ -1,5 +1,5 @@
 /**
- * Estructura v1.21.0 - Type declarations
+ * Estructura v1.22.0 - Type declarations
  * A lightweight dependency-free JavaScript framework that lets you assign functions to be automatically attached to custom or extended data types, based on one or multiple arguments.
  * 2025 (c) OKZGN
  * @license MIT
@@ -37,7 +37,7 @@ declare namespace _e {
 	 * A handler: a function assigned directly to a type, or to the root of an instance with `.fn(handler)`.
 	 * It runs automatically during the dispatch when its type sequence matches, receiving the dispatcher
 	 * arguments directly, with `this` set to the result object. It may return an object of methods, which is
-	 * then used instead of the methods merged into the handler.
+	 * then used instead of the methods merged into the handler. Any other returned value keeps them.
 	 */
 	type Handler = (this: Result, ...dispatcherArgs: any[]) => Methods | void | null | undefined | false;
 
@@ -84,16 +84,33 @@ declare namespace _e {
 	 */
 	type ArgsOption = 'array' | 'spread';
 
+	/**
+	 * Whether a handler (a function assigned to a type name) is also attached to the result as a method:
+	 * `'exposed'` (default) it is, as in previous versions; `'hidden'` it is not: every name starting with an
+	 * uppercase letter is a type name, so its function only runs as a handler.
+	 */
+	type HandlersOption = 'exposed' | 'hidden';
+
+	/**
+	 * What happens when a method, a handler or a subtype evaluator throws: `'console'` (default) the error is
+	 * reported through the console and the flow continues; `'throw'` the original error is rethrown.
+	 */
+	type ErrorsOption = 'console' | 'throw';
+
 	/** The instance options, for `.config(options)` and `.instance(name, options)`. */
 	interface Options {
 		collision?: CollisionOption;
 		args?: ArgsOption;
+		handlers?: HandlersOption;
+		errors?: ErrorsOption;
 	}
 
 	/** The current options of an instance, as returned by `.config()`. */
 	interface CurrentOptions {
 		collision: CollisionOption;
 		args: ArgsOption;
+		handlers: HandlersOption;
+		errors: ErrorsOption;
 	}
 
 	/** An Estructura instance: the dispatcher function together with its API. */
@@ -103,9 +120,16 @@ declare namespace _e {
 		 * object with the matching methods attached.
 		 */
 		<R extends object = Result>(...args: any[]): R;
-		/** Registers methods and handlers for types or type sequences. Repeated calls merge. Returns the instance. */
+		/**
+		 * Registers methods and handlers for types or type sequences. Repeated calls merge; if a function is
+		 * already registered for a name, the first one is kept and the new one is ignored with a warning.
+		 * Returns the instance.
+		 */
 		fn(assignments: Assignments | Handler): this;
-		/** Registers subtypes and aliases, or one of the predefined sets. Returns the instance. */
+		/**
+		 * Registers subtypes and aliases, or one of the predefined sets. A name that is a native property of
+		 * arrays (e.g., `map`, `length`) cannot be used for a subtype. Returns the instance.
+		 */
 		subtype(definitions: SubtypeDefinitions | PredefinedSubtypes): this;
 		/** Detects all the types of a value, from the most general to the most specific. */
 		type(input: any): TypeResult;

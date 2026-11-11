@@ -2,16 +2,18 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Estructura es un framework de JavaScript ligero y sin dependencias que te permite asignar funciones que se vincularán automáticamente a tipos de datos personalizados o extendidos, basándose en uno o múltiples argumentos.
+**English** | [Español](README.es.md)
 
-**[Guía de inicio rápido](#guía-de-inicio-rápido)**
+Estructura is a lightweight, dependency-free JavaScript framework that lets you assign functions to be automatically attached to custom or extended data types, based on one or multiple arguments.
 
-### Ejemplo de Caso de Uso
+**[Quick Start Guide](#quick-start-guide)**
 
-Imagina tener que manejar diferentes tipos de datos con lógica específica para cada combinación:
+### Use Case Example
+
+Imagine having to handle different data types with specific logic for each combination:
 
 ```javascript
-// ❌ El problema: código repetitivo y difícil de mantener
+// ❌ The problem: repetitive code that is hard to maintain
 
 function processData(data, format, destination){
   if(typeof data === 'string' && format === 'json' && destination.type === 'api'){
@@ -23,10 +25,10 @@ function processData(data, format, destination){
   else if(typeof data === 'object' && format === 'xml' && destination.type === 'database'){
     return insertXMLToDB(data, destination);
   }
-  // ... decenas de combinaciones más
+  // ... dozens more combinations
 }
 
-// ✅ La solución con Estructura: limpio, extensible y mantenible
+// ✅ The solution with Estructura: clean, extensible and maintainable
 
 _e.fn({
   String: {
@@ -47,247 +49,248 @@ _e.fn({
 });
 
 _e.subtype({
-    // Aquí defines: JSON, API, CSV, File, XML, y Database.
+    // Here you define: JSON, API, CSV, File, XML, and Database.
 });
 
-// Uso simple y elegante
+// Simple and elegant usage
 _e(myData, format, destination).process();
 ```
 
 ---
 
-## 📚 Índice de Contenidos
+## 📚 Table of Contents
 
 <details>
-<summary>Abrir Índice</summary>
+<summary>Open Table of Contents</summary>
 
-### 1. Introducción
-- [Características Principales](#características-principales)
-- [¿Cuándo Usar Estructura?](#cuándo-usar-estructura)
+### 1. Introduction
+- [Key Features](#key-features)
+- [When to Use Estructura](#when-to-use-estructura)
 
-### 2. Instalación y Configuración
-- [Instalación](#instalación)
+### 2. Installation and Setup
+- [Installation](#installation)
   - [npm](#npm)
-  - [CDN (Navegador)](#cdn-navegador)
-- [Compatibilidad](#compatibilidad)
-  - [Formatos de Módulo](#formatos-de-módulo)
-  - [Compatibilidad con Navegadores](#compatibilidad-con-navegadores)
-  - [Compatibilidad con Entornos](#compatibilidad-con-entornos)
+  - [CDN (Browser)](#cdn-browser)
+- [Compatibility](#compatibility)
+  - [Module Formats](#module-formats)
+  - [Browser Compatibility](#browser-compatibility)
+  - [Environment Compatibility](#environment-compatibility)
   - [TypeScript](#typescript)
 
-### 3. Guía de Inicio Rápido
-- [Ejemplo Básico](#guía-de-inicio-rápido)
+### 3. Quick Start Guide
+- [Basic Example](#quick-start-guide)
 
-### 4. Conceptos Previos
-- [Despacho de Funciones](#despacho-de-funciones)
-  - [¿Qué es el Despacho de Funciones?](#qué-es-el-despacho-de-funciones)
-- [Despacho Simple vs. Múltiple](#despacho-simple-vs-múltiple)
-  - [Despacho Simple](#despacho-simple)
-  - [Despacho Múltiple](#despacho-múltiple)
-- [Terminología de Estructura](#terminología-de-estructura)
-  - [Despachador](#despachador)
-  - [Métodos](#métodos)
-  - [Manejadores](#manejadores)
-  - [Tipos, Subtipos y Alias](#tipos-subtipos-y-alias)
-- [Por Qué es Útil el Despacho Múltiple](#por-qué-es-útil-el-despacho-múltiple)
-  - [Problema Común: Funciones Polimórficas](#problema-común-funciones-polimórficas)
-  - [Ventajas Clave](#ventajas-clave)
+### 4. Preliminary Concepts
+- [Function Dispatch](#function-dispatch)
+  - [What is Function Dispatch?](#what-is-function-dispatch)
+- [Single vs. Multiple Dispatch](#single-vs-multiple-dispatch)
+  - [Single Dispatch](#single-dispatch)
+  - [Multiple Dispatch](#multiple-dispatch)
+- [Estructura Terminology](#estructura-terminology)
+  - [Dispatcher](#dispatcher)
+  - [Methods](#methods)
+  - [Handlers](#handlers)
+  - [Types, Subtypes and Aliases](#types-subtypes-and-aliases)
+- [Why Multiple Dispatch is Useful](#why-multiple-dispatch-is-useful)
+  - [Common Problem: Polymorphic Functions](#common-problem-polymorphic-functions)
+  - [Key Advantages](#key-advantages)
 
-### 5. Documentación de la API
-- [Función Principal o Despachador](#_earg1-arg2-)
-- [Registrar Funciones para Tipos](#_efnassignments)
-- [Registrar Nuevos Tipos](#_esubtypedefinitions)
-- [Crear Instancias](#_einstancename-options)
-- [Configurar Opciones](#_econfigoptions)
-- [Identificar Tipos](#_etypeinput)
+### 5. API Documentation
+- [Main Function or Dispatcher](#_earg1-arg2-)
+- [Register Functions for Types](#_efnassignments)
+- [Register New Types](#_esubtypedefinitions)
+- [Create Instances](#_einstancename-options)
+- [Configure Options](#_econfigoptions)
+- [Identify Types](#_etypeinput)
 
-### 6. Tipos y Subtipos
-- [Tipos Predefinidos](#tipos-predefinidos)
-- [Subtipos Predefinidos Browser-DOM](#subtipos-predefinidos-browser-dom)
-  - [Node](#subtipo-node)
-  - [Nodes](#subtipo-nodes)
-  - [Document](#subtipo-document)
-  - [Browser](#subtipo-browser)
+### 6. Types and Subtypes
+- [Predefined Types](#predefined-types)
+- [Browser-DOM Predefined Subtypes](#predefined-subtypes-browser-dom)
+  - [Node](#node-subtype)
+  - [Nodes](#nodes-subtype)
+  - [Document](#document-subtype)
+  - [Browser](#browser-subtype)
 
-### 7. Conceptos Avanzados
-- [Manejadores](#conceptos-avanzados-manejadores)
-  - [Auto-Ejecución de Manejadores](#auto-ejecución-de-manejadores)
-  - [Secuencia de Ejecución por Especificidad](#secuencia-de-ejecución-por-especificidad)
-  - [Sobrescribir Métodos Dinámicamente](#sobrescribir-métodos-dinámicamente)
+### 7. Advanced Concepts
+- [Handlers](#advanced-concepts-handlers)
+  - [Handler Auto-Execution](#handler-auto-execution)
+  - [Execution Sequence by Specificity](#execution-sequence-by-specificity)
+  - [Handlers as Methods](#handlers-as-methods)
+  - [Overriding Methods Dynamically](#overriding-methods-dynamically)
 
-### 8. Adicionales
-- [Preguntas Frecuentes](#faq-preguntas-frecuentes)
-- [Problemas Comunes](#problemas-comunes)
-- [Consideraciones](#consideraciones)
-- [Notas sobre Versiones Anteriores y Actual](#notas-sobre-versiones-anteriores-y-actual)
-- [Licencia](#licencia)
+### 8. Additional Information
+- [Frequently Asked Questions](#faq-frequently-asked-questions)
+- [Common Problems](#common-problems)
+- [Considerations](#considerations)
+- [Notes on Previous and Current Versions](#notes-on-previous-and-current-versions)
+- [License](#license)
 
 </details>
 
-## Características Principales
+## Key Features
 
-*   **Sistema de Tipos Extensible:** Define tus propios tipos ([`.subtype()`](#_esubtypedefinitions)) para cualquier estructura de datos, yendo mucho más allá de los tipos principales de JavaScript.
-*   **Instancias Aisladas (`Sandboxing`):** Crea múltiples instancias de Estructura ([`.instance()`](#_einstancename)) que no interfieren entre sí, cada una con su propio registro de tipos y funciones.
-*   **Robusto y Predecible:** Las llamadas al `despachador` son deterministas. Para una misma configuración de tipos y funciones registradas ([`.fn()`](#_efnassignments)) para esos tipos, una llamada a [`_e(arg1, arg2, ...)`](#_earg1-arg2-) siempre seguirá una misma secuencia de ejecución y devolverá el mismo conjunto de `métodos`.
-*   **Ligero y sin Dependencias:** Menos de 30 KB sin comprimir (`ESM` y `UMD`), ideal para el navegador o Node.js.
+*   **Extensible Type System:** Define your own types ([`.subtype()`](#_esubtypedefinitions)) for any data structure, going far beyond JavaScript's main types.
+*   **Isolated Instances (`Sandboxing`):** Create multiple Estructura instances ([`.instance()`](#_einstancename-options)) that do not interfere with each other, each with its own registry of types and functions.
+*   **Robust and Predictable:** Calls to the `dispatcher` are deterministic. For the same configuration of types and of functions registered ([`.fn()`](#_efnassignments)) for those types, a call to [`_e(arg1, arg2, ...)`](#_earg1-arg2-) will always follow the same execution sequence and return the same set of `methods`.
+*   **Lightweight and Dependency-Free:** About 35 KB uncompressed and under 10 KB gzipped (`ESM` and `UMD`), ideal for the browser or Node.js.
 
-## ¿Cuándo Usar Estructura?
+## When to Use Estructura
 
-Estructura es ideal cuando necesitas manejar lógica compleja que depende de la naturaleza de tus datos, como en:
+Estructura is ideal when you need to handle complex logic that depends on the nature of your data, such as in:
 
-*   **`APIs` Polimórficas:** Crea funciones que se resuelven automáticamente, como `endpoint(url_string, different_data_inputs)`, `render(html_element, content_variations)`.
-*   **Sistemas de Plugins:** Permite que extensiones de terceros registren funciones sin modificar el núcleo de tu aplicación.
-*   **Procesamiento de Datos:** Escribe flujos de datos limpios que se adaptan a diferentes formatos de entrada (JSON, CSV, XML, etc.).
-*   **Refactorización de Código Complejo:** Reemplaza largas cadenas de `if/else` o `switch` de comprobaciones con una solución más declarativa y mantenible.
+*   **Polymorphic `APIs`:** Create functions that resolve automatically, such as `endpoint(url_string, different_data_inputs)`, `render(html_element, content_variations)`.
+*   **Plugin Systems:** Let third-party extensions register functions without modifying the core of your application.
+*   **Data Processing:** Write clean data flows that adapt to different input formats (JSON, CSV, XML, etc.).
+*   **Refactoring Complex Code:** Replace long chains of `if/else` or `switch` checks with a more declarative and maintainable solution.
 
-## Instalación
+## Installation
 
 ### npm
-Puedes instalar Estructura a través de npm:
+You can install Estructura through npm:
 
 ```bash
 npm install estructura-js
 ```
-### CDN (Navegador)
-Puedes usarlo directamente en el navegador a través de un CDN:
+### CDN (Browser)
+You can use it directly in the browser through a CDN:
 
 ```html
 <script src="https://unpkg.com/estructura-js"></script>
 ```
 
-## Compatibilidad
+## Compatibility
 
-Estructura está diseñado para ser casi universalmente compatible, funcionando sin problemas en una amplia gama de entornos de JavaScript, desde navegadores modernos y antiguos hasta Node.js, etc.
+Estructura is designed to be almost universally compatible, working smoothly across a wide range of JavaScript environments, from modern and legacy browsers to Node.js, etc.
 
-**Resumen rápido:**  
-Estructura soporta **ESM**, **UMD** y **AMD** en navegadores, Node.js y RequireJS.
+**Quick summary:**  
+Estructura supports **ESM**, **UMD** and **AMD** in browsers, Node.js and RequireJS.
 
-| Formato | Uso en Node.js         | Navegador moderno       | Navegador antiguo |
-|---------|------------------------|-------------------------|-------------------|
-| ESM     | `import _e from ...`    | `<script type="module">`| ❌ Necesita transpilar |
-| UMD     | `require(...)`          | `<script src=...>`      | ✅ Soportado           |
-| AMD     | `define([...])`         | Con RequireJS           | ✅ Soportado           |
+| Format  | Usage in Node.js       | Modern browser          | Legacy browser     |
+|---------|------------------------|-------------------------|--------------------|
+| ESM     | `import _e from ...`    | `<script type="module">`| ❌ Needs transpiling |
+| UMD     | `require(...)`          | `<script src=...>`      | ✅ Supported         |
+| AMD     | `define([...])`         | With RequireJS          | ✅ Supported         |
 
-**Decisión rápida:**
-- Si tu entorno soporta módulos modernos → usa **ESM**.  
-- Si no → usa **UMD** o **AMD** según corresponda.
+**Quick decision:**
+- If your environment supports modern modules → use **ESM**.  
+- If not → use **UMD** or **AMD** as appropriate.
 
-### Formatos de Módulo
+### Module Formats
 
-El paquete se distribuye en varios formatos para asegurar una integración sencilla, en general, con los siguientes sistemas de módulos:
+The package is distributed in several formats to ensure easy integration, in general, with the following module systems:
 
-*   **Módulos ES (`ESM`):** El formato principal y moderno. Ideal para usar con `import` en Node.js (o entornos similares) con herramientas de compilación como Vite, Rollup, Webpack, o en navegadores actualizados.
+*   **ES Modules (`ESM`):** The main, modern format. Ideal for use with `import` in Node.js (or similar environments) with build tools such as Vite, Rollup or Webpack, or in up-to-date browsers.
     *   **Node.js:**
     ```javascript
     import _e from 'estructura-js';
     ```
-    *   **Navegadores actuales:**
+    *   **Current browsers:**
     ```html
     <script type="module">
-      import _e from 'https://unpkg.com/estructura-js';
+      import _e from 'https://unpkg.com/estructura-js/dist/estructura.esm.mjs';
     </script>
     ```
 
-*   **`UMD` (Universal Module Definition):** Proporciona máxima compatibilidad.
-    *   **CommonJS (Node.js):** Funciona de forma nativa con `require()`.
+*   **`UMD` (Universal Module Definition):** Provides maximum compatibility.
+    *   **CommonJS (Node.js):** Works natively with `require()`.
         ```javascript
         const _e = require('estructura-js');
         ```
 
-    *   **Navegadores (`Global`):** Si se incluye con un tag `<script>` normal, crea una variable `global` `_e`.
+    *   **Browsers (`Global`):** If included with a regular `<script>` tag, it creates a `global` variable `_e`.
         ```html
         <script src="https://unpkg.com/estructura-js"></script>
         <script>
-          // La variable global '_e' se ha cargado correctamente
+          // The global variable '_e' has been loaded correctly
           const estructura = _e;
 
-          // Ejemplo para mostrar los tipos de datos en la consola del navegador
-          let tipos = _e.type('hola');
-          console.log(tipos); //> [ 'String', String: true ]
+          // Example that shows the data types in the browser console
+          let types = _e.type('hello');
+          console.log(types); //> [ 'String', String: true ]
         </script>
         ```
-    *   **AMD (Asynchronous Module Definition):** Compatible con cargadores de módulos como RequireJS. Véase [Ejemplos](https://requirejs.org/docs/start.html#examples).
+    *   **AMD (Asynchronous Module Definition):** Compatible with module loaders such as RequireJS. See [Examples](https://requirejs.org/docs/start.html#examples).
 
-### Compatibilidad con Navegadores
+### Browser Compatibility
 
-El código de la distribución **`UMD`** no necesita transpilación, está escrito en **sintaxis compatible con ES3/ES5**, lo que garantiza su funcionamiento en todos los navegadores modernos y en la mayoría de los antiguos, incluyendo **Internet Explorer 9+**. La distribución **`ESM`** necesita transpilación para funcionar en ciertos navegadores.
+The code of the **`UMD`** distribution does not need transpiling: it is written in **ES3/ES5-compatible syntax**, which guarantees that it works in all modern browsers and in most legacy ones, including **Internet Explorer 9+**. The **`ESM`** distribution needs transpiling to work in certain browsers.
 
-> **Nota:** **Los ejemplos utilizan sintaxis de ES6 por brevedad**, pero pueden ser convertidos fácilmente y adaptarse a entornos ES5 (como a funciones clásicas `function(){}`) para ejecutarlos en navegadores antiguos.
+> **Note:** **The examples use ES6 syntax for brevity**, but they can easily be converted and adapted to ES5 environments (for example, to classic `function(){}` functions) to run them in legacy browsers.
 
-### Compatibilidad con Entornos
+### Environment Compatibility
 
-Estructura funciona perfectamente en cualquier entorno que soporte la sintaxis ES5 (Node.js, Deno, Bun, etc.). 
+Estructura works perfectly in any environment that supports ES5 syntax (Node.js, Deno, Bun, etc.). 
 
 ### TypeScript
 
-Desde la v1.21.0 el paquete incluye sus declaraciones de tipos (`.d.ts`), tanto para `import` como para `require`, sin instalar nada más:
+Since v1.21.0 the package includes its type declarations (`.d.ts`), for both `import` and `require`, with nothing else to install:
 
 ```typescript
 import _e, { type Instance, type TypeResult } from 'estructura-js';
 
 const api: Instance = _e.instance('api', { collision: 'specific' });
-const types: TypeResult = api.type([1, 2]); //> ['Object', 'Array'], con types['Array'] === true
+const types: TypeResult = api.type([1, 2]); //> ['Object', 'Array'], with types['Array'] === true
 ```
 
-Como los `métodos` solo se conocen en tiempo de ejecución, el objeto que devuelve el `despachador` admite cualquier `método`. Para más precisión, indica su forma con el parámetro genérico:
+Since `methods` are only known at runtime, the object returned by the `dispatcher` accepts any `method`. For more precision, describe its shape with the generic parameter:
 
 ```typescript
 const list = _e<{ join(sep: string): string }>(['a', 'b']);
-list.join('-'); // Tipado: devuelve string
+list.join('-'); // Typed: returns string
 ```
 
-Si cargas la distribución `UMD` con un `<script>` (variable global `_e`), declara el global en tu proyecto:
+If you load the `UMD` distribution with a `<script>` (global variable `_e`), declare the global in your project:
 
 ```typescript
 declare const _e: import('estructura-js').Instance;
 ```
 
-> **Nota:** con `moduleResolution` `node16`, `nodenext` o `bundler` los tipos se resuelven automáticamente. Con la resolución clásica (`node`/`node10`), `import _e from 'estructura-js'` requiere `esModuleInterop` (o `allowSyntheticDefaultImports`); la alternativa es `import _e = require('estructura-js')`.
+> **Note:** with `moduleResolution` set to `node16`, `nodenext` or `bundler`, the types are resolved automatically. With classic resolution (`node`/`node10`), `import _e from 'estructura-js'` requires `esModuleInterop` (or `allowSyntheticDefaultImports`); the alternative is `import _e = require('estructura-js')`.
 
-## Guía de Inicio Rápido
+## Quick Start Guide
 
-El concepto central es simple: asigna funciones para tipos o combinaciones de tipos y llama al `despachador` `_e()` con los datos correspondientes.
+The core concept is simple: assign functions for types or combinations of types, and call the `dispatcher` `_e()` with the corresponding data.
 
 ```javascript
 import _e from 'estructura-js';
 
-// Asignar métodos para tipos específicos
+// Assign methods for specific types
 _e.fn({
   Array: {
-    log: (args) => console.log(`Un array: ${args[0]}`)
+    log: (args) => console.log(`An array: ${args[0]}`)
   },
 
   Number: {
-    log: (args) => console.log(`Un número: ${args[0]}`)
+    log: (args) => console.log(`A number: ${args[0]}`)
   },
 
-  // Asigna un método para la secuencia (combinación) de tipos '_e(String, Number)'
+  // Assigns a method for the type sequence (combination) '_e(String, Number)'
   String: {
     Number: {
-      combine: (args) => console.log(`Combinado: ${args[0]} y ${args[1]}`)
+      combine: (args) => console.log(`Combined: ${args[0]} and ${args[1]}`)
     }
   }
 });
 
-// Llamar al despachador
-_e(['hola']).log();             //> "Un array: hola"
-_e(12345).log();                //> "Un número: 12345"
-_e('texto', 67890).combine();   //> "Combinado: texto y 67890"
+// Call the dispatcher
+_e(['hello']).log();            //> "An array: hello"
+_e(12345).log();                //> "A number: 12345"
+_e('text', 67890).combine();    //> "Combined: text and 67890"
 ```
 
-## Conceptos Previos
+## Preliminary Concepts
 
-Antes de profundizar en Estructura, es importante entender algunos conceptos fundamentales que te ayudarán a aprovechar al máximo este framework.
+Before diving into Estructura, it is important to understand some fundamental concepts that will help you get the most out of this framework.
 
-### Despacho de Funciones
+### Function Dispatch
 
-#### ¿Qué es el Despacho de Funciones?
+#### What is Function Dispatch?
 
-El **despacho de funciones** es el mecanismo que determina qué función específica se ejecutará cuando hay múltiples opciones disponibles. Es como un "enrutador inteligente" que selecciona la función correcta basándose en ciertos criterios.
+**Function dispatch** is the mechanism that determines which specific function will run when there are multiple options available. It works like a "smart router" that selects the right function based on certain criteria.
 
-**Ejemplo Simple:**
+**Simple Example:**
 ```javascript
-// Sin despacho: código repetitivo
+// Without dispatch: repetitive code
 function processData(data){
   if(Array.isArray(data)){
     return data.map(item => item.toUpperCase());
@@ -298,45 +301,45 @@ function processData(data){
   else if(typeof data === 'number'){
     return data.toString().toUpperCase();
   }
-  // ... más condiciones
+  // ... more conditions
 }
 
-// Con despacho: más elegante
+// With dispatch: more elegant
 _e.fn({
   Array: { process: (args) => args[0].map(item => item.toUpperCase()) },
   String: { process: (args) => args[0].toUpperCase() },
   Number: { process: (args) => args[0].toString().toUpperCase() }
 });
 
-// Uso limpio
-_e(['hola', 'mundo']).process();  //> ["HOLA", "MUNDO"]
-_e('hola').process();             //> "HOLA"
-_e(123).process();                //> "123"
+// Clean usage
+_e(['hello', 'world']).process();  //> ["HELLO", "WORLD"]
+_e('hello').process();             //> "HELLO"
+_e(123).process();                 //> "123"
 ```
 
-### Despacho Simple vs. Múltiple
+### Single vs. Multiple Dispatch
 
-#### Despacho Simple
-Es el que usa la **Programación Orientada a Objetos tradicional**. La función a ejecutar se determina únicamente por el **primer argumento** (basándose en el cual se llama el método).
+#### Single Dispatch
+This is the one used by **traditional Object-Oriented Programming**. The function to run is determined solely by the **first argument** (the one the method is called on).
 
 ```javascript
-// Programación tradicional: solo importa el tipo del primer argumento
+// Traditional programming: only the type of the first argument matters
 class MyArray extends Array {
-  combine(anotherArray){  // Solo sabe que 'this' es MyArray
+  combine(anotherArray){  // It only knows that 'this' is a MyArray
     return this.concat(anotherArray);
   }
 }
 
 const arr1 = new MyArray(1, 2);
 const arr2 = [3, 4];
-arr1.combine(arr2); // Solo considera el tipo de 'arr1'
+arr1.combine(arr2); // It only considers the type of 'arr1'
 ```
 
-#### Despacho Múltiple
-Estructura utiliza **despacho múltiple**, donde la función se selecciona considerando los **tipos de TODOS los argumentos**, no solo del primero.
+#### Multiple Dispatch
+Estructura uses **multiple dispatch**, where the function is selected by considering the **types of ALL the arguments**, not just the first one.
 
 ```javascript
-// Con Estructura: considera TODOS los argumentos
+// With Estructura: it considers ALL the arguments
 _e.fn({
   Array: {
     Array: {
@@ -353,111 +356,111 @@ _e.fn({
   }
 });
 
-_e([1, 2], [3, 4]).combine();    //> [1, 2, 3, 4] (Array + Array)
-_e([1, 2], '-').combine();       //> "1-2"       (Array + String)
-_e('hola', [1, 2]).combine();    //> ["hola", 1, 2] (String + Array)
+_e([1, 2], [3, 4]).combine();    //> [1, 2, 3, 4]    (Array + Array)
+_e([1, 2], '-').combine();       //> "1-2"           (Array + String)
+_e('hello', [1, 2]).combine();   //> ["hello", 1, 2] (String + Array)
 ```
 
-### Terminología de Estructura
+### Estructura Terminology
 
-#### `Despachador`
-La **función principal `_e()`** que analiza los argumentos y decide qué hacer con ellos.
+#### `Dispatcher`
+The **main function `_e()`**, which analyzes the arguments and decides what to do with them.
 
 ```javascript
-// '_e()' es el despachador
-const result = _e('datos', 123); // Analiza: String + Number
+// '_e()' is the dispatcher
+const result = _e('data', 123); // Analyzes: String + Number
 ```
 
-#### `Métodos`
-**Funciones que se adjuntan** al objeto que devuelve el despachador. Se llaman **después** de la evaluación de tipos.
+#### `Methods`
+**Functions that are attached** to the object returned by the dispatcher. They are called **after** the type evaluation.
 
 ```javascript
 _e.fn({
   String: {
-    length: (args) => args[0].length // ← Esto es un MÉTODO
+    size: (args) => args[0].length // ← This is a METHOD
   }
 });
 
-_e('hola').length(); // Se llama DESPUÉS del despacho
+_e('hello').size(); // Called AFTER the dispatch
 ```
 
-#### `Manejadores`
-**Funciones que se ejecutan automáticamente** cuando los tipos coinciden, **antes** de devolver el objeto con `métodos`.
+#### `Handlers`
+**Functions that run automatically** when the types match, **before** the object with the `methods` is returned.
 
 ```javascript
 _e.fn({
-  String: (str) => { // ← Esto es un MANEJADOR
-    console.log('Procesando:', str);
-    // Se ejecuta automáticamente
+  String: (str) => { // ← This is a HANDLER
+    console.log('Processing:', str);
+    // It runs automatically
   }
 });
 
-_e('hola'); //> "Procesando: hola" (se imprime inmediatamente)
+_e('hello'); //> "Processing: hello" (printed immediately)
 ```
 
-#### Tipos, subtipos y alias
+#### Types, Subtypes and Aliases
 
-**En la documentación, los siguientes términos son tipos en sentido general**, aunque tienen pequeñas diferencias entre sí:
+**In this documentation, the following terms are all types in a general sense**, although there are small differences between them:
 
-* **Tipos:** categorías principales de datos, integrados por defecto, de estos se derivan todos los subtipos.
+* **Types:** the main categories of data, built in by default; all subtypes derive from them.
 
-* **Subtipos:** categorías personalizadas de datos que se pueden crear a partir de los tipos principales, con las características que se especifiquen.
+* **Subtypes:** custom categories of data that can be created from the main types, with the characteristics you specify.
 
-* **Alias:** nombres adicionales que se asignan a tipos y subtipos para categorizar, agrupar o relacionar.
+* **Aliases:** additional names assigned to types and subtypes to categorize, group or relate them.
 
 ```javascript
 _e.subtype({
-   // Crear un subtipo, a partir del tipo Object
+   // Create a subtype, from the Object type
   Object: (input) => input.name && input.email ? 'User' : false,
 
-  // Crear un alias, a partir del tipo Array
+  // Create an alias, from the Array type
   Array: 'Collection'
 });
 
 
 _e.fn({
-   // Registrar método para el subtipo
+   // Register a method for the subtype
   User: {
-    hello: (args) => `¡Hola ${args[0].name}!`
+    hello: (args) => `Hello ${args[0].name}!`
   },
 
-   // Registrar método para el alias
+   // Register a method for the alias
   Collection: {
     combine: (args, char) => args[0].join(char)
   }
 });
 
-// Usos
+// Usage
 const person = { name: 'Ana', email: 'ana@email.com' };
-_e(person).hello(); //> "¡Hola Ana!"
+_e(person).hello(); //> "Hello Ana!"
 
 const list = ['1', '2', '3'];
 _e(list).combine(','); //> "1,2,3"
 ```
 
-### Por Qué es Útil el Despacho Múltiple
+### Why Multiple Dispatch is Useful
 
-#### Problema Común: Funciones Polimórficas
-Por ejemplo, una función `save()` que debe comportarse diferente según los tipos de datos:
+#### Common Problem: Polymorphic Functions
+For example, a `save()` function that must behave differently depending on the data types:
 
 ```javascript
-// Enfoque tradicional: código espagueti
+// Traditional approach: spaghetti code
 function save(data, to){
   if(typeof data === 'string' && typeof to === 'string'){
-    // Guardar texto en archivo
+    // Save text to a file
   }
   else if(Array.isArray(data) && to instanceof Database){
-    // Guardar array en base de data
+    // Save an array to a database
   }
   else if(typeof data === 'object' && to.type === 'API'){
-    // Enviar objeto a API
+    // Send an object to an API
   }
-  // ... otras combinaciones
+  // ... other combinations
 }
 ```
 
 ```javascript
-// Con Estructura: declarativo y extensible
+// With Estructura: declarative and extensible
 _e.fn({
   String: {
     String: {
@@ -476,53 +479,53 @@ _e.fn({
   }
 });
 
-// Uso limpio
-_e('contenido', 'archivo.txt').save();
+// Clean usage
+_e('content', 'file.txt').save();
 _e([1,2,3], myDB).save();
 _e({data: 'json'}, myAPI).save();
 ```
 
-#### Ventajas Clave
+#### Key Advantages
 
-*   **Extensibilidad:** Permite añadir nuevas combinaciones manteniendo separadas las responsabilidades del código.
-*   **Legibilidad:** La lógica está organizada por tipos, no mezclada en `if/else`.
-*   **Mantenibilidad:** Cada combinación de tipos tiene su propio espacio.
-*   **Composabilidad:** Diferentes módulos o instancias pueden registrar sus propias funciones.
+*   **Extensibility:** Lets you add new combinations while keeping the responsibilities of the code separate.
+*   **Readability:** The logic is organized by types, not mixed into `if/else` chains.
+*   **Maintainability:** Each combination of types has its own space.
+*   **Composability:** Different modules or instances can register their own functions.
 
 ---
 
-## Documentación de la `API`
+## `API` Documentation
 
 ### `_e(arg1, arg2, ...)`
 
-La función principal o `despachador`. **Cada argumento representa un valor (`input`)**.
+The main function, or `dispatcher`. **Each argument represents a value (`input`)**.
 
-* Analiza los tipos de los argumentos proporcionados.
-* Busca asignaciones para toda la secuencia (combinación) de tipos.
-* **Devuelve un nuevo objeto (`output`)** con los `métodos` correspondientes adjuntos y/o ejecuta `manejadores`.
+* It analyzes the types of the provided arguments.
+* It looks up assignments for the whole type sequence (combination).
+* **It returns a new object (`output`)** with the corresponding `methods` attached and/or runs `handlers`.
 
 ---
 
 ### `_e.fn(assignments)`
 
-Registra asignaciones de [`métodos`](#métodos) y/o [`manejadores`](#manejadores) para tipos, subtipos, alias o combinaciones.
+Registers assignments of [`methods`](#methods) and/or [`handlers`](#handlers) for types, subtypes, aliases or combinations.
 
-**`assignments`:** Puede ser **un objeto o una función**.
+**`assignments`:** Can be **an object or a function**.
 
-**Devuelve la instancia** *(v1.21.0+)*, por lo que las llamadas se pueden encadenar: `_e.fn({ /*...*/ }).subtype({ /*...*/ })`.
+**It returns the instance** *(v1.21.0+)*, so calls can be chained: `_e.fn({ /*...*/ }).subtype({ /*...*/ })`.
 
-* **Objeto:**
+* **Object:**
 
-    En el cual cada *clave* se refiere a un nombre de tipo y cada *valor* es un objeto anidado con `métodos` o una función (`manejador`). Cada nivel de anidación se refiere al tipo de cada argumento en orden que se pasa al [`despachador`](#_earg1-arg2-) (función principal).
+    Each *key* refers to a type name, and each *value* is a nested object with `methods` or a function (`handler`). Each nesting level refers to the type of each argument, in the order in which it is passed to the [`dispatcher`](#_earg1-arg2-) (main function).
 
     ```javascript
     _e.fn({
-      // Asigna métodos para '_e(Object)'
+      // Assigns methods for '_e(Object)'
       Object: {
         keys: (args) => Object.keys(args[0])
       },
 
-      // Los niveles de anidación se refieren a '_e(Array, String)' y sus métodos
+      // The nesting levels refer to '_e(Array, String)' and its methods
       Array: {
         String: {
           join: (args) => args[0].join(args[1])
@@ -537,7 +540,7 @@ Registra asignaciones de [`métodos`](#métodos) y/o [`manejadores`](#manejadore
     console.log(join); //> "1,2,3"
     ```
 
-    Los `métodos` que registres recibirán los argumentos del `despachador` como un **`array` en el primer argumento**. (Véase "[Cómo se Pasan los Argumentos del `Despachador`](#cómo-se-pasan-los-argumentos-del-despachador)").
+    The `methods` you register will receive the `dispatcher` arguments as an **`array` in the first argument**. (See "[How the `Dispatcher` Arguments Are Passed](#how-the-dispatcher-arguments-are-passed)").
 
     ```javascript
     _e.fn({
@@ -546,197 +549,222 @@ Registra asignaciones de [`métodos`](#métodos) y/o [`manejadores`](#manejadore
       }
     });
 
-    const repeated = _e('hola ').repeat(3);
-    console.log(repeated); //> "hola hola hola "
+    const repeated = _e('hello ').repeat(3);
+    console.log(repeated); //> "hello hello hello "
     ```
-    #### **`Métodos Globales`**
-    También puedes asignar `métodos` que estarán disponibles sin importar el tipo de los argumentos (`Any`) de una instancia registrándolos en el primer nivel del objeto de asignaciones (el `método` no estará disponible y se generará una colisión si ya existe un método con el mismo nombre).
+    #### **`Global Methods`**
+    You can also assign `methods` that will be available regardless of the type of the arguments (`Any`) of an instance, by registering them at the first level of the assignments object (if a global `method` with the same name already exists, the new one is ignored with a warning; and if the name matches that of a `method` of a type, a [collision](#collision-of-methods-or-handlers) occurs).
 
     ```javascript
     _e.fn({
-      // Este método estará disponible para todas las llamadas a '_e()'
-      timestamp: () => `Procesado a las: ${Date.now()}`
+      // This method will be available for every call to '_e()'
+      timestamp: () => `Processed at: ${Date.now()}`
     });
 
-    console.log(_e(123).timestamp());       //> "Procesado a las: 1700000000000"
-    console.log(_e('abc').timestamp());     //> "Procesado a las: 1700000000001"
+    console.log(_e(123).timestamp());       //> "Processed at: 1700000000000"
+    console.log(_e('abc').timestamp());     //> "Processed at: 1700000000001"
     ```
-    #### **Colisión de `Métodos` o `Manejadores`**
+    #### **Collision of `Methods` or `Handlers`**
 
-    **⚠️ IMPORTANTE: Modo del Framework, En Colisiones Lo General Sobrescribe a lo Específico**
+    **⚠️ IMPORTANT: Framework Mode, in Collisions the General Overrides the Specific**
     
-    Cuando un [valor (`input`)](#_earg1-arg2-) corresponde a múltiples tipos, todos sus `métodos` se fusionan en el objeto resultante. Si dos o más tipos asignan un `método` o `manejador` con el mismo nombre, se producirá una colisión. En este caso, **el `método` o `manejador` del tipo más general (menos específico, principal) prevalecerá, sobrescribiendo al de subtipo o alias más específico**. Puedes consultar el orden de especificidad de cualquier valor usando [`.type()`](#_etypeinput).
+    When a [value (`input`)](#_earg1-arg2-) matches multiple types, all of their `methods` are merged into the resulting object. If two or more types assign a `method` or `handler` with the same name, a collision occurs. In this case, **the `method` or `handler` of the most general type (the least specific one, the main type) prevails, overriding the one of the more specific subtype or alias**. You can check the specificity order of any value using [`.type()`](#_etypeinput).
     
-    **Orden de sobrescritura en colisión de métodos:**
-    1. Si existe, se usa un `método`/`manejador` global.
-    2. Si no, se usa un `método`/`manejador` de tipo principal.
-    3. Si no, se usa un `método`/`manejador` de tipo derivado.
-    4. Si no, usa el de subtipo/alias.
+    **Override order in a method collision:**
+    1. If it exists, a global `method`/`handler` is used.
+    2. If not, a `method`/`handler` of the main type is used.
+    3. If not, a `method`/`handler` of the derived type is used.
+    4. If not, the one of the subtype/alias is used.
     
-    **Ejemplo:**
+    **Example:**
     
-    | Nivel de especificidad      | Ejemplo                   | Prioridad ↑ |
+    | Specificity level           | Example                   | Priority ↑  |
     |-----------------------------|---------------------------|-------------|
-    | Subtipo o Alias             | `AnotherCollection`       | 1           |
-    | Tipo derivado               | `Array`                   | 2           |
-    | Tipo principal              | `Object`                  | 3           |
-    | `Método`/`Manejador` global | `myMethod`                | 4           |
+    | Subtype or Alias            | `AnotherCollection`       | 1           |
+    | Derived type                | `Array`                   | 2           |
+    | Main type                   | `Object`                  | 3           |
+    | Global `Method`/`Handler`   | `myMethod`                | 4           |
     
-    1. `Métodos` de [**subtipos o alias**](#_esubtypedefinitions):
+    1. `Methods` of [**subtypes or aliases**](#_esubtypedefinitions):
     ```javascript
     _e.fn({ AnotherCollection: { myMethod: ... }})
     ```
     
-    2. `Métodos` de [**tipos derivados**](#tipos-predefinidos):
+    2. `Methods` of [**derived types**](#predefined-types):
     ```javascript
     _e.fn({ Array: { myMethod: ... }})
     ```
     
-    3. `Métodos` de [**tipos principales**](#tipos-predefinidos):
+    3. `Methods` of [**main types**](#predefined-types):
     ```javascript
     _e.fn({ Object: { myMethod: ... }})
     ```
     
-    4. [`Métodos **globales**`](#métodos-globales):
+    4. [**Global** `Methods`](#global-methods):
     ```javascript
     _e.fn({ myMethod: ... })
     ```
     
-    En el ejemplo anterior, significa que `myMethod` para `Object` sobrescribirá al de `AnotherCollection`.
+    In the previous example, this means that `myMethod` for `Object` will override the one for `AnotherCollection`.
     
-    **Otro ejemplo:**
+    **Another example:**
     
     ```javascript
-    // Registramos métodos con el mismo nombre para 'Array' y 'Object'.
+    // We register methods with the same name for 'Array' and 'Object'.
     _e.fn({
-      // Método para el tipo derivado: Array
+      // Method for the derived type: Array
       Array: {
-        logType: () => console.log('Tipo Derivado: Array')
+        logType: () => console.log('Derived Type: Array')
       },
-      // Método para el tipo general (principal): Object
+      // Method for the general (main) type: Object
       Object: {
-        logType: () => console.log('Tipo General (Principal): Object')
+        logType: () => console.log('General (Main) Type: Object')
       }
     });
     
-    // Un array es tanto de tipo 'Array' como de tipo 'Object'.
-    // Al haber una colisión, se prevalecerá el método del tipo más general (principal 'Object').
-    _e([1, 2, 3]).logType(); //> "Tipo General (Principal): Object"
+    // An array is both of type 'Array' and of type 'Object'.
+    // Since there is a collision, the method of the most general type (the main type 'Object') prevails.
+    _e([1, 2, 3]).logType(); //> "General (Main) Type: Object"
     ```
     
-    **Nota:** Esta decisión de diseño garantiza que los `métodos` o `manejadores globales` puedan actuar como un `'fallback'` predecible y consistente, asegurando que una función siempre esté disponible si no se encuentra una más específica. O para prevenir que `métodos` o `manejadores` registrados más recientes sobrescriban a los anteriores.
+    **Note:** This design decision ensures that global `methods` or `handlers` can act as a predictable and consistent `'fallback'`, guaranteeing that a function is always available if a more specific one is not found. It also serves to prevent more recently registered `methods` or `handlers` from overriding earlier ones.
 
-    **Cambiar el orden de especificidad (v1.21.0+):** con la opción `collision` de [`.config()`](#_econfigoptions) o de [`.instance()`](#_einstancename-options) se elige qué definición prevalece en una colisión:
+    **Changing the specificity order (v1.21.0+):** with the `collision` option of [`.config()`](#_econfigoptions) or of [`.instance()`](#_einstancename-options) you choose which definition prevails in a collision:
 
-    | Valor                  | Prevalece                                                                                          |
+    | Value                  | Prevails                                                                                           |
     |------------------------|----------------------------------------------------------------------------------------------------|
-    | `'general'` (defecto) | El tipo más general (comportamiento descrito arriba).                                              |
-    | `'specific'`          | El tipo más específico. Los `métodos`/`manejadores` globales actúan solo como `fallback` real.    |
+    | `'general'` (default)  | The most general type (the behavior described above).                                              |
+    | `'specific'`           | The most specific type. Global `methods`/`handlers` act only as a true `fallback`.                 |
 
     ```javascript
     const e = _e.instance('myAPI', { collision: 'specific' });
 
     e.fn({
-      Array: { logType: () => 'Tipo Derivado: Array' },
-      Object: { logType: () => 'Tipo General (Principal): Object' },
+      Array: { logType: () => 'Derived Type: Array' },
+      Object: { logType: () => 'General (Main) Type: Object' },
       logType: () => 'Global'
     });
 
-    e([1, 2, 3]).logType(); //> "Tipo Derivado: Array"
-    e({}).logType();        //> "Tipo General (Principal): Object"
-    e('texto').logType();   //> "Global"
+    e([1, 2, 3]).logType(); //> "Derived Type: Array"
+    e({}).logType();        //> "General (Main) Type: Object"
+    e('text').logType();    //> "Global"
     ```
 
-    Con `'specific'`, en las secuencias de varios argumentos el primer argumento es el que más pesa: se comparan los tipos del primer argumento y, a igualdad, los del segundo, y así sucesivamente. La advertencia de colisión se sigue mostrando, indicando que se ignoró la definición más general. El orden de **ejecución** de los `manejadores` (del más específico al más general) **no cambia** con esta opción.
+    With `'specific'`, in sequences of several arguments the first argument carries the most weight: the types of the first argument are compared and, if they are equal, those of the second one, and so on. The collision warning is still shown, stating that the more general definition was ignored. The **execution** order of the `handlers` (from the most specific to the most general) **does not change** with this option.
 
-    > **Nota:** con `'general'` (el valor por defecto) se conserva exactamente el orden de resolución de las versiones anteriores. En secuencias de varios argumentos ese orden no sigue siempre la regla "lo general sobrescribe a lo específico" (por ejemplo, entre `Array + String` y `Object + String` prevalece `Array + String`). Si necesitas un orden consistente en varios argumentos usa `'specific'`.
+    > **Note:** with `'general'` (the default value), the resolution order of previous versions is kept exactly. In sequences of several arguments, that order does not always follow the rule "the general overrides the specific" (for example, between `Array + String` and `Object + String`, `Array + String` prevails). If you need a consistent order across several arguments, use `'specific'`.
 
-* **Función:**
+    > **Note:** collisions between `handlers` happen because, by default, a `handler` is also attached to the result as a `method` named after its type. With the `handlers: 'hidden'` option *(v1.22.0+)* they are not attached, so they do not collide. See "[`Handlers` as `Methods`](#handlers-as-methods)".
 
-    Se puede asignar para que se ejecute **en cualquier llamada a una instancia**, se llama **`manejador` raíz**.
+* **Function:**
+
+    It can be assigned to run **on every call to an instance**; it is called the **root `handler`**.
     ```javascript
     _e.fn((arg1, arg2, /*...,*/ argN) => {
-      // Código...
+      // Code...
     });
     ```
-    Véase "[Conceptos Avanzados: `Manejadores`](#conceptos-avanzados-manejadores)" o "[Secuencia de Ejecución por Especificidad](#secuencia-de-ejecución-por-especificidad)".
+    See "[Advanced Concepts: `Handlers`](#advanced-concepts-handlers)" or "[Execution Sequence by Specificity](#execution-sequence-by-specificity)".
 
-### Fusión de Registros de Asignaciones (Registro Aditivo)
+### Merging Assignment Registrations (Additive Registration)
 
-Si llamas a `.fn()` varias veces para registrar asignaciones de `manejadores` o `métodos` **para los mismos tipos**, las asignaciones se fusionan en lugar de sobrescribirse. Este comportamiento aditivo sirve para sistemas de plugins o para organizar el código en módulos, ya que permite añadir nueva funcionalidad de forma segura.
+If you call `.fn()` several times to register assignments of `handlers` or `methods` **for the same types**, the assignments are merged instead of overwritten. This additive behavior is useful for plugin systems or for organizing code into modules, since it lets you add new functionality safely.
 
-* **Para `Manejadores`:**
+* **For `Handlers`:**
 
-    Hay una regla importante: **una vez que se asigna un `manejador` a un tipo, seguirá siendo un `manejador`**.
+    There is an important rule: **once a `handler` is assigned to a type, it remains a `handler`**.
 
-    Si a continuación registras un objeto de `métodos` para ese mismo tipo, los nuevos `métodos` se añadirán al `manejador`, pero no perderá su capacidad de auto-ejecutarse.
+    If you then register an object of `methods` for that same type, the new `methods` are added to the `handler`, but it does not lose its ability to auto-execute.
 
     ```javascript
-    // Asignamos un manejador para 'Number'
+    // We assign a handler for 'Number'
     _e.fn({
-      Number: (num) => console.log(`Manejador ejecutado para: ${num}`)
+      Number: (num) => console.log(`Handler executed for: ${num}`)
     });
 
-    // Fusionamos un objeto con un nuevo método
+    // We merge an object with a new method
     _e.fn({
       Number: {
         isEven: (args) => args[0] % 2 === 0
       }
     });
 
-    // El manejador se auto-ejecuta y tiene el nuevo método disponible
-    const myNumber = _e(10); //> Manejador ejecutado para: 10
+    // The handler auto-executes and has the new method available
+    const myNumber = _e(10); //> Handler executed for: 10
 
     console.log(myNumber.isEven()); //> true
     ```
-    Véase "[Conceptos Avanzados: `Manejadores`](#conceptos-avanzados-manejadores)" y "[Colisión de `Métodos` o `Manejadores`](#colisión-de-métodos-o-manejadores)".
+    See "[Advanced Concepts: `Handlers`](#advanced-concepts-handlers)" and "[Collision of `Methods` or `Handlers`](#collision-of-methods-or-handlers)".
 
-* **Para `Métodos`:**
+    > **Bad practice:** do not reuse **the same function** as the `handler` of several types. In JavaScript a function is an object, and the `methods` merged into a `handler` are stored as properties of that function, so the types that share it would also share its `methods`. Use a different function for each type:
+    >
+    > ```javascript
+    > const logValue = (value) => console.log(value);
+    >
+    > // Wrong: 'String' and 'Number' share the function and, with it, the methods merged into it
+    > _e.fn({ String: logValue, Number: logValue });
+    >
+    > // Right: one function per type
+    > _e.fn({ String: (value) => logValue(value), Number: (value) => logValue(value) });
+    > ```
 
-    Los objetos con `métodos` para los mismos tipos se fusionarán en lugar de sobrescribirse.
+* **For `Methods`:**
+
+    Objects with `methods` for the same types are merged instead of overwritten.
 
     ```javascript
-    // Registro inicial en el núcleo de la aplicación
+    // Initial registration in the core of the application
     _e.fn({
       String: {
         log: (args) => console.log(`[LOG]: ${args[0]}`)
       }
     });
 
-    // Más tarde, un 'plugin' añade nueva funcionalidad al tipo String
+    // Later, a 'plugin' adds new functionality to the String type
     _e.fn({
       String: {
         wordCount: (args) => args[0].split(' ').length
       }
     });
 
-    // Ambos métodos están ahora disponibles gracias a la fusión
-    const myText = _e('Estructura es muy flexible');
+    // Both methods are now available thanks to the merge
+    const myText = _e('Estructura is very flexible');
 
-    myText.log();                      //> [LOG]: Estructura es muy flexible
+    myText.log();                      //> [LOG]: Estructura is very flexible
     console.log(myText.wordCount());   //> 4
     ```
 
-### Cómo se Pasan los Argumentos del `Despachador`
+* **If the function already exists:**
 
-**⚠️ IMPORTANTE: Distinción Crucial**
+    Merging is not overwriting: **the first registered function prevails**. If you register another `handler` for a type that already has one (or for the root), or another `method` with a name that already exists in the same type sequence, the new one is ignored with a warning *(v1.22.0+; previously it was ignored silently)*. Registering exactly the same function again does not produce any warning.
 
-Hay una diferencia clave en **cómo los `métodos` o `manejadores` reciben los argumentos del `despachador`**.
+    ```javascript
+    _e.fn({ String: { log: () => 'first' } });
+    _e.fn({ String: { log: () => 'second' } }); // Ignored with a warning
 
-- **`Métodos`**: reciben **todos los argumentos en un array** como primer parámetro.  
-- **`Manejadores`**: reciben **los argumentos directamente**.
+    _e('text').log(); //> "first"
+    ```
 
-| Tipo        | Argumentos de función         | Ejemplo de acceso |
+### How the `Dispatcher` Arguments Are Passed
+
+**⚠️ IMPORTANT: Crucial Distinction**
+
+There is a key difference in **how `methods` and `handlers` receive the `dispatcher` arguments**.
+
+- **`Methods`**: receive **all the arguments in an array** as their first parameter.  
+- **`Handlers`**: receive **the arguments directly**.
+
+| Kind        | Function arguments            | Access example    |
 |-------------|-------------------------------|-------------------|
-| `Método`    | `(args, extra...)`            | `args[0]`         |
-| `Manejador` | `(arg1, arg2, ...)`           | `arg1`            |
+| `Method`    | `(args, extra...)`            | `args[0]`         |
+| `Handler`   | `(arg1, arg2, ...)`           | `arg1`            |
 
-**Con la opción `args: 'spread'` (v1.21.0+)**, los `métodos` reciben los argumentos del `despachador` uno a uno, y los argumentos con los que se llama al `método` van juntos en un `array` como **último** argumento (véase [`.config()`](#_econfigoptions)):
+**With the `args: 'spread'` option (v1.21.0+)**, `methods` receive the `dispatcher` arguments one by one, and the arguments the `method` is called with go together in an `array` as the **last** argument (see [`.config()`](#_econfigoptions)):
 
-| Opción `args`        | Argumentos de función del `método`           | Para `_e(a, b).method(c, d)` |
+| `args` option         | Arguments of the `method` function            | For `_e(a, b).method(c, d)`   |
 |-----------------------|-----------------------------------------------|-------------------------------|
-| `'array'` (defecto)  | `(args, ...methodArgs)`                       | `([a, b], c, d)`              |
-| `'spread'`           | `(...dispatcherArgs, methodArgs)`             | `(a, b, [c, d])`              |
+| `'array'` (default)   | `(args, ...methodArgs)`                       | `([a, b], c, d)`              |
+| `'spread'`            | `(...dispatcherArgs, methodArgs)`             | `(a, b, [c, d])`              |
 
 ```javascript
 const e = _e.instance('spreadAPI', { args: 'spread' });
@@ -744,7 +772,7 @@ const e = _e.instance('spreadAPI', { args: 'spread' });
 e.fn({
   Array: {
     String: {
-      // (arr, sep) son los argumentos del despachador; [prefix] son los del método
+      // (arr, sep) are the dispatcher arguments; [prefix] are the method arguments
       join: (arr, sep, [prefix]) => prefix + arr.join(sep)
     }
   }
@@ -753,71 +781,75 @@ e.fn({
 e([1, 2, 3], '-').join('>'); //> ">1-2-3"
 ```
 
-Con `'spread'` el último parámetro es siempre un `array` (`[]` si el `método` se llama sin argumentos). Para un `método` registrado en una secuencia de tipos, la cantidad de argumentos del `despachador` es fija: la longitud de la secuencia. Para los [`métodos globales`](#métodos-globales) varía con cada llamada; por eso el `array` de argumentos del `método` va siempre al final: `(...all) => { const methodArgs = all.pop(); /* 'all' queda con los del despachador */ }`. Los `manejadores` **no cambian**: siguen recibiendo los argumentos directamente.
+With `'spread'` the last parameter is always an `array` (`[]` if the `method` is called without arguments). For a `method` registered in a type sequence, the number of `dispatcher` arguments is fixed: the length of the sequence. For [`global methods`](#global-methods) it varies with each call; that is why the `array` of `method` arguments always goes last: `(...all) => { const methodArgs = all.pop(); /* 'all' is left with the dispatcher arguments */ }`. `Handlers` **do not change**: they still receive the arguments directly.
 
-**Ejemplos:**  
+**Examples:**  
 
-* **`Métodos`:**
+* **`Methods`:**
 
     ```javascript
     _e.fn({
       String: {
-        // 'args' es ['Hola']
-        myMethod: (args) => console.log(`El primer argumento es: ${args[0]}`)
+        // 'args' is ['Hello']
+        myMethod: (args) => console.log(`The first argument is: ${args[0]}`)
       }
     });
 
-    _e('Hola').myMethod(); //> "El primer argumento es: Hola"
+    _e('Hello').myMethod(); //> "The first argument is: Hello"
     ```
 
-* **`Manejadores`:**
+* **`Handlers`:**
 
     ```javascript
     _e.fn({
-      // 'arg1' es 'Hola'
-      String: (arg1) => { console.log(`Recibí directamente: ${arg1}`); }
+      // 'arg1' is 'Hello'
+      String: (arg1) => { console.log(`Received directly: ${arg1}`); }
     });
 
-    _e('Hola'); //> "Recibí directamente: Hola"
+    _e('Hello'); //> "Received directly: Hello"
     ```
 
 ---
 
 ### `_e.subtype(definitions)`
 
-Registra definiciones de tipos nuevos para cada instancia de Estructura. **Se llaman subtipos y alias**. Devuelve la instancia *(v1.21.0+)*, por lo que las llamadas se pueden encadenar.
+Registers definitions of new types for each Estructura instance. **These are called subtypes and aliases**. It returns the instance *(v1.21.0+)*, so calls can be chained.
 
-**`definitions`:** Un objeto donde cada *clave* es un nombre de tipo predefinido y cada *valor* puede ser:
+**`definitions`:** An object where each *key* is the name of a predefined type and each *value* can be:
 
-*   Una cadena de texto (`string`) para crear un alias simple.
-*   Un `array` de cadenas de texto para asignar múltiples alias a la vez.
-*   **Una función evaluadora** que recibe el [valor (`input`)](#_earg1-arg2-) y decide el tipo/subtipo de `input`:
-    > **Argumentos disponibles en la función:**
-    > * **`input`**: El valor que se está analizando.
-    > * **`primitive_type`**: El nombre del tipo principal o derivado del que proviene (ej. `'Object'`, `'String'`).
-    > * **`getTypes`**: Una función que, al ejecutarse `getTypes()`, devuelve una copia segura del *array/mapa* con todos los tipos detectados hasta ese momento en la cadena de recursividad. (Al ser una función, garantiza un rendimiento óptimo al no clonar el mapa a menos que lo solicites explícitamente).
+*   A text string (`string`) to create a simple alias.
+*   An `array` of text strings to assign multiple aliases at once.
+*   **An evaluator function** that receives the [value (`input`)](#_earg1-arg2-) and decides the type/subtype of `input`:
+    > **Arguments available in the function:**
+    > * **`input`**: The value being analyzed.
+    > * **`primitive_type`**: The name of the main or derived type it comes from (e.g. `'Object'`, `'String'`).
+    > * **`getTypes`**: A function that, when executed as `getTypes()`, returns a safe copy of the *array/map* with all the types detected so far in the recursion chain. (Because it is a function, it guarantees optimal performance by not cloning the map unless you explicitly request it).
 
-    **Valores que puede retornar la función:**
+    **Values the function can return:**
 
-    * Una cadena de texto con el nombre nuevo del subtipo.
-    * Un *booleano* **`true`** si el nombre de la *clave* debe usarse como el nombre del subtipo.
-    * Si no coincide con el subtipo: **`undefined`**, **`null`**, **`false`**, o **`''`**.
+    * A text string with the new name of the subtype.
+    * A *boolean* **`true`** if the name of the *key* should be used as the name of the subtype.
+    * If the value does not match the subtype: **`undefined`**, **`null`**, **`false`**, or **`''`**.
+
+    Evaluator functions only run when the types of a value are detected (in the `dispatcher` or in [`.type()`](#_etypeinput)), never when registering with [`.fn()`](#_efnassignments) or `.subtype()` *(v1.22.0+)*.
+
+    > **Disallowed names:** the result of [`.type()`](#_etypeinput) is an `array`, so a subtype or alias cannot be named after a native property of `arrays` (`map`, `filter`, `length`, etc.). Those names are ignored with a warning *(v1.22.0+)*. With the convention of names that start with an uppercase letter (`Email`, `User`) there is no conflict.
 
 ```javascript
-// Crear subtipos
+// Create subtypes
 _e.subtype({
-  // Con una función
+  // With a function
   Object: (input) => (input.userId ? 'User' : false),
 
-  // Con un string (un alias simple)
+  // With a string (a simple alias)
   RegExp: 'RegexPattern',
 
-  // Con un array (múltiples alias)
-  // Un 'Array' ahora también es de tipo 'Collection' y 'OrderedList'
+  // With an array (multiple aliases)
+  // An 'Array' is now also of type 'Collection' and 'OrderedList'
   Array: ['Collection', 'OrderedList'] 
 });
 
-// Registrar funciones para los nuevos tipos
+// Register functions for the new types
 _e.fn({
   User: {
     hello: (args) => console.log(`Hello, ${args[0].name}!`)
@@ -825,7 +857,7 @@ _e.fn({
   RegexPattern: {
     test: (args, str) => args[0].test(str)
   },
-  // Se pueden registrar métodos para CUALQUIER alias
+  // Methods can be registered for ANY alias
   Collection: {
     isCollection: () => true
   },
@@ -840,101 +872,101 @@ _e(user).hello(); //> "Hello, Alex!"
 const hasNumber = _e(/\d+/).test('abc-123'); 
 console.log(hasNumber); //> true
 
-// Ahora los métodos de ambos alias están disponibles
+// Now the methods of both aliases are available
 const myList = _e([1, 2, 3]);
 console.log(myList.count());         //> 3
 console.log(myList.isCollection());  //> true
 ```
-Además, **`definitions`** puede ser una cadena de texto como `'browser-dom'`, que sirve para cargar [subtipos predefinidos para el DOM de navegadores](#subtipos-predefinidos-browser-dom) en instancias.
+In addition, **`definitions`** can be a text string such as `'browser-dom'`, which loads the [predefined subtypes for the browser DOM](#predefined-subtypes-browser-dom) into instances. If the string is not the name of a predefined set, nothing is registered and a warning is emitted *(v1.22.0+)*.
 
-### Tipos Predefinidos
-* **Principales:**
+### Predefined Types
+* **Main:**
 
     `Null`, `Undefined`, `Boolean`, `String`, `Number`, `NaN`, `BigInt`, `Symbol`, `Function`, `Object`.
-* **Derivados:**
+* **Derived:**
 
-  * **De `Object`:**
+  * **From `Object`:**
 
-    `Array`, `RegExp`, `Date`, etc. propios de la especificación básica de JavaScript.
+    `Array`, `RegExp`, `Date`, etc., which belong to the basic JavaScript specification.
 
-    O dependiendo del entorno, especificación JavaScript, o navegador: `Map`, `Set`, `Promise`, etc.
+    Or, depending on the environment, the JavaScript specification, or the browser: `Map`, `Set`, `Promise`, etc.
 
     
 
-### Subtipos Predefinidos: `'browser-dom'`
+### Predefined Subtypes: `'browser-dom'`
 
-Este conjunto de subtipos simplifica drásticamente la manipulación del DOM al agrupar cientos de tipos de objetos específicos del navegador en unas pocas categorías potentes y genéricas.
+This set of subtypes drastically simplifies DOM manipulation by grouping hundreds of browser-specific object types into a few powerful, generic categories.
 
-#### **Cómo Importar o Activar `browser-dom`**
+#### **How to Import or Enable `browser-dom`**
 
 ```javascript
-// Activar en la instancia por defecto
+// Enable it on the default instance
 _e.subtype('browser-dom');
 
-// O en una instancia nombrada
+// Or on a named instance
 const domAPI = _e.instance('domAPI');
 domAPI.subtype('browser-dom');
 
 /*
- * Ejemplos de uso en un navegador.
- * Nota: El resultado de '.type()' se muestra aquí ordenado desde el
- * tipo más específico al más general para mayor claridad, pero
- * el orden que devuelve '.type()' por defecto es el inverso.
+ * Usage examples in a browser.
+ * Note: The result of '.type()' is shown here ordered from the
+ * most specific type to the most general one for clarity, but
+ * the order that '.type()' returns by default is the reverse.
  */
 console.log(domAPI.type(document.head));   //> [ "Node.HEAD", "Node", "HTMLHeadElement", "Object" ]
 console.log(domAPI.type(document));        //> [ "Document", "HTMLDocument", "Object" ]
 console.log(domAPI.type(window));          //> [ "Browser", "Window", "Object" ]
 ```
 
-#### Subtipos Identificados
+#### Identified Subtypes
 
-##### Subtipo `Node`
+##### `Node` Subtype
 
-Representa nodos o elementos individuales en el DOM. Es la categoría más amplia y abarca:
+Represents individual nodes or elements in the DOM. It is the broadest category and covers:
 
-*   **Todos los Elementos HTML:** Desde `HTMLHtmlElement` hasta `HTMLDivElement`, `HTMLInputElement`, `HTMLTemplateElement`, etc. (cualquier etiqueta que se pueda escribir).
-  > **Subtipo Dinámico: `Node.<TAG_NAME>`**
+*   **All HTML Elements:** From `HTMLHtmlElement` to `HTMLDivElement`, `HTMLInputElement`, `HTMLTemplateElement`, etc. (any tag that can be written).
+  > **Dynamic Subtype: `Node.<TAG_NAME>`**
   >
-  > Después de que un elemento es identificado como `Node`, para más precisión, el framework crea un subtipo adicional usando su propiedad `tagName`.
+  > After an element is identified as `Node`, for more precision, the framework creates an additional subtype using its `tagName` property.
   >
-  > **Ejemplos:**
+  > **Examples:**
   >
-  > **Nota:** En los siguientes ejemplos, por claridad, los tipos se muestran ordenados desde el más específico al más general, pero el orden que devuelve `.type()` es el inverso.
-  > *   Un elemento `<div>` se clasifica como `[ "Node.DIV", "Node", "HTMLDivElement", "Object" ]`.
-  > *   Un elemento `<button>` se clasifica como `[ "Node.BUTTON", "Node", "HTMLButtonElement", "Object" ]`.
-*   **Elementos SVG y MathML:** Como `SVGSVGElement` y `MathMLMathElement`.
-*   **Elementos desconocidos u obsoletos:** Como `HTMLUnknownElement` y `HTMLMarqueeElement`.
-*   **Nodos que no son elementos:** Nodos de texto (`Text`), comentarios (`Comment`), fragmentos de documento (`DocumentFragment`) y atributos (`Attr`).
+  > **Note:** In the following examples, for clarity, the types are shown ordered from the most specific to the most general, but the order that `.type()` returns is the reverse.
+  > *   A `<div>` element is classified as `[ "Node.DIV", "Node", "HTMLDivElement", "Object" ]`.
+  > *   A `<button>` element is classified as `[ "Node.BUTTON", "Node", "HTMLButtonElement", "Object" ]`.
+*   **SVG and MathML Elements:** Such as `SVGSVGElement` and `MathMLMathElement`.
+*   **Unknown or obsolete elements:** Such as `HTMLUnknownElement` and `HTMLMarqueeElement`.
+*   **Nodes that are not elements:** Text nodes (`Text`), comments (`Comment`), document fragments (`DocumentFragment`) and attributes (`Attr`).
 
-##### Subtipo `Nodes`
+##### `Nodes` Subtype
 
-Representa colecciones o listas de nodos, que son el resultado de consultas al DOM.
+Represents collections or lists of nodes, which are the result of DOM queries.
 
-*   `NodeList` (devuelto por `document.querySelectorAll()`).
-*   `HTMLCollection` (devuelto por `document.getElementsByTagName()` o `element.children`).
-*   `HTMLAllCollection` (una colección obsoleta).
+*   `NodeList` (returned by `document.querySelectorAll()`).
+*   `HTMLCollection` (returned by `document.getElementsByTagName()` or `element.children`).
+*   `HTMLAllCollection` (an obsolete collection).
 
-##### Subtipo `Document`
+##### `Document` Subtype
 
-Identifica específicamente el objeto `document` principal de la página, para normalizar cuando el tipo del objeto es `HTMLDocument` (en ciertos navegadores).
+Specifically identifies the main `document` object of the page, to normalize the cases where the type of the object is `HTMLDocument` (in certain browsers).
 
-##### Subtipo `Browser`
+##### `Browser` Subtype
 
-Identifica objetos `globales` del entorno del navegador que no son parte del contenido del DOM.
+Identifies `global` objects of the browser environment that are not part of the DOM content.
 
-*   `Window` (el objeto `global` `window`).
-*   `Navigator` (el objeto `navigator` con información del navegador).
-*   `Screen` (el objeto `screen` con información de la pantalla).
-*   `Location` (el objeto `location` con información de la URL).
-*   `History` (el objeto `history` para la navegación).
+*   `Window` (the `global` object `window`).
+*   `Navigator` (the `navigator` object, with information about the browser).
+*   `Screen` (the `screen` object, with information about the screen).
+*   `Location` (the `location` object, with information about the URL).
+*   `History` (the `history` object, for navigation).
 
 ---
 
 ### `_e.instance(name, options)`
 
-Crea o recupera una instancia aislada de Estructura. Esto es ideal para evitar colisiones en aplicaciones grandes o al crear librerías.
+Creates or retrieves an isolated Estructura instance. This is ideal to avoid collisions in large applications or when creating libraries.
 
-**`options`** *(opcional, v1.21.0+)*: objeto con las [opciones](#_econfigoptions) iniciales de la instancia. Solo se aplican cuando la instancia se **crea**; si la instancia ya existe se ignoran con una advertencia (usa [`.config()`](#_econfigoptions) para cambiarlas).
+**`options`** *(optional, v1.21.0+)*: an object with the initial [options](#_econfigoptions) of the instance. They are only applied when the instance is **created**; if the instance already exists, they are ignored with a warning (use [`.config()`](#_econfigoptions) to change them).
 
 ```javascript
 const strictAPI = _e.instance('strictAPI', { collision: 'specific', args: 'spread' });
@@ -944,252 +976,319 @@ const strictAPI = _e.instance('strictAPI', { collision: 'specific', args: 'sprea
 const myAPI = _e.instance('myAPI');
 const anotherAPI = _e.instance('anotherAPI');
 
-// Las asignaciones en 'myAPI' no afectan a 'anotherAPI'
-myAPI.fn({ String: { log: () => console.log('Log de myAPI') } });
-anotherAPI.fn({ String: { log: () => console.log('Log de anotherAPI') } });
+// The assignments in 'myAPI' do not affect 'anotherAPI'
+myAPI.fn({ String: { log: () => console.log('myAPI log') } });
+anotherAPI.fn({ String: { log: () => console.log('anotherAPI log') } });
 
-myAPI('test').log();    //> "Log de myAPI"
-anotherAPI('test').log();  //> "Log de anotherAPI"
+myAPI('test').log();       //> "myAPI log"
+anotherAPI('test').log();  //> "anotherAPI log"
 ```
 
 ---
 
 ### `_e.config(options)`
 
-*(v1.21.0+)* Cambia las opciones de una instancia (cada instancia tiene las suyas, la instancia por defecto `_e` incluida) y devuelve la instancia para encadenar. Llamada **sin argumentos**, devuelve una copia de las opciones actuales. Los valores inválidos y las opciones desconocidas se ignoran con una advertencia.
+*(v1.21.0+)* Changes the options of an instance (each instance has its own, including the default instance `_e`) and returns the instance for chaining. Called **without arguments**, it returns a copy of the current options. Invalid values and unknown options are ignored with a warning.
 
-| Opción        | Valores                                  | Descripción                                                                                                              |
+| Option        | Values                                   | Description                                                                                                              |
 |---------------|------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
-| `collision`  | `'general'` (defecto), `'specific'`      | Qué definición prevalece cuando un `input` coincide con varios tipos que asignan un `método` con el mismo nombre. Véase "[Colisión de `Métodos` o `Manejadores`](#colisión-de-métodos-o-manejadores)". |
-| `args`       | `'array'` (defecto), `'spread'`           | Cómo reciben los argumentos los `métodos`. Véase "[Cómo se Pasan los Argumentos del `Despachador`](#cómo-se-pasan-los-argumentos-del-despachador)". |
+| `collision`   | `'general'` (default), `'specific'`      | Which definition prevails when an `input` matches several types that assign a `method` with the same name. See "[Collision of `Methods` or `Handlers`](#collision-of-methods-or-handlers)". |
+| `args`        | `'array'` (default), `'spread'`          | How `methods` receive the arguments. See "[How the `Dispatcher` Arguments Are Passed](#how-the-dispatcher-arguments-are-passed)". |
+| `handlers`    | `'exposed'` (default), `'hidden'`        | *(v1.22.0+)* Whether a `handler` is also attached to the result as a `method`. See "[`Handlers` as `Methods`](#handlers-as-methods)". |
+| `errors`      | `'console'` (default), `'throw'`         | *(v1.22.0+)* What happens when a `method`, a `handler` or a subtype evaluator function throws an error: it is reported through the console and the flow continues, or the original error is rethrown. |
 
 ```javascript
-_e.config(); //> { collision: 'general', args: 'array' }
+_e.config(); //> { collision: 'general', args: 'array', handlers: 'exposed', errors: 'console' }
 
 _e.config({ collision: 'specific' }).config({ args: 'spread' });
-_e.config(); //> { collision: 'specific', args: 'spread' }
+_e.config(); //> { collision: 'specific', args: 'spread', handlers: 'exposed', errors: 'console' }
 ```
 
-Los valores por defecto reproducen el comportamiento de las versiones anteriores, por lo que no hace falta cambiar nada en el código existente. Un cambio de opciones se aplica a las llamadas al `despachador` posteriores; los objetos que ya devolvió el `despachador` conservan la forma de pasar argumentos con la que se crearon.
+The default values reproduce the behavior of previous versions, so nothing needs to change in existing code. A change of options applies to the subsequent calls to the `dispatcher`; the objects the `dispatcher` has already returned keep the argument-passing style they were created with.
+
+**Errors (`errors`):** by default (`'console'`), if a `method`, a `handler` or a subtype evaluator function throws an error, the error is reported through the console and the flow continues (a `method` that fails returns the result object). With `'throw'` the original error is rethrown, with its stack trace and its class, and nothing is written to the console. The option applies at the moment the error occurs.
+
+```javascript
+const api = _e.instance('strict', { errors: 'throw' });
+
+api.fn({ String: { parse: (args) => JSON.parse(args[0]) } });
+
+try {
+  api('not JSON').parse();
+}
+catch(error){
+  console.log(error instanceof SyntaxError); //> true
+}
+```
 
 ---
 
 ### `_e.type(input)`
 
-Una herramienta de utilidad que te permite saber los tipos de cualquier variable en orden de especificidad (desde el más general en el índice 0, hasta el más específico en el último índice). Devuelve un `array` que también funciona como mapa de todos los tipos detectados (las propiedades devueltas con el nombre del tipo y valor `true` sirven para verificaciones rápidas).
+A utility that tells you the types of any variable in order of specificity (from the most general at index 0 to the most specific at the last index). It returns an `array` that also works as a map of all the detected types (the properties named after each type, with the value `true`, are useful for quick checks).
 
 ```javascript
 const types = _e.type({ id: 1 }); 
 console.log(types); //> [ 'Object', Object: true ]
 
 if(types['Object']){
-  console.log('Verificación rápida, es un objeto.');
+  console.log('Quick check: it is an object.');
 }
 ```
 
-## Conceptos Avanzados: `Manejadores`
+> **Note:** the result is an `array`, so it also has the native properties of arrays (`types['filter']` is a function for any value). Use the quick check only with type names; with the convention of names that start with an uppercase letter there is no conflict.
 
-Estas funciones se comportan de manera diferente, ofrecen más flexibilidad y pueden:
+## Advanced Concepts: `Handlers`
 
-* **Auto-ejecutarse:**
+These functions behave differently, offer more flexibility and can:
 
-  Si la secuencia (combinación) de tipos coincide con la función (`manejador`), se ejecutará automáticamente *antes* de que el `despachador` devuelva el objeto con los `métodos` (que está como referencia en **`this`** [si es función clásica `function(){}`]).
+* **Auto-execute:**
 
-  Los argumentos del `despachador` se pasan directamente a la función (véase "[Cómo se Pasan los Argumentos del `Despachador`](#cómo-se-pasan-los-argumentos-del-despachador)").
+  If the type sequence (combination) matches the function (`handler`), it runs automatically *before* the `dispatcher` returns the object with the `methods` (which is available as a reference in **`this`** [if it is a classic function `function(){}`]).
 
-* **Contener más `manejadores` o `métodos`:**
+  The `dispatcher` arguments are passed directly to the function (see "[How the `Dispatcher` Arguments Are Passed](#how-the-dispatcher-arguments-are-passed)").
 
-  Al ser una función, puede tener propiedades que actúen como `sub-manejadores` o `métodos` para un despacho más profundo.
+* **Contain more `handlers` or `methods`:**
 
-* [**Sobrescribir `métodos` dinámicamente**](#sobrescribir-métodos-dinámicamente).
+  Since it is a function, it can have properties that act as `sub-handlers` or `methods` for a deeper dispatch.
 
-#### Auto-ejecución de `Manejadores`
+* [**Override `methods` dynamically**](#overriding-methods-dynamically).
 
-Puedes registrar una función que se ejecute si los tipos de los argumentos coinciden.
+#### `Handler` Auto-Execution
+
+You can register a function that runs if the types of the arguments match.
 
 ```javascript
-// Creamos una función que se ejecutará para cualquier 'String'
-// Nota: La función recibe los argumentos del despachador directamente
+// We create a function that will run for any 'String'
+// Note: The function receives the dispatcher arguments directly
 
 const logString = (str) => {
-  console.log(`[LOG]: La cadena '${str}' fue procesada.`);
+  console.log(`[LOG]: The string '${str}' was processed.`);
 };
 
-// Asignamos la función directamente bajo el tipo 'String'
+// We assign the function directly under the 'String' type
 
 _e.fn({
   String: logString
 });
 
-// Al llamar a '_e()' con una string, la función se ejecuta automáticamente
+// When '_e()' is called with a string, the function runs automatically
 
-_e('Mi primer evento');   //> "[LOG]: La cadena 'Mi primer evento' fue procesada."
-_e('Otro evento más');    //> "[LOG]: La cadena 'Otro evento más' fue procesada."
+_e('My first event');     //> "[LOG]: The string 'My first event' was processed."
+_e('One more event');     //> "[LOG]: The string 'One more event' was processed."
 ```
 
-#### Secuencia de Ejecución por Especificidad
+#### Execution Sequence by Specificity
 
-Permite crear `middleware` o capas de lógica que se construyen unas sobre otras.
+It lets you create `middleware` or layers of logic built on top of one another.
 
-Cuando un [valor (`input`)](#_earg1-arg2-) pertenece a múltiples tipos (como un `Array`, que también es un `Object`), se ejecutarán en secuencia todos los `manejadores` que coincidan, **desde el más específico hasta el más general**.
+When a [value (`input`)](#_earg1-arg2-) belongs to multiple types (such as an `Array`, which is also an `Object`), all the matching `handlers` run in sequence, **from the most specific to the most general**.
 
-**Resumen rápido:** Los `manejadores` se ejecutan del más específico al más general.
+**Quick summary:** `Handlers` run from the most specific to the most general.
 
-**Ejemplo de secuencia:**
+**Sequence example:**
 
-| Especificidad | Ejemplo de tipo detectado             |
+| Specificity   | Example of detected type              |
 |---------------|---------------------------------------|
-| 1 (más alto)  | `Array`                               |
+| 1 (highest)   | `Array`                               |
 | 2             | `Object`                              |
-| 3 (más bajo)  | Manejador raíz (`_e.fn(() => {...})`) |
+| 3 (lowest)    | Root handler (`_e.fn(() => {...})`)   |
 
 ```javascript
-// Manejador para Arrays (muy específico)
+// Handler for Arrays (very specific)
 _e.fn({
-  Array: (arr) => console.log(`[LOG]: Manejador para Array ejecutado para: ${arr}`)
+  Array: (arr) => console.log(`[LOG]: Handler for Array executed for: ${arr}`)
 });
 
-// Manejador para Objects (menos específico, ya que Array es un Object)
+// Handler for Objects (less specific, since an Array is an Object)
 _e.fn({
-  Object: () => console.log('[LOG]: Manejador para Object ejecutado.')
+  Object: () => console.log('[LOG]: Handler for Object executed.')
 });
 
-// Manejador raíz (el más general)
+// Root handler (the most general one)
 _e.fn(() => {
-  console.log('[LOG]: Manejador raíz ejecutado.');
+  console.log('[LOG]: Root handler executed.');
 });
 
-// Al llamar con un array, se ejecutan los tres manejadores en orden de especificidad
+// When called with an array, the three handlers run in order of specificity
 _e(['a', 'b']);
-//> "[LOG]: Manejador para Array ejecutado para: a,b"
-//> "[LOG]: Manejador para Object ejecutado."
-//> "[LOG]: Manejador raíz ejecutado."
+//> "[LOG]: Handler for Array executed for: a,b"
+//> "[LOG]: Handler for Object executed."
+//> "[LOG]: Root handler executed."
 ```
 
-#### Sobrescribir `Métodos` Dinámicamente
+#### `Handlers` as `Methods`
 
-**Si un `manejador` devuelve un objeto o función**, los `sub-manejadores` o `métodos` que contenga sobrescribirán el conjunto de `métodos` que el `despachador` está agregando al objeto principal que devolverá (que está como referencia en **`this`** [si es función clásica `function(){}`]).
-
-Esto permite crear `APIs` dinámicas donde el resultado de una función puede cambiar los `métodos` disponibles.
-
-**Ejemplo: Un validador que devuelve `métodos` diferentes según el resultado.**
+By default (`handlers: 'exposed'`), a function assigned to a type name is a `handler` and is also attached to the result as a `method` with that name, just as in previous versions:
 
 ```javascript
-// Subtipo para identificar emails
+_e.fn({ String: (str) => console.log(str) });
+
+Object.keys(_e(5)); //> [ 'String' ]
+```
+
+With the `handlers: 'hidden'` option *(v1.22.0+)* of [`.config()`](#_econfigoptions) or of [`.instance()`](#_einstancename-options), every name that **starts with an uppercase letter** is treated as a type name: its function only acts as a `handler` (it runs when its type matches) and is never attached as a `method`. Names that start with a lowercase letter are still `methods`.
+
+```javascript
+const api = _e.instance('myAPI', { handlers: 'hidden' });
+
+api.fn({
+  String: (str) => console.log(`Handler: ${str}`),
+  log: () => 'Global method'
+});
+
+Object.keys(api(5));  //> [ 'log' ]
+api('text');          //> "Handler: text"
+```
+
+> **Note:** with `'hidden'` the rule applies at every level (global `methods`, the `methods` of a type and those returned by a `handler`), so the names of `methods` must start with a lowercase letter. It also avoids the collision warnings between `handlers` of different sequences that share a type name (for example, those of `Array + String` and `Object + String` when the `dispatcher` is called with only an `array`).
+
+#### Overriding `Methods` Dynamically
+
+**If a `handler` returns an object or a function**, the `sub-handlers` or `methods` it contains override the set of `methods` that the `dispatcher` is adding to the main object it will return (which is available as a reference in **`this`** [if it is a classic function `function(){}`]).
+
+Any other returned value (`true`, a number, a string, or nothing) leaves the `methods` merged into the `handler` untouched *(v1.22.0+; previously, a value such as `true` or a number left the result without those `methods`)*. To leave the result without the `methods` of that type, return an empty object (`{}`).
+
+This lets you create dynamic `APIs` where the result of a function can change the available `methods`.
+
+**Example: A validator that returns different `methods` depending on the result.**
+
+```javascript
+// Subtype to identify emails
 
 _e.subtype({
   String: (input) => (input.includes('@') ? 'Email' : false)
 });
 
-// Manejador para el tipo 'Email'
-// Recibe el email como primer argumento, no envuelto en un array
+// Handler for the 'Email' type
+// It receives the email as the first argument, not wrapped in an array
 
 const validateEmail = (email) => {
-  console.log(`Validando: ${email}`);
+  console.log(`Validating: ${email}`);
 
   if(email.endsWith('@gmail.com')){
-    // Si es un email de Gmail, devuelve métodos específicos
+    // If it is a Gmail email, it returns specific methods
 
     return {
-      send: () => console.log('Enviando con la API de Gmail...'),
-      addToContacts: () => console.log('Añadiendo a contactos de Google.')
+      send: () => console.log('Sending with the Gmail API...'),
+      addToContacts: () => console.log('Adding to Google contacts.')
     };
   }
   else {
-    // Para otros emails, devuelve un método genérico
+    // For other emails, it returns a generic method
 
     return {
-      send: () => console.log('Enviando con SMTP genérico...')
+      send: () => console.log('Sending with generic SMTP...')
     };
   }
 };
 
-// Registramos el manejador
+// We register the handler
 
 _e.fn({
   Email: validateEmail
 });
 
-// CASO 1: Email de Gmail
+// CASE 1: Gmail email
 
 const gmailUser = _e('test@gmail.com');
-//> "Validando: test@gmail.com"
+//> "Validating: test@gmail.com"
 
-gmailUser.send();            //> "Enviando con la API de Gmail..."
-gmailUser.addToContacts();   //> "Añadiendo a contactos de Google."
+gmailUser.send();            //> "Sending with the Gmail API..."
+gmailUser.addToContacts();   //> "Adding to Google contacts."
 
-// CASO 2: Otro email
+// CASE 2: Another email
 
 const otherUser = _e('user@outlook.com');
-//> "Validando: user@outlook.com"
+//> "Validating: user@outlook.com"
 
-otherUser.send();            //> "Enviando con SMTP genérico..."
-// otherUser.addToContacts(); // Esto causa error, porque el método no fue devuelto
+otherUser.send();            //> "Sending with generic SMTP..."
+// otherUser.addToContacts(); // This throws an error, because the method was not returned
 ```
 
-## FAQ (Preguntas Frecuentes)
+## FAQ (Frequently Asked Questions)
 
-* **¿Puedo usar Estructura con TypeScript?**
+* **Can I use Estructura with TypeScript?**
 
-  Sí. Desde la v1.21.0 el paquete incluye sus declaraciones de tipos (véase "[TypeScript](#typescript)"). Estructura resuelve los tipos en tiempo de ejecución, así que sigue siendo una alternativa ligera a la verbosidad del tipado estático, y ahora también puede usarse desde proyectos TypeScript.
+  Yes. Since v1.21.0 the package includes its type declarations (see "[TypeScript](#typescript)"). Estructura resolves types at runtime, so it remains a lightweight alternative to the verbosity of static typing, and it can now also be used from TypeScript projects.
 
-* **¿Tiene alguna manera integrada para depurar?**
+* **Does it have a built-in way to debug?**
 
-  Sí, actualmente se emiten advertencias y errores en consola (o se lanza un error en entornos sin consola) en estos casos:
-  * Si registras un subtipo con una función con error o si devuelve un tipo incorrecto.
-  * Si tratas de usar nombres no permitidos para instancias o `métodos`, como: nombres de propiedades heredadas de [`Object.prototype`](https://developer.mozilla.org/es/docs/Web/JavaScript/Reference/Global_Objects/Object), [palabras reservadas de JavaScript](https://developer.mozilla.org/es/docs/Web/JavaScript/Reference/Lexical_grammar), y nombres de propiedades que usa el framework.
-  * Si la instancia que tratas de crear ya existe.
-  * Si hubo un conflicto con nombres de `métodos` (colisiones).
-  * Si un `manejador` presenta errores al ejecutarse.
-  * Si tratas de registrar un subtipo o `método` de manera incorrecta.
+  Yes. Currently, warnings and errors are emitted to the console (or an error is thrown in environments without a console) in these cases:
+  * If you register a subtype with a function that has an error or that returns an incorrect type.
+  * If you try to use disallowed names for instances or `methods`, such as: names of properties inherited from [`Object.prototype`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object), [JavaScript reserved words](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar), and names of properties used by the framework.
+  * If the instance you are trying to create already exists.
+  * If there was a conflict between `method` names (collisions).
+  * If a `method` or a `handler` throws errors when it runs.
+  * If you try to register a subtype or a `method` incorrectly.
+  * If you register a `handler` or a `method` that already exists: the first one is kept *(v1.22.0+)*.
+  * If the name of a predefined set of subtypes does not exist, or if a subtype uses the name of a native property of `arrays` *(v1.22.0+)*.
 
-* **¿Cómo depurar `métodos` no encontrados?**
+  With the `errors: 'throw'` option *(v1.22.0+)* of [`.config()`](#_econfigoptions), errors from `methods`, `handlers` and subtype evaluator functions are thrown instead of being reported through the console.
 
-  Véase "[Problemas comunes](#problemas-comunes)".
+* **How do I debug `methods` that are not found?**
 
-* **¿Se puede incluir llamadas a Estructura en bucles muy repetitivos?**
+  See "[Common Problems](#common-problems)".
 
-  Véase "[Consideraciones](#consideraciones)".
+* **Can calls to Estructura be included in highly repetitive loops?**
 
-## Problemas comunes
+  See "[Considerations](#considerations)".
 
-* **`Manejador` no se ejecuta**
+## Common Problems
 
-  Compruebe que fue asignado a los tipos de datos o argumentos adecuados verificando con [`.type()`](#_etypeinput) los tipos detectados. Y revise "[Secuencia de Ejecución por Especificidad](#secuencia-de-ejecución-por-especificidad)" o "[Conceptos Avanzados: `Manejadores`](#conceptos-avanzados-manejadores)".
+* **A `handler` does not run**
 
-* **Error de `métodos` no encontrados**
+  Check that it was assigned to the right data types or arguments by verifying the detected types with [`.type()`](#_etypeinput). Also review "[Execution Sequence by Specificity](#execution-sequence-by-specificity)" or "[Advanced Concepts: `Handlers`](#advanced-concepts-handlers)".
 
-  Si al invocar un `método` aparece un error, asegúrese de que el `método` esté registrado para los tipos de datos o argumentos correctos, y que los datos sean exactamente de esos tipos, se puede usar [`.type()`](#_etypeinput) para verificar los tipos detectados de los datos.
+* **`Methods` not found error**
 
-* **`Métodos` se sobrescriben**
+  If an error appears when invoking a `method`, make sure that the `method` is registered for the correct data types or arguments, and that the data are exactly of those types; you can use [`.type()`](#_etypeinput) to verify the detected types of the data.
 
-  Revise cómo funciona el orden de sobrescritura en caso de `métodos` con el mismo nombre en "[Colisión de `Métodos` o `Manejadores`](#colisión-de-métodos-o-manejadores)" y la sección de sobrescritura dinámica "[Sobrescribir `Métodos` Dinámicamente](#sobrescribir-métodos-dinámicamente)".
+* **`Methods` are overridden**
 
-## Consideraciones
+  Review how the override order works for `methods` with the same name in "[Collision of `Methods` or `Handlers`](#collision-of-methods-or-handlers)", and the dynamic override section "[Overriding `Methods` Dynamically](#overriding-methods-dynamically)".
 
-* **Rendimiento**
+* **A new `handler` or `method` does not replace the previous one**
 
-  * **En la v1.19.0:**
+  When registering with [`.fn()`](#_efnassignments), the first registered function prevails: the new one is ignored with a warning. See "[Merging Assignment Registrations](#merging-assignment-registrations-additive-registration)".
 
-    Se optimizó el registro de subtipos anidados en [`.subtype()`](#_esubtypedefinitions), reduciendo a la mitad el tiempo de resolución en anidaciones profundas.
+* **`Methods` named after types appear (`String`, `Array`, etc.)**
 
-  * **Hasta la v1.18.0:**
+  By default, a `handler` is also attached as a `method` named after its type. To avoid this, use the `handlers: 'hidden'` option. See "[`Handlers` as `Methods`](#handlers-as-methods)".
 
-    **En dispositivos de gama baja** se experimentan retrasos (`lags`) en bucles de alta frecuencia. Por ejemplo:
+* **A `method` returns the result object instead of its value, or an error is not propagated**
+
+  By default, if a `method` throws an error, the error is reported through the console and the `method` returns the result object. To have the error thrown, use the `errors: 'throw'` option of [`.config()`](#_econfigoptions).
+
+## Considerations
+
+* **Performance**
+
+  * **In v1.22.0:**
+
+    Registering with [`.fn()`](#_efnassignments) and [`.subtype()`](#_esubtypedefinitions) no longer runs the subtype evaluator functions, so creating an instance and registering its definitions takes about a third less time (measured with `bench/benchmark.js`: instance + subtypes + 100 `methods`). Dispatch time does not change.
+
+  * **In v1.19.0:**
+
+    The registration of nested subtypes in [`.subtype()`](#_esubtypedefinitions) was optimized, halving the resolution time in deep nesting.
+
+  * **Up to v1.18.0:**
+
+    **On low-end devices**, delays (`lags`) occur in high-frequency loops. For example:
     
-    `Lag` de aprox. 1 segundo por cada 100000 ejecuciones seguidas en:
+    A `lag` of approx. 1 second per 100000 consecutive executions on:
 
-    - **Dispositivo:** "HP 15 Notebook PC".
-    - **Procesador:** "AMD A8-7410 APU with AMD Radeon R5 Graphics, 2200 Mhz, 4 Core(s), 4 Logical Processor(s)".
-    - **S.O.:** "Windows 10 Home" de 64 bits.
-    - **Procesos simultáneos:** procesos comunes del S.O. ejecutándose.
-    - **Entorno de ejecución:** "Google Chrome 138.0".
-    - **Contexto de ejecución:** limpio, 10 tipos de datos variados definidos con 100 `métodos` simples en total asignados equitativamente.
-    - **Resumen de ejecución:** bucle `for` de 10000 repeticiones con 10 llamadas al `despachador` para los tipos definidos.
+    - **Device:** "HP 15 Notebook PC".
+    - **Processor:** "AMD A8-7410 APU with AMD Radeon R5 Graphics, 2200 Mhz, 4 Core(s), 4 Logical Processor(s)".
+    - **OS:** "Windows 10 Home", 64-bit.
+    - **Simultaneous processes:** common OS processes running.
+    - **Runtime environment:** "Google Chrome 138.0".
+    - **Execution context:** clean, 10 varied data types defined, with 100 simple `methods` in total assigned evenly.
+    - **Execution summary:** a `for` loop of 10000 iterations with 10 calls to the `dispatcher` for the defined types.
 
-* **Inconsistencias**
+* **Inconsistencies**
 
-  Como se menciona en la documentación del código de [`jQuery`](https://code.jquery.com/jquery-3.7.1.js) (en los comentarios de la función `isFunction`, línea 77), en ciertas versiones antiguas de navegadores hay nodos del DOM que podrían retornar como tipo primitivo `'Function'` en lugar de `'Object'`. Por eso se ha integrado la siguiente solución de compatibilidad con los subtipos predefinidos `browser-dom`:
+  As mentioned in the code documentation of [`jQuery`](https://code.jquery.com/jquery-3.7.1.js) (in the comments of the `isFunction` function, line 77), in certain old browser versions there are DOM nodes that could return `'Function'` as their primitive type instead of `'Object'`. That is why the following compatibility solution has been integrated into the `browser-dom` predefined subtypes:
 
   ```javascript
   _e.subtype({
@@ -1199,68 +1298,81 @@ otherUser.send();            //> "Enviando con SMTP genérico..."
   });
   ```
 
-## Notas sobre Versiones Anteriores y Actual
+## Notes on Previous and Current Versions
 
-*   **En la v1.21.0:**
+*   **In v1.22.0:**
 
-    * **Nueva opción `collision`** (`'general'` | `'specific'`) para elegir qué definición prevalece en las colisiones de `métodos`: [`.config()`](#_econfigoptions).
-    * **Nueva opción `args`** (`'array'` | `'spread'`) para elegir cómo reciben los argumentos los `métodos`: `(...argumentos del despachador, [argumentos del método])`.
-    * Nuevo método [`.config()`](#_econfigoptions) y segundo parámetro opcional en [`.instance()`](#_einstancename-options).
-    * **TypeScript:** se incluyen declaraciones de tipos (`.d.ts`) para `import` y `require`, con pruebas de tipos (`npm run test:types`). Véase "[TypeScript](#typescript)".
-    * [`.fn()`](#_efnassignments) y [`.subtype()`](#_esubtypedefinitions) devuelven la instancia, por lo que se pueden encadenar con [`.config()`](#_econfigoptions).
-    * **`Bugfix`:** `getTypes()` en las funciones evaluadoras de [`.subtype()`](#_esubtypedefinitions) devolvía `undefined` en lugar de la copia del *array/mapa* de tipos detectados.
-    * **`Bugfix`:** [`.fn()`](#_efnassignments) con un `manejador` raíz devolvía el estado interno de la instancia.
-    * **`Bugfix`:** la distribución `ESM` no incluía la optimización de la v1.19.0 para subtipos anidados (las funciones evaluadoras se ejecutaban dos veces). Ambas distribuciones vuelven a estar sincronizadas y las pruebas unitarias ahora también cubren la `ESM`.
-    * Sin `breaking changes`: los valores por defecto mantienen el comportamiento de la v1.20.0.
+    * **New `handlers` option** (`'exposed'` | `'hidden'`) so that `handlers` are not attached as `methods`: see "[`Handlers` as `Methods`](#handlers-as-methods)".
+    * **New `errors` option** (`'console'` | `'throw'`) to rethrow the errors of `methods`, `handlers` and subtype evaluator functions: [`.config()`](#_econfigoptions).
+    * **New warnings** in cases that were previously ignored silently: when registering a `handler` or a `method` that already exists (the first one prevails), when using in [`.subtype()`](#_esubtypedefinitions) the name of a predefined set that does not exist, and when a subtype uses the name of a native property of `arrays`.
+    * **`Bugfix`:** a `handler` that returned a value that is neither an object nor a function (such as `true` or a number) left the result without the `methods` merged into it. Now only an object or a function replaces them.
+    * **`Bugfix`:** [`.fn()`](#_efnassignments) and [`.subtype()`](#_esubtypedefinitions) ran the subtype evaluator functions on the definition objects when registering. Now they only run when types are detected.
+    * **Performance:** as a consequence, registration takes about a third less time (see "[Considerations](#considerations)"). Dispatch time does not change.
+    * **TypeScript:** new `HandlersOption` and `ErrorsOption` types; `Options` and `CurrentOptions` include the new options.
+    * **Documentation:** the default documentation (`README.md`) is now in English; the Spanish version is kept in [`README.es.md`](README.es.md). The unit tests, the type tests and the `benchmark` are now in English as well. Also: a bad-practice note about reusing the same function as the `handler` of several types (see "[Merging Assignment Registrations](#merging-assignment-registrations-additive-registration)"), the size updated (about 35 KB uncompressed), a fix to the "[`Methods`](#methods)" example, which used the reserved name `length`, and a fix to the browser `ESM` import example via CDN, which now points to the `ESM` file.
+    * **Tests:** continuous integration with GitHub Actions (unit tests, type tests and the build checks of `npm run check`: `ES3` syntax of the `UMD` distribution, `UMD` and `ESM` distributions in sync, and version). The same checks run automatically before publishing (`prepublishOnly`).
+    * No `breaking changes`: the default values keep the behavior of v1.21.0. [`.config()`](#_econfigoptions) without arguments also returns the new options.
 
-*   **Hasta la v1.20.0:**
+*   **In v1.21.0:**
 
-    * **Corrección relevante:** se inicializó `.unref()` en el `setInterval` del sistema interno de mensajes de consola, específicamente para entornos como Node.js, de modo que el proceso pueda terminar en lugar de mantenerse indefinidamente activo.
-    * Pequeños ajustes de coherencia en la documentación.
-    * En general, la funcionalidad se ha mantenido estable.
+    * **New `collision` option** (`'general'` | `'specific'`) to choose which definition prevails in `method` collisions: [`.config()`](#_econfigoptions).
+    * **New `args` option** (`'array'` | `'spread'`) to choose how `methods` receive the arguments: `(...dispatcher arguments, [method arguments])`.
+    * New [`.config()`](#_econfigoptions) method and optional second parameter in [`.instance()`](#_einstancename-options).
+    * **TypeScript:** type declarations (`.d.ts`) are included for `import` and `require`, with type tests (`npm run test:types`). See "[TypeScript](#typescript)".
+    * [`.fn()`](#_efnassignments) and [`.subtype()`](#_esubtypedefinitions) return the instance, so they can be chained with [`.config()`](#_econfigoptions).
+    * **`Bugfix`:** `getTypes()` in the evaluator functions of [`.subtype()`](#_esubtypedefinitions) returned `undefined` instead of the copy of the *array/map* of detected types.
+    * **`Bugfix`:** [`.fn()`](#_efnassignments) with a root `handler` returned the internal state of the instance.
+    * **`Bugfix`:** the `ESM` distribution did not include the v1.19.0 optimization for nested subtypes (the evaluator functions ran twice). Both distributions are synchronized again, and the unit tests now also cover the `ESM` distribution.
+    * No `breaking changes`: the default values keep the behavior of v1.20.0.
 
-*   **En la v1.19.0:**
+*   **Up to v1.20.0:**
 
-    * **`Bugfix` crítico:** se resolvió una fuga de memoria (`Memory Leak`) en el sistema interno de cola de mensajes de consola (`setInterval`).
-    * **Rendimiento:** se optimizó el registro de subtipos anidados (`trash code` eliminado en [`.subtype()`](#_esubtypedefinitions)), reduciendo a la mitad el tiempo de resolución en anidaciones profundas.
-    * Se mejoraron o actualizaron los comentarios JSDoc del código y documentación.
+    * **Notable fix:** `.unref()` is now called on the `setInterval` of the internal console message system, specifically for environments such as Node.js, so that the process can exit instead of staying active indefinitely.
+    * Small consistency adjustments in the documentation.
+    * In general, the functionality has remained stable.
 
-*   **En la v1.18.0:**
+*   **In v1.19.0:**
 
-    * Se han eliminado redundancias y se ha corregido el flujo de mensajes de consola.
+    * **Critical `Bugfix`:** a memory leak (`Memory Leak`) in the internal console message queue system (`setInterval`) was fixed.
+    * **Performance:** the registration of nested subtypes was optimized (`trash code` removed in [`.subtype()`](#_esubtypedefinitions)), halving the resolution time in deep nesting.
+    * The JSDoc comments of the code and the documentation were improved or updated.
 
-*   **En la v1.17.0:**
+*   **In v1.18.0:**
 
-    * Se ha mejorado la seguridad en `subtype_definition_execution` y muestra de advertencias y errores en consola.
-    * Se corregieron inconsistencias en `subtype`, `is_correct_object_property_name`, `merge_type_fns_node` y mensajes de consola.
-    * Compatibilidad integrada para inconsistencias de ciertos navegadores con subtipos predefinidos `browser-dom`.
-    * Se ha degradado la versión mínima de Jest para pruebas unitarias a v29.7+ para asegurar la compatibilidad con versiones anteriores de Node.js (v14.15+).
-    * Se mejoraron y agregaron pruebas unitarias para cobertura extra.
-    * Las actualizaciones se centraron principalmente en la documentación.
+    * Redundancies were removed and the flow of console messages was fixed.
 
-*   **En la v1.15.0:**
+*   **In v1.17.0:**
 
-    * Se agregaron pruebas unitarias con Jest.
-    * En los subtipos predefinidos `browser-dom` se eliminó el alias `Browser` para el subtipo `Document` (`no breaking change`).
-    * Se actualizó la documentación `JSDoc` del código para reflejar las referencias a "`manejadores`".
+    * Safety was improved in `subtype_definition_execution` and in the display of warnings and errors in the console.
+    * Inconsistencies were fixed in `subtype`, `is_correct_object_property_name`, `merge_type_fns_node` and the console messages.
+    * Built-in compatibility for inconsistencies of certain browsers, with the `browser-dom` predefined subtypes.
+    * The minimum Jest version for the unit tests was lowered to v29.7+ to ensure compatibility with older versions of Node.js (v14.15+).
+    * Unit tests were improved and added for extra coverage.
+    * The updates focused mainly on the documentation.
 
-*   **En la v1.14.0:**
+*   **In v1.15.0:**
 
-    En la documentación, los "`manejadores`" reemplazaron a los "nodo/s híbrido/s".
+    * Unit tests with Jest were added.
+    * In the `browser-dom` predefined subtypes, the `Browser` alias for the `Document` subtype was removed (`no breaking change`).
+    * The `JSDoc` documentation of the code was updated to reflect the references to "`handlers`".
 
-*   **En la v1.9.0:**
+*   **In v1.14.0:**
 
-    Se actualizó la documentación `JSDoc` del código para reflejar cambios de versiones anteriores.
+    In the documentation, "`handlers`" replaced the "hybrid node(s)".
 
-*   **En la v1.8.0:**
+*   **In v1.9.0:**
 
-    Se mejoró: el adjuntador de `métodos` (`attach_resolved_methods`), y el aislamiento de instancias en los registradores de funciones (`fn`) y subtipos (`subtype`) para entornos JavaScript como Node.js.
+    The `JSDoc` documentation of the code was updated to reflect changes from previous versions.
 
-*   **Anteriores a la v1.6.0:**
+*   **In v1.8.0:**
 
-    El módulo en formato `ESM` no estaba configurado correctamente, lo que podía causar problemas de importación.
+    Improved: the `methods` attacher (`attach_resolved_methods`), and the isolation of instances in the function (`fn`) and subtype (`subtype`) registrars for JavaScript environments such as Node.js.
 
-## Licencia
+*   **Before v1.6.0:**
+
+    The module in `ESM` format was not configured correctly, which could cause import problems.
+
+## License
 
 MIT License
 
@@ -1268,4 +1380,4 @@ Copyright (c) 2025 [OKZGN](https://okzgn.com)
 
 ---
 
-[Volver arriba](#estructura)
+[Back to top](#estructura)
