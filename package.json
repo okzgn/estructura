@@ -1,5 +1,5 @@
 {
-  "name": "@okzgn/estructura",
+  "name": "estructura-js",
   "version": "1.22.0",
   "description": "A lightweight dependency-free JavaScript framework that lets you assign functions to be automatically attached to custom or extended data types, based on one or multiple arguments.",
   "main": "./dist/estructura.umd.js",
