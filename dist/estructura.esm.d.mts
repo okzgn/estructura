@@ -1,5 +1,5 @@
 /**
- * Estructura v1.22.0 - Type declarations (ESM)
+ * Estructura v1.23.0 - Type declarations (ESM)
  * A lightweight dependency-free JavaScript framework that lets you assign functions to be automatically attached to custom or extended data types, based on one or multiple arguments.
  * 2025 (c) OKZGN
  * @license MIT

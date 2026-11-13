@@ -1,5 +1,5 @@
 /**
- * Estructura v1.22.0 - Type declarations
+ * Estructura v1.23.0 - Type declarations
  * A lightweight dependency-free JavaScript framework that lets you assign functions to be automatically attached to custom or extended data types, based on one or multiple arguments.
  * 2025 (c) OKZGN
  * @license MIT
@@ -86,8 +86,8 @@ declare namespace _e {
 
 	/**
 	 * Whether a handler (a function assigned to a type name) is also attached to the result as a method:
-	 * `'exposed'` (default) it is, as in previous versions; `'hidden'` it is not: every name starting with an
-	 * uppercase letter is a type name, so its function only runs as a handler.
+	 * `'hidden'` (default since v1.23.0) it is not: every name starting with an uppercase letter is a type name, so
+	 * its function only runs as a handler; `'exposed'` it is, as before v1.23.0.
 	 */
 	type HandlersOption = 'exposed' | 'hidden';
 

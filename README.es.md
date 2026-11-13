@@ -132,7 +132,7 @@ _e(myData, format, destination).process();
 *   **Sistema de Tipos Extensible:** Define tus propios tipos ([`.subtype()`](#_esubtypedefinitions)) para cualquier estructura de datos, yendo mucho más allá de los tipos principales de JavaScript.
 *   **Instancias Aisladas (`Sandboxing`):** Crea múltiples instancias de Estructura ([`.instance()`](#_einstancename-options)) que no interfieren entre sí, cada una con su propio registro de tipos y funciones.
 *   **Robusto y Predecible:** Las llamadas al `despachador` son deterministas. Para una misma configuración de tipos y funciones registradas ([`.fn()`](#_efnassignments)) para esos tipos, una llamada a [`_e(arg1, arg2, ...)`](#_earg1-arg2-) siempre seguirá una misma secuencia de ejecución y devolverá el mismo conjunto de `métodos`.
-*   **Ligero y sin Dependencias:** Unos 35 KB sin comprimir y menos de 10 KB con gzip (`ESM` y `UMD`), ideal para el navegador o Node.js.
+*   **Ligero y sin Dependencias:** Unos 48 KB sin comprimir y menos de 13 KB con gzip (`ESM` y `UMD`), ideal para el navegador o Node.js.
 
 ## ¿Cuándo Usar Estructura?
 
@@ -654,7 +654,7 @@ Registra asignaciones de [`métodos`](#métodos) y/o [`manejadores`](#manejadore
 
     > **Nota:** con `'general'` (el valor por defecto) se conserva exactamente el orden de resolución de las versiones anteriores. En secuencias de varios argumentos ese orden no sigue siempre la regla "lo general sobrescribe a lo específico" (por ejemplo, entre `Array + String` y `Object + String` prevalece `Array + String`). Si necesitas un orden consistente en varios argumentos usa `'specific'`.
 
-    > **Nota:** las colisiones entre `manejadores` se deben a que, por defecto, un `manejador` también queda adjunto al resultado como `método` con el nombre de su tipo. Con la opción `handlers: 'hidden'` *(v1.22.0+)* no se adjuntan, así que no colisionan. Véase "[`Manejadores` como `Métodos`](#manejadores-como-métodos)".
+    > **Nota:** las colisiones entre `manejadores` se deben a que, con `handlers: 'exposed'`, un `manejador` también queda adjunto al resultado como `método` con el nombre de su tipo. Con `'hidden'`, el valor por defecto desde la v1.23.0, no se adjuntan, así que no colisionan. Véase "[`Manejadores` como `Métodos`](#manejadores-como-métodos)".
 
 * **Función:**
 
@@ -696,16 +696,16 @@ Si llamas a `.fn()` varias veces para registrar asignaciones de `manejadores` o 
     ```
     Véase "[Conceptos Avanzados: `Manejadores`](#conceptos-avanzados-manejadores)" y "[Colisión de `Métodos` o `Manejadores`](#colisión-de-métodos-o-manejadores)".
 
-    > **Mala práctica:** no reutilices **la misma función** como `manejador` de varios tipos. En JavaScript una función es un objeto, y los `métodos` que se fusionan con un `manejador` se guardan como propiedades de esa función, así que los tipos que la comparten compartirían también sus `métodos`. Usa una función distinta por tipo:
+    > **Nota:** *(v1.23.0+)* Estructura guarda su propia copia de cada función registrada. Los `métodos` que se fusionan con un `manejador` no se guardan en tu función, así que varios tipos pueden reutilizar **la misma función** como `manejador` sin compartir sus `métodos`, y las propiedades que añadas tú a la función nunca se adjuntan como `métodos`: [`.fn()`](#_efnassignments) es la única forma de añadir `métodos` a un tipo.
     >
     > ```javascript
     > const logValue = (value) => console.log(value);
     >
-    > // Incorrecto: 'String' y 'Number' comparten la función y, con ella, los métodos que se le fusionen
     > _e.fn({ String: logValue, Number: logValue });
+    > _e.fn({ String: { upper: (args) => args[0].toUpperCase() } });
     >
-    > // Correcto: una función por tipo
-    > _e.fn({ String: (value) => logValue(value), Number: (value) => logValue(value) });
+    > _e('texto').upper(); //> "TEXTO"
+    > _e(5).upper;         //> undefined: 'Number' no recibe los métodos de 'String'
     > ```
 
 * **Para `Métodos`:**
@@ -994,17 +994,17 @@ anotherAPI('test').log();  //> "Log de anotherAPI"
 |---------------|------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | `collision`  | `'general'` (defecto), `'specific'`      | Qué definición prevalece cuando un `input` coincide con varios tipos que asignan un `método` con el mismo nombre. Véase "[Colisión de `Métodos` o `Manejadores`](#colisión-de-métodos-o-manejadores)". |
 | `args`       | `'array'` (defecto), `'spread'`           | Cómo reciben los argumentos los `métodos`. Véase "[Cómo se Pasan los Argumentos del `Despachador`](#cómo-se-pasan-los-argumentos-del-despachador)". |
-| `handlers`   | `'exposed'` (defecto), `'hidden'`         | *(v1.22.0+)* Si un `manejador` queda además adjunto al resultado como `método`. Véase "[`Manejadores` como `Métodos`](#manejadores-como-métodos)". |
+| `handlers`   | `'hidden'` (defecto), `'exposed'`         | *(v1.22.0+; `'hidden'` por defecto desde la v1.23.0)* Si un `manejador` queda además adjunto al resultado como `método`, y si un nombre que empieza con mayúscula es un tipo. Véase "[`Manejadores` como `Métodos`](#manejadores-como-métodos)". |
 | `errors`     | `'console'` (defecto), `'throw'`          | *(v1.22.0+)* Qué ocurre cuando un `método`, un `manejador` o una función evaluadora de subtipos lanza un error: se informa por consola y el flujo continúa, o se relanza el error original. |
 
 ```javascript
-_e.config(); //> { collision: 'general', args: 'array', handlers: 'exposed', errors: 'console' }
+_e.config(); //> { collision: 'general', args: 'array', handlers: 'hidden', errors: 'console' }
 
 _e.config({ collision: 'specific' }).config({ args: 'spread' });
-_e.config(); //> { collision: 'specific', args: 'spread', handlers: 'exposed', errors: 'console' }
+_e.config(); //> { collision: 'specific', args: 'spread', handlers: 'hidden', errors: 'console' }
 ```
 
-Los valores por defecto reproducen el comportamiento de las versiones anteriores, por lo que no hace falta cambiar nada en el código existente. Un cambio de opciones se aplica a las llamadas al `despachador` posteriores; los objetos que ya devolvió el `despachador` conservan la forma de pasar argumentos con la que se crearon.
+Desde la v1.23.0 el valor por defecto de `handlers` es `'hidden'`; los demás valores por defecto reproducen el comportamiento de las versiones anteriores. Para mantener el comportamiento de la v1.22.0 usa `handlers: 'exposed'` (véase "[`Manejadores` como `Métodos`](#manejadores-como-métodos)"). Un cambio de opciones se aplica a las llamadas al `despachador` posteriores; los objetos que ya devolvió el `despachador` conservan la forma de pasar argumentos con la que se crearon.
 
 **Errores (`errors`):** por defecto (`'console'`), si un `método`, un `manejador` o una función evaluadora de subtipos lanza un error, este se informa por consola y el flujo continúa (un `método` que falla devuelve el objeto resultado). Con `'throw'` se relanza el error original, con su traza y su clase, y no se escribe en consola. La opción se aplica en el momento en que ocurre el error.
 
@@ -1050,7 +1050,7 @@ Estas funciones se comportan de manera diferente, ofrecen más flexibilidad y pu
 
 * **Contener más `manejadores` o `métodos`:**
 
-  Al ser una función, puede tener propiedades que actúen como `sub-manejadores` o `métodos` para un despacho más profundo.
+  Con [`.fn()`](#_efnassignments) se le pueden fusionar `sub-manejadores` o `métodos` para un despacho más profundo (véase "[Fusión de Registros de Asignaciones](#fusión-de-registros-de-asignaciones-registro-aditivo)").
 
 * [**Sobrescribir `métodos` dinámicamente**](#sobrescribir-métodos-dinámicamente).
 
@@ -1119,29 +1119,31 @@ _e(['a', 'b']);
 
 #### `Manejadores` como `Métodos`
 
-Por defecto (`handlers: 'exposed'`), una función asignada a un nombre de tipo es un `manejador` y, además, queda adjunta al resultado como un `método` con ese nombre, igual que en las versiones anteriores:
+Por defecto (`handlers: 'hidden'`, *v1.23.0+*), todo nombre que **empieza con mayúscula** se trata como un nombre de tipo: su función solo actúa como `manejador` (se ejecuta cuando su tipo coincide) y nunca se adjunta como `método`. Los nombres que empiezan con minúscula son `métodos`.
 
 ```javascript
-_e.fn({ String: (str) => console.log(str) });
-
-Object.keys(_e(5)); //> [ 'String' ]
-```
-
-Con la opción `handlers: 'hidden'` *(v1.22.0+)* de [`.config()`](#_econfigoptions) o de [`.instance()`](#_einstancename-options), todo nombre que **empieza con mayúscula** se trata como un nombre de tipo: su función solo actúa como `manejador` (se ejecuta cuando su tipo coincide) y nunca se adjunta como `método`. Los nombres que empiezan con minúscula siguen siendo `métodos`.
-
-```javascript
-const api = _e.instance('myAPI', { handlers: 'hidden' });
-
-api.fn({
+_e.fn({
   String: (str) => console.log(`Manejador: ${str}`),
   log: () => 'Método global'
 });
 
-Object.keys(api(5));  //> [ 'log' ]
-api('texto');         //> "Manejador: texto"
+Object.keys(_e(5));  //> [ 'log' ]
+_e('texto');         //> "Manejador: texto"
 ```
 
-> **Nota:** con `'hidden'` la regla se aplica en todos los niveles (`métodos` globales, `métodos` de un tipo y los que devuelve un `manejador`), así que los nombres de los `métodos` deben empezar con minúscula. También evita las advertencias de colisión entre `manejadores` de secuencias distintas que comparten el nombre de un tipo (por ejemplo, los de `Array + String` y `Object + String` al llamar al `despachador` solo con un `array`).
+Con la opción `handlers: 'exposed'` *(v1.22.0+)* de [`.config()`](#_econfigoptions) o de [`.instance()`](#_einstancename-options), el valor por defecto hasta la v1.22.0, una función asignada a un nombre de tipo es un `manejador` y, además, queda adjunta al resultado como un `método` con ese nombre:
+
+```javascript
+const api = _e.instance('myAPI', { handlers: 'exposed' });
+
+api.fn({ String: (str) => console.log(str) });
+
+Object.keys(api(5)); //> [ 'String' ]
+```
+
+> **Nota:** con `'hidden'` la regla se aplica en todos los niveles (`métodos` globales, `métodos` de un tipo y los que devuelve un `manejador`), así que los nombres de los `métodos` deben empezar con minúscula: un `método` llamado `Format` es un tipo y no se adjunta. También evita las advertencias de colisión entre `manejadores` de secuencias distintas que comparten el nombre de un tipo (por ejemplo, los de `Array + String` y `Object + String` al llamar al `despachador` solo con un `array`).
+
+> **Migrar desde la v1.22.0:** si tu código llama a un `manejador` como `método` (`_e(5).String()`) o tiene `métodos` cuyo nombre empieza con mayúscula, usa `_e.config({ handlers: 'exposed' })` (o `_e.instance(nombre, { handlers: 'exposed' })`), o renombra esos `métodos` para que empiecen con minúscula.
 
 #### Sobrescribir `Métodos` Dinámicamente
 
@@ -1254,7 +1256,11 @@ otherUser.send();            //> "Enviando con SMTP genérico..."
 
 * **Aparecen `métodos` con nombres de tipos (`String`, `Array`, etc.)**
 
-  Por defecto, un `manejador` queda adjunto también como `método` con el nombre de su tipo. Para evitarlo usa la opción `handlers: 'hidden'`. Véase "[`Manejadores` como `Métodos`](#manejadores-como-métodos)".
+  Con `handlers: 'exposed'`, un `manejador` queda adjunto también como `método` con el nombre de su tipo. El valor por defecto, `'hidden'` *(v1.23.0+)*, lo evita. Véase "[`Manejadores` como `Métodos`](#manejadores-como-métodos)".
+
+* **Falta en el resultado un `método` cuyo nombre empieza con mayúscula**
+
+  Desde la v1.23.0 (`handlers: 'hidden'` por defecto), un nombre que empieza con mayúscula es un tipo, no un `método`. Renombra el `método` para que empiece con minúscula, o usa `handlers: 'exposed'`. Véase "[`Manejadores` como `Métodos`](#manejadores-como-métodos)".
 
 * **Un `método` devuelve el objeto resultado en lugar de su valor, o un error no se propaga**
 
@@ -1263,6 +1269,23 @@ otherUser.send();            //> "Enviando con SMTP genérico..."
 ## Consideraciones
 
 * **Rendimiento**
+
+  * **En la v1.23.0:**
+
+    El `despachador` guarda, para cada nodo del árbol, la lista de sus `métodos` y solo la rehace tras un registro que cambia ese nodo o tras un cambio de opciones. Ya no recorre en cada llamada todos los tipos registrados en la raíz, y el texto de una advertencia que se repite en cada llamada se construye una sola vez. Medido con `bench/benchmark.js` (Node.js 24, mediana de tres corridas de 31 muestras):
+
+    | Escenario | v1.22.0 | v1.23.0 |
+    |---|---|---|
+    | 1 argumento, despacho + llamada (escenario del README) | 712 ns | 577 ns |
+    | 2 argumentos, despacho + llamada | 723 ns | 640 ns |
+    | Subtipos personalizados, despacho + llamada | 1,33 µs | 1,18 µs |
+    | Un conflicto de nombres en cada llamada | 1,81 µs | 602 ns |
+    | 50 tipos registrados en la raíz | 2,80 µs | 315 ns |
+    | Un tipo con 20 `métodos` | 2,37 µs | 1,17 µs |
+    | 10 `manejadores` en la raíz (opciones por defecto) | 870 ns | 474 ns |
+    | Un registro seguido de un despacho, con 3000 `métodos` en la raíz | 559 µs | 204 µs |
+
+    Registrar cuesta entre un 2 % y un 9 % más (una instancia con 100 `métodos`: unos 47 µs), porque Estructura guarda ahora su propia copia de cada función registrada. Una llamada que adjunta 20 `métodos` o más sigue siendo claramente más lenta que una que adjunta 19 (en ese escenario, 1,17 µs frente a 0,49 µs): con tantas propiedades, los motores de JavaScript guardan el objeto resultado en un modo más lento.
 
   * **En la v1.22.0:**
 
@@ -1299,6 +1322,15 @@ otherUser.send();            //> "Enviando con SMTP genérico..."
   ```
 
 ## Notas sobre Versiones Anteriores y Actual
+
+*   **En la v1.23.0:**
+
+    * **Rendimiento:** el despacho tarda entre un 10 % y un 20 % menos en los casos habituales, hasta un 89 % menos con muchos tipos registrados en la raíz, y un conflicto de nombres que se repite en cada llamada cuesta un 67 % menos. Registrar cuesta entre un 2 % y un 9 % más. Véase "[Consideraciones](#consideraciones)".
+    * **`Breaking change`:** el valor por defecto de la opción `handlers` pasa a ser `'hidden'`: un nombre que empieza con mayúscula es un tipo, así que ni los `manejadores` ni los `métodos` con nombres así se adjuntan ya como `métodos`. `handlers: 'exposed'` recupera el comportamiento anterior. Véase "[`Manejadores` como `Métodos`](#manejadores-como-métodos)".
+    * **Cambio:** Estructura guarda su propia copia de cada función registrada. [`.fn()`](#_efnassignments) ya no escribe los `métodos` de un tipo en tu `manejador`, las propiedades que añadas tú a esa función nunca se adjuntan como `métodos`, y los tipos que reutilizan la misma función ya no comparten sus `métodos`.
+    * **`Bugfix`:** lo heredado de `Object.prototype` ya no cuenta como nombre reservado, nodo, tipo, instancia ni colisión. En la v1.22.0 una función añadida ahí podía bloquear un registro, ejecutarse como `manejador` de un tipo con su nombre o, con `collision: 'specific'`, ejecutarse en lugar del `método` registrado.
+    * **Pruebas y `benchmark`:** pruebas nuevas para el comportamiento que se mantiene y para estos cambios. `bench/benchmark.js` usa nombres de `método` en minúscula, así que mide igual la v1.22.0 y la v1.23.0, y añade escenarios con muchos tipos, muchos `métodos`, `manejadores`, una llamada repetida a un `método` y un registro seguido de un despacho.
+    * **Documentación:** ya no hace falta la nota de mala práctica sobre reutilizar la misma función como `manejador` de varios tipos, y se actualiza el tamaño (unos 48 KB sin comprimir).
 
 *   **En la v1.22.0:**
 

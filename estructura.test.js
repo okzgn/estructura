@@ -8,7 +8,7 @@ const path = require('path');
 // We wait 1010 ms to make sure the message has been processed.
 const waitForConsole = (ms = 1010) => new Promise(resolve => setTimeout(resolve, ms));
 
-describe('Estructura Framework v1.22.0 - Unit Tests', () => {
+describe('Estructura Framework v1.23.0 - Unit Tests', () => {
 
   // --- 1. QUICK START GUIDE ---
   describe('Quick Start Guide', () => {
@@ -527,18 +527,18 @@ describe('Estructura Framework v1.22.0 - Unit Tests', () => {
     describe('Default values and configuration', () => {
       it('should default to collision "general" and args "array" (v1.20 behavior)', () => {
         const e = _e.instance(newName());
-        expect(e.config()).toEqual({ collision: 'general', args: 'array', handlers: 'exposed', errors: 'console' });
+        expect(e.config()).toEqual({ collision: 'general', args: 'array', handlers: 'hidden', errors: 'console' });
       });
 
       it('should accept options when creating the instance with .instance(name, options)', () => {
         const e = _e.instance(newName(), { collision: 'specific', args: 'spread' });
-        expect(e.config()).toEqual({ collision: 'specific', args: 'spread', handlers: 'exposed', errors: 'console' });
+        expect(e.config()).toEqual({ collision: 'specific', args: 'spread', handlers: 'hidden', errors: 'console' });
       });
 
       it('should allow changing options with .config(options) and return the instance for chaining', () => {
         const e = _e.instance(newName());
         expect(e.config({ args: 'spread' })).toBe(e);
-        expect(e.config()).toEqual({ collision: 'general', args: 'spread', handlers: 'exposed', errors: 'console' });
+        expect(e.config()).toEqual({ collision: 'general', args: 'spread', handlers: 'hidden', errors: 'console' });
       });
 
       it('.config() should return a copy: modifying it does not affect the instance', () => {
@@ -550,7 +550,7 @@ describe('Estructura Framework v1.22.0 - Unit Tests', () => {
       it('should ignore invalid options with a warning and keep the current value', async () => {
         const e = _e.instance(newName(), { collision: 'invalid', unknown: true });
         e.config({ args: 123 });
-        expect(e.config()).toEqual({ collision: 'general', args: 'array', handlers: 'exposed', errors: 'console' });
+        expect(e.config()).toEqual({ collision: 'general', args: 'array', handlers: 'hidden', errors: 'console' });
 
         await waitForConsole();
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Invalid value for option "collision"'));
@@ -571,7 +571,7 @@ describe('Estructura Framework v1.22.0 - Unit Tests', () => {
       it('should warn if the options are not an object', async () => {
         const e = _e.instance(newName(), 'specific');
         e.config(null);
-        expect(e.config()).toEqual({ collision: 'general', args: 'array', handlers: 'exposed', errors: 'console' });
+        expect(e.config()).toEqual({ collision: 'general', args: 'array', handlers: 'hidden', errors: 'console' });
 
         await waitForConsole();
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Options must be an object'));
@@ -611,8 +611,8 @@ describe('Estructura Framework v1.22.0 - Unit Tests', () => {
       it('the options of one instance should not affect another', () => {
         const a = _e.instance(newName(), { collision: 'specific', args: 'spread' });
         const b = _e.instance(newName());
-        expect(a.config()).toEqual({ collision: 'specific', args: 'spread', handlers: 'exposed', errors: 'console' });
-        expect(b.config()).toEqual({ collision: 'general', args: 'array', handlers: 'exposed', errors: 'console' });
+        expect(a.config()).toEqual({ collision: 'specific', args: 'spread', handlers: 'hidden', errors: 'console' });
+        expect(b.config()).toEqual({ collision: 'general', args: 'array', handlers: 'hidden', errors: 'console' });
       });
     });
 
@@ -841,9 +841,9 @@ describe('Estructura Framework v1.22.0 - Unit Tests', () => {
     });
 
     describe('New options: handlers and errors', () => {
-      it('should default to handlers "exposed" and errors "console" (v1.21 behavior)', () => {
+      it('should default to handlers "hidden" (v1.23.0) and errors "console"', () => {
         const e = _e.instance(newName());
-        expect(e.config()).toEqual({ collision: 'general', args: 'array', handlers: 'exposed', errors: 'console' });
+        expect(e.config()).toEqual({ collision: 'general', args: 'array', handlers: 'hidden', errors: 'console' });
       });
 
       it('should accept them in .instance() and in .config(), and ignore invalid values with a warning', async () => {
@@ -863,8 +863,8 @@ describe('Estructura Framework v1.22.0 - Unit Tests', () => {
     });
 
     describe('handlers: handlers as methods', () => {
-      it('"exposed" (default): a handler is also attached as a method, as in previous versions', () => {
-        const e = _e.instance(newName());
+      it('"exposed": a handler is also attached as a method, as before v1.23.0', () => {
+        const e = _e.instance(newName(), { handlers: 'exposed' });
         const handler = jest.fn();
         e.fn({ String: handler });
 
@@ -913,7 +913,7 @@ describe('Estructura Framework v1.22.0 - Unit Tests', () => {
         const exposedName = newName();
         const hiddenName = newName();
         const register = (e) => e.fn({ Array: { String: () => {} }, Object: { String: () => {} } });
-        const exposed = register(_e.instance(exposedName));
+        const exposed = register(_e.instance(exposedName, { handlers: 'exposed' }));
         const hidden = register(_e.instance(hiddenName, { handlers: 'hidden' }));
 
         expect(Object.keys(exposed([1]))).toEqual(['String']);
@@ -925,7 +925,7 @@ describe('Estructura Framework v1.22.0 - Unit Tests', () => {
       });
 
       it('can be changed on the fly with .config() for subsequent calls', () => {
-        const e = _e.instance(newName());
+        const e = _e.instance(newName(), { handlers: 'exposed' });
         e.fn({ String: () => {} });
 
         expect(Object.keys(e(5))).toEqual(['String']);
@@ -1141,6 +1141,383 @@ describe('Estructura Framework v1.22.0 - Unit Tests', () => {
     });
   });
 
+  // --- Behavior that the dispatcher optimizations of v1.23.0 must keep (these tests also pass with v1.22.0) ---
+  describe('Dispatcher optimizations (v1.23.0): behavior kept', () => {
+    let warnSpy;
+    let errorSpy;
+    let counter = 0;
+    const newName = () => `kept-${Date.now()}-${counter++}`;
+    const messagesOf = (spy, name) => spy.mock.calls.map(call => call[0]).filter(m => m.includes('(' + name + ')'));
+    const echo = function(){ return Array.prototype.slice.call(arguments); };
+
+    beforeEach(() => {
+      warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      warnSpy.mockRestore();
+      errorSpy.mockRestore();
+    });
+
+    it('should keep the order of the methods: numeric names first, then the type node, then the root', () => {
+      const e = _e.instance(newName());
+      e.fn({ String: { b: () => 'b', a: () => 'a', 2: () => 'two', 1: () => 'one' }, Number: { n: () => 'n' }, any: () => 'any' });
+
+      expect(Object.keys(e('x'))).toEqual(['1', '2', 'b', 'a', 'any']);
+      expect(Object.keys(e(5))).toEqual(['n', 'any']);
+      expect(Object.keys(e(true))).toEqual(['any']);
+      expect(Object.keys(e())).toEqual(['any']);
+    });
+
+    it('should reflect every registration made after a dispatch in the next call', () => {
+      const e = _e.instance(newName(), { handlers: 'hidden' });
+      const calls = [];
+      e.fn({ String: { a: () => 'a' } });
+      expect(Object.keys(e('x'))).toEqual(['a']);
+
+      e.fn({ String: { c: () => 'c' } });
+      expect(Object.keys(e('x'))).toEqual(['a', 'c']);
+
+      e.fn({ Boolean: { t: () => 't' } });
+      expect(Object.keys(e(true))).toEqual(['t']);
+
+      e.fn({ String: () => { calls.push('String handler'); } });
+      expect(Object.keys(e('x'))).toEqual(['a', 'c']);
+      expect(calls).toEqual(['String handler']);
+
+      e.fn(() => { calls.push('root handler'); });
+      e.fn({ later: () => 'later' });
+      expect(Object.keys(e(5))).toEqual(['later']);
+      expect(calls).toEqual(['String handler', 'root handler']);
+    });
+
+    it('should reflect registrations in nested nodes and in the root made after a dispatch', () => {
+      const e = _e.instance(newName(), { handlers: 'hidden' });
+      const calls = [];
+      e.fn({ Number: { String: { a: () => 'a' } } });
+      expect(Object.keys(e(1, 's'))).toEqual(['a']);
+
+      e.fn({ Number: { String: { b: () => 'b' } } });
+      expect(Object.keys(e(1, 's'))).toEqual(['a', 'b']);
+
+      e.fn({ Number: { String: () => { calls.push('nested handler'); } } });
+      expect(Object.keys(e(1, 's'))).toEqual(['a', 'b']);
+      expect(calls).toEqual(['nested handler']);
+
+      e.fn({ Number: { other: () => 'other' } });
+      expect(Object.keys(e(1))).toEqual(['other']);
+
+      const exposed = _e.instance(newName(), { handlers: 'exposed' });
+      exposed.fn({ String: { s: () => 's' } });
+      expect(Object.keys(exposed(1))).toEqual([]);
+      exposed.fn({ Number: () => {} });
+      expect(Object.keys(exposed(1))).toEqual(['Number']);
+      expect(Object.keys(exposed('x'))).toEqual(['s', 'Number']);
+    });
+
+    it('should keep working when a handler registers handlers in the middle of a dispatch', () => {
+      const e = _e.instance(newName(), { handlers: 'hidden', errors: 'throw' });
+      const calls = [];
+      let registered = false;
+      e.subtype({ String: { Email: (input) => input.indexOf('@') > 0 } });
+      e.fn({ Number: {
+        String: { a: () => 'a' },
+        // It runs before the 'String' node of the same dispatch is attached, and replaces that node and its parent.
+        Email: () => {
+          if(registered){ return; }
+          registered = true;
+          e.fn({ Number: () => { calls.push('Number'); } });
+          e.fn({ Number: { String: () => { calls.push('String'); } } });
+        },
+      } });
+
+      expect(Object.keys(e(1, 'a@b'))).toEqual(['a']);
+      expect(calls).toEqual([]);
+      expect(Object.keys(e(1, 's'))).toEqual(['a']);
+      expect(Object.keys(e(1, 's'))).toEqual(['a']);
+      expect(calls).toEqual(['String', 'String']);
+      e(1);
+      expect(calls).toEqual(['String', 'String', 'Number']);
+    });
+
+    it('should use what a handler returns on every call, even if it changes between calls', () => {
+      const e = _e.instance(newName(), { handlers: 'hidden' });
+      let turn = 0;
+      e.fn({ String: () => (++turn % 2 ? { odd: () => 'odd' } : { even: () => 'even' }) });
+
+      expect(Object.keys(e('x'))).toEqual(['odd']);
+      expect(Object.keys(e('x'))).toEqual(['even']);
+      expect(e('x').odd()).toBe('odd');
+    });
+
+    it('should allow a subtype definition and a handler to call the dispatcher again (reentry)', () => {
+      const e = _e.instance(newName(), { handlers: 'hidden' });
+      e.subtype({ Array: { Pair: (input) => input.length === 2 && Object.keys(e(input[0])).length > 0 } });
+      e.fn({ String: { s: () => 's' }, Number: () => ({ inner: () => Object.keys(e('x')) }), Pair: { pair: () => 'pair' } });
+
+      expect(Object.keys(e(['a', 'b']))).toEqual(['pair']);
+      expect(Object.keys(e([true, false]))).toEqual([]);
+      expect(e(1).inner()).toEqual(['s']);
+    });
+
+    it('should deliver a conflict that repeats on every call once per flush, with the same text, in both collision modes', async () => {
+      const names = { general: newName(), specific: newName() };
+      Object.keys(names).forEach((mode) => {
+        const e = _e.instance(names[mode], { collision: mode });
+        e.subtype({ String: { Email: (input) => input.indexOf('@') > 0 } });
+        e.fn({ String: { describe: () => 'String' }, Email: { describe: () => 'Email' } });
+        for(let i = 0; i < 200; i++){ e('a@b.co'); }
+        expect(e('a@b.co').describe()).toBe(mode === 'general' ? 'String' : 'Email');
+      });
+
+      await waitForConsole();
+      const general = messagesOf(warnSpy, names.general);
+      const specific = messagesOf(warnSpy, names.specific);
+      expect(general.length).toBe(1);
+      expect(general[0]).toContain('Conflict for "describe". A definition from type "String" is overwriting');
+      expect(specific.length).toBe(1);
+      expect(specific[0]).toContain('Conflict for "describe". A definition from type "String" was ignored');
+    });
+
+    it('should attach every method of results with 19, 20 and 25 methods, in order', () => {
+      [19, 20, 25].forEach((count) => {
+        const e = _e.instance(newName());
+        const methods = {}, expected = [];
+        for(let i = 0; i < count; i++){ methods['m' + i] = () => i; expected.push('m' + i); }
+        e.fn({ String: methods });
+
+        const result = e('x');
+        expect(Object.keys(result)).toEqual(expected);
+        expect(result['m' + (count - 1)]()).toBe(count - 1);
+      });
+    });
+
+    it('should pass 0 to 5 method arguments and 1 to 3 dispatcher arguments in both args styles', () => {
+      ['array', 'spread'].forEach((style) => {
+        const e = _e.instance(newName(), { args: style });
+        e.fn({ String: { echo: echo }, Number: { String: { echo2: echo } }, Boolean: { Boolean: { Boolean: { echo3: echo } } } });
+
+        for(let k = 0; k <= 5; k++){
+          const args = [1, 'two', null, undefined, { k: 5 }].slice(0, k);
+          const received = e('x').echo.apply(null, args);
+          expect(received).toEqual(style === 'array' ? [['x']].concat(args) : ['x', args]);
+        }
+        for(let k = 0; k <= 3; k++){
+          const args = ['a', 'b', 'c'].slice(0, k);
+          expect(e(1, 's').echo2.apply(null, args)).toEqual(style === 'array' ? [[1, 's']].concat(args) : [1, 's', args]);
+          expect(e(true, false, true).echo3.apply(null, args)).toEqual(style === 'array' ? [[true, false, true]].concat(args) : [true, false, true, args]);
+        }
+      });
+    });
+
+    it('should give every method call a fresh copy of the dispatcher arguments', () => {
+      const e = _e.instance(newName());
+      e.fn({ String: { mutate: (args) => { args.push('changed'); return args.length; } } });
+      const result = e('x');
+
+      expect(result.mutate()).toBe(2);
+      expect(result.mutate()).toBe(2);
+    });
+
+    it('should report a revoked Proxy as an input like any other subtype error', async () => {
+      const name = newName();
+      const e = _e.instance(name);
+      e.fn({ Object: { o: () => 'o' } });
+      const revocable = Proxy.revocable({}, {});
+      revocable.revoke();
+
+      expect(Object.keys(e(revocable.proxy))).toEqual(['o']);
+      e.config({ errors: 'throw' });
+      expect(() => e(revocable.proxy)).toThrow(TypeError);
+
+      await waitForConsole();
+      expect(messagesOf(errorSpy, name).some(m => m.includes('Subtype definition "Object" function error'))).toBe(true);
+    });
+  });
+
+  // --- Changes of behavior on purpose (v1.23.0) ---
+  describe('Registered functions and inherited properties (v1.23.0)', () => {
+    let warnSpy;
+    let counter = 0;
+    const newName = () => `owned-${Date.now()}-${counter++}`;
+    const messagesOf = (spy, name) => spy.mock.calls.map(call => call[0]).filter(m => m.includes('(' + name + ')'));
+
+    beforeEach(() => {
+      warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      warnSpy.mockRestore();
+    });
+
+    it('should never attach the own properties of a registered function, nor write methods into it', () => {
+      const e = _e.instance(newName());
+      const handler = function(){};
+      handler.before = () => 'before';
+      e.fn({ String: handler });
+      handler.after = () => 'after';
+      e.fn({ String: { method: () => 'method' } });
+
+      expect(Object.keys(e('x'))).toEqual(['method']);
+      expect(handler.method).toBeUndefined();
+      expect(Object.keys(handler)).toEqual(['before', 'after']);
+    });
+
+    it('should run a registered function only when its type is dispatched, never when registering or changing options', () => {
+      const e = _e.instance(newName());
+      let calls = 0;
+      e.fn({ String: () => { calls++; } });
+      e.fn({ String: { m: () => 1 } }).config({ collision: 'specific' });
+      e(1);
+      e(true);
+      expect(calls).toBe(0);
+
+      expect(e('x').m()).toBe(1);
+      expect(calls).toBe(1);
+    });
+
+    it('should not share methods between types that use the same function as handler', () => {
+      const e = _e.instance(newName());
+      const shared = function(){};
+      e.fn({ String: shared, Number: shared });
+      e.fn({ String: { onlyString: () => 's' } });
+
+      expect(Object.keys(e('x'))).toEqual(['onlyString']);
+      expect(Object.keys(e(1))).toEqual([]);
+    });
+
+    it('should keep calling a handler with the result as `this` and with the dispatcher arguments', () => {
+      const e = _e.instance(newName());
+      e.fn({ String: function(input, extra){ this.seen = [input, extra]; } });
+
+      expect(e('x', 2).seen).toBeUndefined();
+      expect(e('x').seen).toEqual(['x', undefined]);
+    });
+
+    it('should ignore a function added to Object.prototype: it is neither a reserved name nor a collision', async () => {
+      const name = newName();
+      Object.prototype.polluted = () => 'intruder';
+      try {
+        const e = _e.instance(name);
+        e.fn({ Number: { polluted: () => 'registered', other: () => 'other' } });
+        expect(Object.keys(e(1))).toEqual(['polluted', 'other']);
+        expect(e(1).polluted()).toBe('registered');
+        e.config({ collision: 'specific' });
+        expect(e(1).polluted()).toBe('registered');
+      }
+      finally { delete Object.prototype.polluted; }
+
+      await waitForConsole();
+      expect(messagesOf(warnSpy, name)).toEqual([]);
+    });
+
+    it('should not run a function added to Object.prototype with the name of a type', () => {
+      const e = _e.instance(newName());
+      const calls = [];
+      e.fn({ Number: { n: () => 1 } });
+      e('warm-up');
+      Object.prototype.String = function(){ calls.push('intruder'); return { injected: () => 'x' }; };
+      let keys;
+      try { keys = Object.keys(e('x')); }
+      finally { delete Object.prototype.String; }
+
+      expect(calls).toEqual([]);
+      expect(keys).toEqual([]);
+    });
+
+    it('should not report a collision for a name that the result only inherits (toString)', async () => {
+      const name = newName();
+      const e = _e.instance(name);
+      e.fn({ String: () => ({ toString: () => 'custom' }) });
+
+      expect(e('x').toString()).toBe('custom');
+      await waitForConsole();
+      expect(messagesOf(warnSpy, name)).toEqual([]);
+    });
+
+    it('should dispatch when a subtype is named after a native property of functions', () => {
+      ['caller', 'arguments', 'call', 'bind', 'name', 'prototype'].forEach((subtypeName) => {
+        [function(){}, () => {}].forEach((rootHandler) => {
+          const e = _e.instance(newName(), { errors: 'throw' });
+          e.subtype({ String: { Odd: () => subtypeName } });
+          e.fn(rootHandler).fn({ String: { m: () => 1 } });
+
+          expect(e.type('x').slice()).toEqual(['String', subtypeName]);
+          expect(Object.keys(e('x'))).toEqual(['m']);
+        });
+      });
+    });
+
+    it('should report every conflict of the names a handler returns, also when they change on every call', async () => {
+      const name = newName();
+      const e = _e.instance(name);
+      let turn = 0;
+      e.fn({ String: () => { const methods = {}; methods['dynamic' + (turn++)] = () => 'String'; return methods; } });
+      e.fn(() => { const methods = {}; methods['dynamic' + (turn - 1)] = () => 'root'; return methods; });
+
+      expect(e('x').dynamic0()).toBe('root');
+      expect(e('x').dynamic1()).toBe('root');
+
+      await waitForConsole();
+      const warnings = messagesOf(warnSpy, name);
+      expect(warnings.filter(m => m.includes('Conflict for "dynamic0"')).length).toBe(1);
+      expect(warnings.filter(m => m.includes('Conflict for "dynamic1"')).length).toBe(1);
+    });
+
+    it('should create an instance whose name only exists in Object.prototype', () => {
+      const intruder = () => 'intruder';
+      Object.prototype.inheritedInstanceName = intruder;
+      let e;
+      try { e = _e.instance('inheritedInstanceName'); }
+      finally { delete Object.prototype.inheritedInstanceName; }
+
+      expect(e).not.toBe(intruder);
+      expect(e).not.toBe(_e);
+      expect(typeof e.fn).toBe('function');
+      expect(_e.instance('inheritedInstanceName')).toBe(e);
+    });
+
+    it('should ignore a function added to Array.prototype in an array of subtype names', async () => {
+      const name = newName();
+      Array.prototype.intruder = function(){};
+      let types;
+      try {
+        const e = _e.instance(name);
+        e.subtype({ Number: ['Amount'] });
+        types = e.type(5).slice();
+      }
+      finally { delete Array.prototype.intruder; }
+
+      expect(types).toEqual(['Number', 'Amount']);
+      await waitForConsole();
+      expect(messagesOf(warnSpy, name)).toEqual([]);
+    });
+  });
+
+  describe('handlers: "hidden" by default (v1.23.0)', () => {
+    let counter = 0;
+    const newName = () => `hidden-default-${Date.now()}-${counter++}`;
+
+    it('should treat every function under a capitalized name as a type, also a method named that way', () => {
+      const e = _e.instance(newName());
+      e.fn({ String: { Format: () => 'F', format: () => 'f' }, Number: () => {} });
+
+      expect(e.config().handlers).toBe('hidden');
+      expect(Object.keys(e('x'))).toEqual(['format']);
+      expect(Object.keys(e(1))).toEqual([]);
+    });
+
+    it('should restore the behavior of v1.22.0 with handlers: "exposed"', () => {
+      const e = _e.instance(newName(), { handlers: 'exposed' });
+      e.fn({ String: { Format: () => 'F', format: () => 'f' }, Number: () => {} });
+
+      expect(Object.keys(e('x'))).toEqual(['Format', 'format', 'Number']);
+      expect(Object.keys(e(1))).toEqual(['Number']);
+      expect(e('x').Format()).toBe('F');
+    });
+  });
+
   describe('ESM build: parity with the UMD build', () => {
     // Jest cannot load the .mjs with require(), so it is run in a Node child process.
     const runInESM = (body) => {
@@ -1168,7 +1545,7 @@ describe('Estructura Framework v1.22.0 - Unit Tests', () => {
         e.subtype({ Array: 'Collection', Collection: (input, primitiveType, getTypes) => { seen = [...getTypes()]; return true; } })
          .fn({ Array: { who: (arr, [suffix]) => 'Array' + suffix }, Object: { who: () => 'Object' }, who: () => 'Global' });
         return [e.config(), e([1]).who('!'), e({}).who(), e('s').who(), seen, e.fn(() => {}) === e];
-      `)).toEqual([{ collision: 'specific', args: 'spread', handlers: 'exposed', errors: 'console' }, 'Array!', 'Object', 'Global', ['Object', 'Array', 'Collection'], true]);
+      `)).toEqual([{ collision: 'specific', args: 'spread', handlers: 'hidden', errors: 'console' }, 'Array!', 'Object', 'Global', ['Object', 'Array', 'Collection'], true]);
     });
 
     it('should support the handlers and errors options and the v1.22.0 fixes (same as the UMD build)', () => {

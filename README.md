@@ -132,7 +132,7 @@ _e(myData, format, destination).process();
 *   **Extensible Type System:** Define your own types ([`.subtype()`](#_esubtypedefinitions)) for any data structure, going far beyond JavaScript's main types.
 *   **Isolated Instances (`Sandboxing`):** Create multiple Estructura instances ([`.instance()`](#_einstancename-options)) that do not interfere with each other, each with its own registry of types and functions.
 *   **Robust and Predictable:** Calls to the `dispatcher` are deterministic. For the same configuration of types and of functions registered ([`.fn()`](#_efnassignments)) for those types, a call to [`_e(arg1, arg2, ...)`](#_earg1-arg2-) will always follow the same execution sequence and return the same set of `methods`.
-*   **Lightweight and Dependency-Free:** About 35 KB uncompressed and under 10 KB gzipped (`ESM` and `UMD`), ideal for the browser or Node.js.
+*   **Lightweight and Dependency-Free:** About 48 KB uncompressed and under 13 KB gzipped (`ESM` and `UMD`), ideal for the browser or Node.js.
 
 ## When to Use Estructura
 
@@ -654,7 +654,7 @@ Registers assignments of [`methods`](#methods) and/or [`handlers`](#handlers) fo
 
     > **Note:** with `'general'` (the default value), the resolution order of previous versions is kept exactly. In sequences of several arguments, that order does not always follow the rule "the general overrides the specific" (for example, between `Array + String` and `Object + String`, `Array + String` prevails). If you need a consistent order across several arguments, use `'specific'`.
 
-    > **Note:** collisions between `handlers` happen because, by default, a `handler` is also attached to the result as a `method` named after its type. With the `handlers: 'hidden'` option *(v1.22.0+)* they are not attached, so they do not collide. See "[`Handlers` as `Methods`](#handlers-as-methods)".
+    > **Note:** collisions between `handlers` happen when, with `handlers: 'exposed'`, a `handler` is also attached to the result as a `method` named after its type. With `'hidden'`, the default value since v1.23.0, they are not attached, so they do not collide. See "[`Handlers` as `Methods`](#handlers-as-methods)".
 
 * **Function:**
 
@@ -696,16 +696,16 @@ If you call `.fn()` several times to register assignments of `handlers` or `meth
     ```
     See "[Advanced Concepts: `Handlers`](#advanced-concepts-handlers)" and "[Collision of `Methods` or `Handlers`](#collision-of-methods-or-handlers)".
 
-    > **Bad practice:** do not reuse **the same function** as the `handler` of several types. In JavaScript a function is an object, and the `methods` merged into a `handler` are stored as properties of that function, so the types that share it would also share its `methods`. Use a different function for each type:
+    > **Note:** *(v1.23.0+)* Estructura keeps its own copy of every registered function. The `methods` merged into a `handler` are not stored in your function, so several types can reuse **the same function** as their `handler` without sharing their `methods`, and properties that you add to the function yourself are never attached as `methods`: [`.fn()`](#_efnassignments) is the only way to add `methods` to a type.
     >
     > ```javascript
     > const logValue = (value) => console.log(value);
     >
-    > // Wrong: 'String' and 'Number' share the function and, with it, the methods merged into it
     > _e.fn({ String: logValue, Number: logValue });
+    > _e.fn({ String: { upper: (args) => args[0].toUpperCase() } });
     >
-    > // Right: one function per type
-    > _e.fn({ String: (value) => logValue(value), Number: (value) => logValue(value) });
+    > _e('text').upper(); //> "TEXT"
+    > _e(5).upper;        //> undefined: 'Number' does not get the methods of 'String'
     > ```
 
 * **For `Methods`:**
@@ -994,17 +994,17 @@ anotherAPI('test').log();  //> "anotherAPI log"
 |---------------|------------------------------------------|--------------------------------------------------------------------------------------------------------------------------|
 | `collision`   | `'general'` (default), `'specific'`      | Which definition prevails when an `input` matches several types that assign a `method` with the same name. See "[Collision of `Methods` or `Handlers`](#collision-of-methods-or-handlers)". |
 | `args`        | `'array'` (default), `'spread'`          | How `methods` receive the arguments. See "[How the `Dispatcher` Arguments Are Passed](#how-the-dispatcher-arguments-are-passed)". |
-| `handlers`    | `'exposed'` (default), `'hidden'`        | *(v1.22.0+)* Whether a `handler` is also attached to the result as a `method`. See "[`Handlers` as `Methods`](#handlers-as-methods)". |
+| `handlers`    | `'hidden'` (default), `'exposed'`        | *(v1.22.0+; `'hidden'` by default since v1.23.0)* Whether a `handler` is also attached to the result as a `method`, and whether a name that starts with an uppercase letter is a type. See "[`Handlers` as `Methods`](#handlers-as-methods)". |
 | `errors`      | `'console'` (default), `'throw'`         | *(v1.22.0+)* What happens when a `method`, a `handler` or a subtype evaluator function throws an error: it is reported through the console and the flow continues, or the original error is rethrown. |
 
 ```javascript
-_e.config(); //> { collision: 'general', args: 'array', handlers: 'exposed', errors: 'console' }
+_e.config(); //> { collision: 'general', args: 'array', handlers: 'hidden', errors: 'console' }
 
 _e.config({ collision: 'specific' }).config({ args: 'spread' });
-_e.config(); //> { collision: 'specific', args: 'spread', handlers: 'exposed', errors: 'console' }
+_e.config(); //> { collision: 'specific', args: 'spread', handlers: 'hidden', errors: 'console' }
 ```
 
-The default values reproduce the behavior of previous versions, so nothing needs to change in existing code. A change of options applies to the subsequent calls to the `dispatcher`; the objects the `dispatcher` has already returned keep the argument-passing style they were created with.
+Since v1.23.0 the default value of `handlers` is `'hidden'`; the other default values reproduce the behavior of previous versions. To keep the behavior of v1.22.0, use `handlers: 'exposed'` (see "[`Handlers` as `Methods`](#handlers-as-methods)"). A change of options applies to the subsequent calls to the `dispatcher`; the objects the `dispatcher` has already returned keep the argument-passing style they were created with.
 
 **Errors (`errors`):** by default (`'console'`), if a `method`, a `handler` or a subtype evaluator function throws an error, the error is reported through the console and the flow continues (a `method` that fails returns the result object). With `'throw'` the original error is rethrown, with its stack trace and its class, and nothing is written to the console. The option applies at the moment the error occurs.
 
@@ -1050,7 +1050,7 @@ These functions behave differently, offer more flexibility and can:
 
 * **Contain more `handlers` or `methods`:**
 
-  Since it is a function, it can have properties that act as `sub-handlers` or `methods` for a deeper dispatch.
+  With [`.fn()`](#_efnassignments) you can merge `sub-handlers` or `methods` into it for a deeper dispatch (see "[Merging Assignment Registrations](#merging-assignment-registrations-additive-registration)").
 
 * [**Override `methods` dynamically**](#overriding-methods-dynamically).
 
@@ -1119,29 +1119,31 @@ _e(['a', 'b']);
 
 #### `Handlers` as `Methods`
 
-By default (`handlers: 'exposed'`), a function assigned to a type name is a `handler` and is also attached to the result as a `method` with that name, just as in previous versions:
+By default (`handlers: 'hidden'`, *v1.23.0+*), every name that **starts with an uppercase letter** is treated as a type name: its function only acts as a `handler` (it runs when its type matches) and is never attached as a `method`. Names that start with a lowercase letter are `methods`.
 
 ```javascript
-_e.fn({ String: (str) => console.log(str) });
-
-Object.keys(_e(5)); //> [ 'String' ]
-```
-
-With the `handlers: 'hidden'` option *(v1.22.0+)* of [`.config()`](#_econfigoptions) or of [`.instance()`](#_einstancename-options), every name that **starts with an uppercase letter** is treated as a type name: its function only acts as a `handler` (it runs when its type matches) and is never attached as a `method`. Names that start with a lowercase letter are still `methods`.
-
-```javascript
-const api = _e.instance('myAPI', { handlers: 'hidden' });
-
-api.fn({
+_e.fn({
   String: (str) => console.log(`Handler: ${str}`),
   log: () => 'Global method'
 });
 
-Object.keys(api(5));  //> [ 'log' ]
-api('text');          //> "Handler: text"
+Object.keys(_e(5));  //> [ 'log' ]
+_e('text');          //> "Handler: text"
 ```
 
-> **Note:** with `'hidden'` the rule applies at every level (global `methods`, the `methods` of a type and those returned by a `handler`), so the names of `methods` must start with a lowercase letter. It also avoids the collision warnings between `handlers` of different sequences that share a type name (for example, those of `Array + String` and `Object + String` when the `dispatcher` is called with only an `array`).
+With the `handlers: 'exposed'` option *(v1.22.0+)* of [`.config()`](#_econfigoptions) or of [`.instance()`](#_einstancename-options), the default value up to v1.22.0, a function assigned to a type name is a `handler` and is also attached to the result as a `method` with that name:
+
+```javascript
+const api = _e.instance('myAPI', { handlers: 'exposed' });
+
+api.fn({ String: (str) => console.log(str) });
+
+Object.keys(api(5)); //> [ 'String' ]
+```
+
+> **Note:** with `'hidden'` the rule applies at every level (global `methods`, the `methods` of a type and those returned by a `handler`), so the names of `methods` must start with a lowercase letter: a `method` named `Format` is a type and is not attached. It also avoids the collision warnings between `handlers` of different sequences that share a type name (for example, those of `Array + String` and `Object + String` when the `dispatcher` is called with only an `array`).
+
+> **Migrating from v1.22.0:** if your code calls a `handler` as a `method` (`_e(5).String()`) or has `methods` whose names start with an uppercase letter, use `_e.config({ handlers: 'exposed' })` (or `_e.instance(name, { handlers: 'exposed' })`), or rename those `methods` so they start with a lowercase letter.
 
 #### Overriding `Methods` Dynamically
 
@@ -1254,7 +1256,11 @@ otherUser.send();            //> "Sending with generic SMTP..."
 
 * **`Methods` named after types appear (`String`, `Array`, etc.)**
 
-  By default, a `handler` is also attached as a `method` named after its type. To avoid this, use the `handlers: 'hidden'` option. See "[`Handlers` as `Methods`](#handlers-as-methods)".
+  With `handlers: 'exposed'`, a `handler` is also attached as a `method` named after its type. The default value, `'hidden'` *(v1.23.0+)*, avoids it. See "[`Handlers` as `Methods`](#handlers-as-methods)".
+
+* **A `method` whose name starts with an uppercase letter is missing from the result**
+
+  Since v1.23.0 (`handlers: 'hidden'` by default), a name that starts with an uppercase letter is a type, not a `method`. Rename the `method` so it starts with a lowercase letter, or use `handlers: 'exposed'`. See "[`Handlers` as `Methods`](#handlers-as-methods)".
 
 * **A `method` returns the result object instead of its value, or an error is not propagated**
 
@@ -1263,6 +1269,23 @@ otherUser.send();            //> "Sending with generic SMTP..."
 ## Considerations
 
 * **Performance**
+
+  * **In v1.23.0:**
+
+    The `dispatcher` keeps, for every node of the tree, the list of its `methods`, and rebuilds it only after a registration that changes that node or after a change of options. It no longer walks every type registered in the root on each call, and the text of a warning that repeats on every call is built once. Measured with `bench/benchmark.js` (Node.js 24, median of three runs of 31 samples):
+
+    | Scenario | v1.22.0 | v1.23.0 |
+    |---|---|---|
+    | 1 argument, dispatch + call (README scenario) | 712 ns | 577 ns |
+    | 2 arguments, dispatch + call | 723 ns | 640 ns |
+    | Custom subtypes, dispatch + call | 1.33 µs | 1.18 µs |
+    | A name conflict on every call | 1.81 µs | 602 ns |
+    | 50 types registered in the root | 2.80 µs | 315 ns |
+    | One type with 20 `methods` | 2.37 µs | 1.17 µs |
+    | 10 `handlers` in the root (default options) | 870 ns | 474 ns |
+    | A registration followed by a dispatch, with 3000 `methods` in the root | 559 µs | 204 µs |
+
+    Registering costs between 2% and 9% more (an instance with 100 `methods`: about 47 µs), because Estructura now keeps its own copy of every registered function. A call that attaches 20 or more `methods` is still clearly slower than one that attaches 19 (in that scenario, 1.17 µs against 0.49 µs): with that many properties, JavaScript engines store the result object in a slower mode.
 
   * **In v1.22.0:**
 
@@ -1299,6 +1322,15 @@ otherUser.send();            //> "Sending with generic SMTP..."
   ```
 
 ## Notes on Previous and Current Versions
+
+*   **In v1.23.0:**
+
+    * **Performance:** dispatching takes between 10% and 20% less time in the usual cases, up to 89% less with many types registered in the root, and a name conflict that repeats on every call costs 67% less. Registering costs between 2% and 9% more. See "[Considerations](#considerations)".
+    * **`Breaking change`:** the default value of the `handlers` option is now `'hidden'`: a name that starts with an uppercase letter is a type, so neither `handlers` nor `methods` named that way are attached as `methods` anymore. `handlers: 'exposed'` restores the previous behavior. See "[`Handlers` as `Methods`](#handlers-as-methods)".
+    * **Change:** Estructura keeps its own copy of every registered function. [`.fn()`](#_efnassignments) no longer writes the `methods` of a type into your `handler`, the properties that you add to that function are never attached as `methods`, and types that reuse the same function no longer share their `methods`.
+    * **`Bugfix`:** what is inherited from `Object.prototype` no longer counts as a reserved name, a node, a type, an instance or a collision. In v1.22.0 a function added there could block a registration, run as the `handler` of a type with its name, or, with `collision: 'specific'`, run instead of the registered `method`.
+    * **Tests and `benchmark`:** new tests for the behavior that is kept and for these changes. `bench/benchmark.js` uses `method` names in lowercase, so it measures v1.22.0 and v1.23.0 alike, and adds scenarios with many types, many `methods`, `handlers`, a repeated call to a `method` and a registration followed by a dispatch.
+    * **Documentation:** the bad-practice note about reusing the same function as the `handler` of several types is no longer needed, and the size is updated (about 48 KB uncompressed).
 
 *   **In v1.22.0:**
 

@@ -10,6 +10,8 @@
 // - `--target` allows comparing another build (e.g. 2.0) with the same suite.
 // - Base scenario taken from the README: 10 types, 100 methods evenly distributed,
 //   10000 repetitions x 10 calls = 100000 dispatches per sample.
+// - Method names are lowercase: since v1.23.0 a name starting with an uppercase letter is a type
+//   (handlers: 'hidden' by default), so the same suite measures v1.22.0 and later builds.
 
 const path = require('path');
 const os = require('os');
@@ -40,7 +42,7 @@ function register_base(e){
   const defs = {};
   BASE_TYPES.forEach(function(t){
     defs[t] = {};
-    for(let i = 0; i < 10; i++){ defs[t][t + '_' + i] = function(){ return i + 1; }; }
+    for(let i = 0; i < 10; i++){ defs[t][t.toLowerCase() + '_' + i] = function(){ return i + 1; }; }
   });
   e.fn(defs);
 }
@@ -58,6 +60,18 @@ function loop_1arg(e, inputs, names){
     }
     return sink;
   };
+}
+
+// The 10 base types registered as handlers (a function that returns nothing), then 5 methods merged into each.
+function build_handlers(_e, name, options){
+  const e = _e.instance(name, options), handlers = {}, methods = {};
+  BASE_TYPES.forEach(function(t){
+    handlers[t] = function(){};
+    methods[t] = {};
+    for(let i = 0; i < 5; i++){ methods[t][t.toLowerCase() + '_' + i] = function(){ return i + 1; }; }
+  });
+  e.fn(handlers).fn(methods);
+  return { run: loop_1arg(e, base_inputs(), BASE_TYPES.map(function(t){ return t.toLowerCase() + '_0'; })), ops: DISPATCHES };
 }
 
 const SUBTYPES = {
@@ -79,7 +93,7 @@ const scenarios = {
     title: '1 argument, dispatch + method call (README scenario)',
     build: function(_e){
       const e = _e.instance('b2'); register_base(e);
-      const names = BASE_TYPES.map(function(t){ return t + '_0'; });
+      const names = BASE_TYPES.map(function(t){ return t.toLowerCase() + '_0'; });
       return { run: loop_1arg(e, base_inputs(), names), ops: DISPATCHES };
     }
   },
@@ -92,12 +106,12 @@ const scenarios = {
       const defs = {};
       pairs.forEach(function(p){
         defs[p[0]] = {}; defs[p[0]][p[1]] = {};
-        for(let i = 0; i < 10; i++){ defs[p[0]][p[1]][p[0] + '_' + p[1] + '_' + i] = function(){ return i + 1; }; }
+        for(let i = 0; i < 10; i++){ defs[p[0]][p[1]][(p[0] + '_' + p[1]).toLowerCase() + '_' + i] = function(){ return i + 1; }; }
       });
       e.fn(defs);
       const a = pairs.map(function(p){ return values[p[0]]; });
       const b = pairs.map(function(p){ return values[p[1]]; });
-      const names = pairs.map(function(p){ return p[0] + '_' + p[1] + '_0'; });
+      const names = pairs.map(function(p){ return (p[0] + '_' + p[1]).toLowerCase() + '_0'; });
       const rounds = DISPATCHES / pairs.length;
       return { ops: DISPATCHES, run: function(){
         let sink = 0;
@@ -114,11 +128,11 @@ const scenarios = {
       const defs = {};
       nodes.forEach(function(t){
         defs[t] = {};
-        for(let i = 0; i < 9; i++){ defs[t][t + '_' + i] = function(){ return i + 1; }; }
+        for(let i = 0; i < 9; i++){ defs[t][t.toLowerCase() + '_' + i] = function(){ return i + 1; }; }
       });
       e.fn(defs);
       const inputs = ['a@b.co', '123', 'plain', { kind: 'user' }, { kind: 'product' }, {}, [[1]], [1, 2], 7, 7.5];
-      const names = ['Email', 'Numeric', 'String', 'User', 'Product', 'Object', 'Matrix', 'Tuple', 'Integer', 'Number'].map(function(t){ return t + '_0'; });
+      const names = ['Email', 'Numeric', 'String', 'User', 'Product', 'Object', 'Matrix', 'Tuple', 'Integer', 'Number'].map(function(t){ return t.toLowerCase() + '_0'; });
       return { run: loop_1arg(e, inputs, names), ops: DISPATCHES };
     }
   },
@@ -133,6 +147,73 @@ const scenarios = {
       const inputs = ['a@b.co', { kind: 'user' }, [1, 2], 7];
       const names = inputs.map(function(){ return 'describe'; });
       return { run: loop_1arg(e, inputs, names), ops: DISPATCHES };
+    }
+  },
+  'many-types': {
+    title: '1 argument, 50 types registered in the root (10 methods each), dispatch + call',
+    build: function(_e){
+      const e = _e.instance('b6'), defs = {};
+      for(let t = 0; t < 50; t++){
+        const type = t === 0 ? 'String' : 'Type' + t;
+        defs[type] = {};
+        for(let i = 0; i < 10; i++){ defs[type][type.toLowerCase() + '_' + i] = function(){ return i + 1; }; }
+      }
+      e.fn(defs);
+      const inputs = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
+      return { run: loop_1arg(e, inputs, inputs.map(function(){ return 'string_0'; })), ops: DISPATCHES };
+    }
+  },
+  'many-methods': {
+    title: '1 argument, one type with 20 methods, dispatch + call',
+    build: function(_e){
+      const e = _e.instance('b7'), methods = {};
+      for(let i = 0; i < 20; i++){ methods['string_' + i] = function(){ return i + 1; }; }
+      e.fn({ String: methods });
+      const inputs = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'];
+      return { run: loop_1arg(e, inputs, inputs.map(function(){ return 'string_0'; })), ops: DISPATCHES };
+    }
+  },
+  'handlers': {
+    title: '1 argument, the 10 base types as handlers with 5 methods each (default options), dispatch + call',
+    build: function(_e){ return build_handlers(_e, 'b8'); }
+  },
+  'handlers-exposed': {
+    title: "The same with handlers: 'exposed'",
+    build: function(_e){ return build_handlers(_e, 'b9', { handlers: 'exposed' }); }
+  },
+  'handlers-hidden': {
+    title: "The same with handlers: 'hidden'",
+    build: function(_e){ return build_handlers(_e, 'b10', { handlers: 'hidden' }); }
+  },
+  'method-call': {
+    title: 'Repeated call to one method of the same result (no dispatch)',
+    build: function(_e){
+      const e = _e.instance('b11'); register_base(e);
+      const result = e('s');
+      return { ops: DISPATCHES, run: function(){
+        let sink = 0;
+        for(let i = 0; i < DISPATCHES; i++){ sink += result.string_0(); }
+        return sink;
+      } };
+    }
+  },
+  'rebuild': {
+    title: 'Registration of a new method in another type + dispatch, with 3000 methods in the root',
+    build: function(_e){
+      const e = _e.instance('b12'), root = {};
+      let n = 0;
+      for(let i = 0; i < 3000; i++){ root['root_' + i] = function(){ return 1; }; }
+      e.fn(root); e('x');
+      const reps = 100;
+      return { ops: reps, run: function(){
+        let sink = 0;
+        for(let r = 0; r < reps; r++){
+          const methods = {}; methods['number_' + (n++)] = function(){ return 1; };
+          e.fn({ Number: methods });
+          sink += e('x').root_0();
+        }
+        return sink;
+      } };
     }
   },
   'registration': {
